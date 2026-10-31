@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.2",
+	"serverVersion": "0.26.3",
 	"files": [
 		{
 			"path": ".env.example",
@@ -50,7 +50,7 @@
 		{
 			"path": "docs/build-guide.mjs",
 			"bytes": 16428,
-			"sha256": "fe68c96a9674a4b40c4001dd5ff8391e0446080081b72e939235c4c9a1eb57d3"
+			"sha256": "df0d02dc97de241e297cde7e76def12299072cafba72d650849ceee1713047aa"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -95,7 +95,7 @@
 		{
 			"path": "docs/site/index.html",
 			"bytes": 39515,
-			"sha256": "81ac03b313344b5667d4a00cbf8c0d99366e47aaa9602ab8b82b26ab8796d958"
+			"sha256": "61391e8868ae1a684b2f8bb013ebb7049c5ad31113a09cc2c75360ebf4f11846"
 		},
 		{
 			"path": "docs/story.html",
@@ -178,6 +178,11 @@
 			"sha256": "63f9eac1c5dbfc45b706c2631c499dc8fff35b34e9611e62b2709210385a21ff"
 		},
 		{
+			"path": "server/broadcast-resume.mjs",
+			"bytes": 8443,
+			"sha256": "9260e669445f92aa0a5ba9b96022fa4c69e2deda215597ea478e1a5f67561f0d"
+		},
+		{
 			"path": "server/cast.mjs",
 			"bytes": 1014,
 			"sha256": "85d221f1733b304b35aebb4aece6d8264bb3ff79b383cc6ba485457224be180a"
@@ -199,8 +204,8 @@
 		},
 		{
 			"path": "server/dispatcharr-guide.mjs",
-			"bytes": 6892,
-			"sha256": "77b2828ea0cb9e8115785441e704504d8d6b98a9218f91f9b5518f0e0e8063d4"
+			"bytes": 7780,
+			"sha256": "adcc17a28444685ec1fd39bffde970756b38cd0245fd30dbf30b41259dc4ad79"
 		},
 		{
 			"path": "server/dispatcharr-player.mjs",
@@ -370,12 +375,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 28842,
-			"sha256": "ca1646d2d57be36417833d99dd8e8cedb1f1d93ba3a44922c2d52f2a060d542e"
+			"sha256": "4a1a14c06b51334ee73eb49c191ef144982316053e03fde24323670f7a7a3762"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 271,
-			"sha256": "18f22f2dad7f4ba32adc9a03debed74b79fd087669e3ab36200542146791ab7b"
+			"sha256": "8b91b867d47ce59e06efb499b93e67b7bf9389b4e45521dce5edd0fa1aa8ebf0"
 		},
 		{
 			"path": "server/people.mjs",
@@ -639,8 +644,8 @@
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 73535,
-			"sha256": "25b092e814d0d48e5a5ff3265b1d478b367d36cb94c6f12c0d0d8ab34a8457cc"
+			"bytes": 74086,
+			"sha256": "e0fb49ecc4b78bdabbe71819ffe0717e0392abdf3f12e7ace41f9be58e2601bd"
 		},
 		{
 			"path": "server/shares.mjs",
@@ -691,6 +696,11 @@
 			"path": "server/test/auth.test.mjs",
 			"bytes": 32109,
 			"sha256": "05f0aa7ce40ffe906b91c417eb66f77eccfa64007da750c9db7b74714bf5f939"
+		},
+		{
+			"path": "server/test/broadcast-resume.test.mjs",
+			"bytes": 10276,
+			"sha256": "77592d8b644f522b5d3f8c95c9575aecec1dc2eeb8a274acedddcf0f9fbf449e"
 		},
 		{
 			"path": "server/test/browser-download.test.mjs",

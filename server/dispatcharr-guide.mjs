@@ -1,5 +1,6 @@
 import sax from 'sax';
 import {readFile,writeFile,rename} from 'node:fs/promises';
+import {broadcastEpisode} from './broadcast-resume.mjs';
 
 export const channelGroupName=value=>String(value||'Other').replace(/^UK\b\s*[|:\-]?\s*/i,'').trim()||'Other';
 
@@ -32,16 +33,25 @@ export async function parseEpg(body, channels, now = Date.now(), historyDays = 0
 			current = wanted.has(tag.attributes.channel) && start < until && end > now - historyDays * 86400000 && end > start
 				? { channel:tag.attributes.channel, start, end, title:'', description:'' } : null;
 			if (wanted.has(tag.attributes.channel) && (!Number.isFinite(start) || !Number.isFinite(end) || end <= start)) invalid++;
-		} else if (current && ['title', 'desc'].includes(tag.name) && !field) {
-			field = { name:tag.name, text:'', english:/^en(?:g|-|$)/i.test(tag.attributes.lang || '') }; fieldDepth = depth;
+		} else if (current && ['title', 'desc', 'sub-title', 'episode-num', 'category', 'date'].includes(tag.name) && !field) {
+			field = { name:tag.name, text:'', system:tag.attributes.system, english:/^en(?:g|-|$)/i.test(tag.attributes.lang || '') }; fieldDepth = depth;
 		}
 	};
 	const text = value => { if (field) field.text = (field.text + value).slice(0, 12000); };
 	parser.ontext = text; parser.oncdata = text;
 	parser.onclosetag = name => {
 		if (field && depth === fieldDepth) {
-			const key = field.name === 'title' ? 'title' : 'description';
-			if (!current[key] || field.english) current[key] = field.text.trim();
+			const value=field.text.trim();
+			if(field.name==='episode-num') {
+				if(['xmltv_ns','onscreen'].includes(field.system))Object.assign(current,broadcastEpisode(value,field.system));
+			} else if(field.name==='category') {
+				if(/^(?:film|movie|cinema)$/i.test(value))current.IsMovie=true;
+			} else if(field.name==='date') {
+				if(/^(?:19|20)\d{2}(?:\d{4})?$/.test(value))current.ProductionYear=Number(value.slice(0,4));
+			} else {
+				const key={title:'title',desc:'description','sub-title':'EpisodeTitle'}[field.name];
+				if (!current[key] || field.english) current[key] = value;
+			}
 			field = null;
 		}
 		if (name === 'programme' && current) {
@@ -65,7 +75,9 @@ export async function parseEpg(body, channels, now = Date.now(), historyDays = 0
 			const overlap = entries.some((other, j) => j !== i && other.start < entry.end && other.end > entry.start);
 			if (overlap) conflicts++;
 			return !overlap;
-		}).map(entry => ({ Id:channel.id + ':' + entry.start, Name:entry.title, Overview:entry.description, StartDate:new Date(entry.start).toISOString(), EndDate:new Date(entry.end).toISOString() }));
+		}).map(entry => ({ Id:channel.id + ':' + entry.start, Name:entry.title, Overview:entry.description, StartDate:new Date(entry.start).toISOString(), EndDate:new Date(entry.end).toISOString(),
+			...(entry.EpisodeTitle?{EpisodeTitle:entry.EpisodeTitle}:{}),...(Number.isInteger(entry.ParentIndexNumber)?{ParentIndexNumber:entry.ParentIndexNumber,IndexNumber:entry.IndexNumber}:{}),
+			...(entry.IsMovie?{IsMovie:true,...(entry.ProductionYear?{ProductionYear:entry.ProductionYear}:{})}:{}) }));
 		return { ...channelView(channel), programmes };
 	});
 	const signatures=new Map();

@@ -29,7 +29,7 @@ node relay/setup.mjs install private/relay.json watch.example.com</code></pre><p
 	<p>Download the official Tellybox HomeLab app for your Android phone or Android TV, then enter your server address on first launch. The apps are proprietary, distributed separately from the server, and updated by Tellybox.</p>
 	<p>A home-only setup can use <code>http://192.168.1.50:8082</code>; remote viewing needs your own HTTPS address, such as <code>https://watch.example.com</code>. Replace these examples with your addresses.</p>
 	<h3>Connect your phone or TV</h3>
-	<p class="app-downloads"><a href="./downloads/Tellybox-phone-0.26.3.apk">Download for Android phone</a><a href="./downloads/Tellybox-tv-0.26.3.apk">Download for Android TV</a></p>
+	<p class="app-downloads"><a href="./downloads/Tellybox-phone-0.26.5.apk">Download for Android phone</a><a href="./downloads/Tellybox-tv-0.26.5.apk">Download for Android TV</a></p>
 	<ol><li>Install the appropriate APK for your device.</li><li>Enter the viewing address configured on your Tellybox server. Use HTTPS for a public domain; private network IPv4 addresses may use HTTP.</li><li>If you use a public address, optionally enter the same local playback address set in installation settings. This lets compatible devices stream directly at home.</li><li>Connect and follow the device-access screen. Disabled server features stay out of the app’s navigation.</li></ol>
 	<p>To move the app to a different installation, clear its app data first. This removes its previous account and downloads, preventing credentials from crossing between servers.</p>
 	<h3 id="tv-install">Install on a TV from your phone</h3>

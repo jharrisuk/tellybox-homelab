@@ -35,6 +35,7 @@ import { createSubtitleLookup, downloadedSubtitleIndex } from './subtitle-lookup
 import { createDispatcharr } from './dispatcharr.mjs';
 import { createDispatcharrGuide, channelView } from './dispatcharr-guide.mjs';
 import {createCatchup} from './catchup.mjs';
+import {createBroadcastResume} from './broadcast-resume.mjs';
 import {createCatchupPlayer} from './catchup-player.mjs';
 import { createDirectPlayer, mediaFile } from './dispatcharr-player.mjs';
 import { createVodLibrary } from './vod-library.mjs';
@@ -364,6 +365,11 @@ app.get('/api/live-guide', async (req, res) => {
 });
 app.get('/api/web/live-guide', async (req,res) => res.json(await dispatcharrGuide(req.query.refresh === '1')));
 const catchup=createCatchup(dispatcharr,dispatcharrGuide);
+const broadcastResume=createBroadcastResume({library:vodLibrary,catchup:{list:(...args)=>features.catchup?catchup.list(...args):Promise.resolve({channels:[]})}});
+app.post('/api/continue-watching',async(req,res)=>{
+	remoteControls.guard(req.jserverViewer);accountLimits.guard(req.jserverViewer,false);
+	res.set('Cache-Control','no-store');res.json(await broadcastResume(req.body,{allowed:item=>remoteControls.allowed(req.jserverViewer,{itemId:item.Id,nonstop:item.Nonstop===true})}));
+});
 const catchupPlayer=createCatchupPlayer({openArchive:(...args)=>dispatcharr.catchupSession(...args)});
 app.get('/api/catchup',async(req,res)=>res.json(await catchup.list(String(req.query.channel||''))));
 app.get('/api/catchup/restart',async(req,res)=>res.json(await catchup.restart(String(req.query.channel||''),String(req.query.programme||''))));
