@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta name="theme-color" content="#101310">
+	<title>Discover — Tellybox</title>
+	<link rel="icon" href="/icon.svg" type="image/svg+xml">
+	<link rel="stylesheet" href="/style.css">
+	<link rel="stylesheet" href="/discover.css">
+	<script src="/visitor-ui.js" defer></script>
+	<script src="/navigation.js" defer></script>
+	<script src="/taste.js" defer></script>
+	<script src="/discover.js" defer></script>
+	<script src="/connection-status.js" defer></script>
+</head>
+<body>
+	<header class="topbar">
+		<a class="brand" href="/" aria-label="Tellybox home"><img class="brand-logo" src="/tellybox-logo.png" alt="Tellybox"></a>
+		<button class="menu-toggle" id="menuToggle" aria-controls="siteNavigation" aria-expanded="false"><span class="menu-icon" aria-hidden="true">☰</span><span>Menu</span></button>
+		<div id="siteNavigation" class="navigation-panel">
+			<nav aria-label="Media libraries"><a class="nav-item" href="/">Home</a><a class="nav-item active" href="/discover" aria-current="page">Discover</a><a class="nav-item" href="/?view=movies">Films</a><a class="nav-item" href="/?view=tvshows">Series</a><a class="nav-item" href="/?view=livetv">Live TV</a><a class="nav-item" href="/?view=nonstop">24/7</a><a class="nav-item" href="/?view=recordings">Recordings</a></nav>
+			<div class="account-actions"><a id="activityLink" hidden>Activity</a><a id="remoteSettings" hidden>Settings</a><button id="signOut" class="button quiet" hidden>Sign out</button></div>
+		</div>
+	</header>
+	<main class="discovery">
+		<header class="discover-heading"><p class="eyebrow">MAKE ROOM FOR SOMETHING NEW</p><h1 id="discoverTitle">Discover</h1><p>Find something you’d love to watch. Stream it now or request a copy for the collection.</p></header>
+			<form id="searchForm" role="search"><label class="search"><span aria-hidden="true">⌕</span><input id="discoverSearch" type="search" maxlength="200" aria-label="Search films, series and channels" placeholder="Search everything…"></label><button class="button secondary">Search</button></form>
+		<div class="discover-toolbar">
+			<div class="filters" aria-label="Discover media"><button id="trendingTab" class="chip" aria-pressed="false">Trending this week</button><button id="ukTvTab" class="chip" aria-pressed="false">UK TV</button><button id="forYouTab" class="chip" aria-pressed="false">For you</button><button id="servicesTab" class="chip" aria-pressed="false">Streaming services</button><button id="filmsTab" class="chip active" aria-pressed="true">Films</button><button id="tvTab" class="chip" aria-pressed="false">Series</button><button id="documentariesTab" class="chip" aria-pressed="false">Documentaries</button><button id="requestsTab" class="chip" aria-pressed="false">On the list</button></div>
+		</div>
+		<div id="genreFilters" class="genre-filters" aria-label="Browse categories" hidden></div>
+		<div class="shelf-heading discover-results-heading">
+			<h2 id="listTitle">Popular films</h2>
+			<label id="discoverSortLabel" class="discover-sort" hidden>Sort by
+				<select id="discoverSort"><option value="popular">Most popular</option><option value="rating">Top rated</option><option value="release">Newest releases</option></select>
+			</label>
+			<button id="refreshRequests" class="button quiet" hidden>Refresh status</button>
+		</div>
+		<p id="discoverOrderNote" class="discover-order-note" hidden></p>
+		<p id="discoverStatus" class="status" role="status">Finding something good…</p>
+		<div id="discoveryFeeds"></div>
+		<div id="discoverGrid" class="discover-grid"></div>
+		<div class="more"><button id="discoverMore" class="button secondary" hidden>Show more</button></div>
+		<aside id="localAdmin" class="discover-admin" hidden><a href="/settings">Media settings</a></aside>
+		<p class="discover-note">Adding a title puts it on our list. Some titles take longer to arrive, especially before their release date. Look for “Ready to watch” when it’s here.</p>
+	</main>
+	<footer><a class="brand footer-brand" href="/">Telly<span class="brand-server">box</span></a><p>Metadata from <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>. UK availability by <a href="https://www.justwatch.com/uk" target="_blank" rel="noopener">JustWatch</a>.</p><a class="credits-link" href="/legal.html">Credits &amp; licences</a></footer>
+	<dialog id="requestDetails" aria-labelledby="requestTitle"><button class="close" id="closeRequest" aria-label="Close title details">×</button><div id="requestBody"></div></dialog>
+</body>
+</html>

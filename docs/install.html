@@ -1,0 +1,117 @@
+<section id="start">
+	<p class="eyebrow">01 · GET IT RUNNING</p>
+	<h2>Run it on Linux. Set it up from any home computer.</h2>
+	<p>I recommend a Linux server for Tellybox. Use PowerShell on your Windows computer or Terminal on your Mac to connect to it and run the commands below. Then finish setup in your normal browser, using the server’s LAN address.</p>
+	<p>This guide uses <code>alex@192.168.1.50</code> as an example Linux login. Replace <code>alex</code> with your server username and <code>192.168.1.50</code> with its private LAN IP throughout. Give the server a stable address using a DHCP reservation or your usual network settings.</p>
+	<p>You’ll need a Linux server with Docker and at least one existing media service. Tellybox connects to Jellyfin, Dispatcharr and the other services you choose; it doesn’t install them or supply media. <a href="#services">See what each integration adds ↓</a></p>
+	<p>This is an early-access release for home use. Start with a separate configuration and test your services before relying on it. Already running Tellybox? Use the <a href="#server-updates">update steps</a> and keep your existing configuration volume.</p>
+
+	<article class="install-step" id="step-tools">
+		<p class="step-label">STEP 1 · CONNECT TO YOUR LINUX SERVER</p><h3>Get the server ready</h3>
+		<p>Open <strong>PowerShell on Windows</strong> or <strong>Terminal on macOS</strong> and connect:</p>
+		<pre><code class="language-shell">ssh alex@192.168.1.50</code></pre>
+		<p>Your Linux server needs SSH enabled and your login configured. After connecting, commands in this terminal run <strong>on the Linux server</strong>. You do not need Docker installed on the Windows or Mac computer you are using to control it.</p>
+		<p>On the server, install <a href="https://docs.docker.com/engine/install/" target="_blank" rel="noopener">Docker Engine and the Compose plugin</a> using Docker’s instructions for your Linux distribution. Keep an existing working Docker installation. Install <a href="https://git-scm.com/downloads/linux" target="_blank" rel="noopener">Git</a> too. No GitHub account or sign-in is needed to download the public server source.</p>
+		<p>Check Docker from the connected terminal:</p>
+		<pre><code class="language-shell">docker version
+docker compose version</code></pre>
+		<p>Both should show version information and Docker should be able to contact its engine. Your account needs permission to use Docker; if your installation requires it, prefix the Docker commands below with <code>sudo</code>.</p>
+		<p>Hosting on Windows or macOS with Docker Desktop is possible, but Linux is my recommendation. The steps here use Windows and Mac only to manage the Linux server.</p>
+	</article>
+
+	<article class="install-step" id="step-source">
+		<p class="step-label">STEP 2 · INSTALL FROM GITHUB</p><h3>Clone Tellybox onto your server</h3>
+		<p>The server source is at <a href="https://github.com/jharrisuk/tellybox-homelab" target="_blank" rel="noopener">jharrisuk/tellybox-homelab</a>, free for personal and non-commercial use. Run these commands in the terminal connected <strong>to your Linux server</strong>:</p>
+		<pre><code class="language-shell">cd ~
+git clone https://github.com/jharrisuk/tellybox-homelab.git
+cd ~/tellybox-homelab</code></pre>
+		<p>This creates <code>~/tellybox-homelab</code> containing <code>compose.yaml</code>, <code>.env.example</code> and <code>server</code>. Run the remaining installation commands from that folder. If you already installed Tellybox, use its existing folder and the <a href="#server-updates">update steps</a> instead of cloning another copy.</p>
+		<p>Create and edit the Docker settings file:</p>
+		<pre><code class="language-shell">cp .env.example .env
+nano .env</code></pre>
+		<p>Set these two lines to <strong>your Linux server’s private LAN IP</strong>. This enables viewing and setup from your other home devices. Leave the relay setting unchanged for now.</p>
+		<pre><code class="language-ini">TELLYBOX_BIND=192.168.1.50
+TELLYBOX_SETUP_BIND=192.168.1.50</code></pre>
+		<p>In nano, save with <strong>Ctrl+O</strong>, press <strong>Enter</strong>, then exit with <strong>Ctrl+X</strong>. Use the server’s actual private address, not <code>0.0.0.0</code>, a public IP or your Windows/Mac computer’s IP. Allow ports 8082 and 8990 only from your trusted home network in the server’s network/firewall rules.</p>
+	</article>
+
+	<article class="install-step" id="step-start">
+		<p class="step-label">STEP 3 · IN THE PROJECT FOLDER</p><h3>Start Tellybox</h3>
+		<pre><code class="language-shell">docker compose up -d --build --wait
+docker compose ps</code></pre>
+		<p>The first run downloads the image dependencies and builds the container. Wait for it to finish; the service should show as <strong>Up</strong> and <strong>healthy</strong>. It keeps running after you close the terminal, but the computer and Docker must stay running for anyone to watch.</p>
+		<p>Copy your one-use setup code with this command:</p>
+		<pre><code class="language-shell">docker compose exec tellybox node -p "require('/config/bootstrap.json').token"</code></pre>
+		<p>Keep that code for the next step. Don’t put it in screenshots or support messages. If it prints <code>undefined</code>, the installation has already been claimed: use its existing administrator password.</p>
+	</article>
+
+	<article class="install-step" id="step-browser">
+		<p class="step-label">STEP 4 · IN YOUR NORMAL BROWSER</p><h3>Open setup</h3>
+		<p>From <strong>any computer on the same LAN</strong>, open <code>http://SERVER_IP:8990</code> in your browser. For the example above that is <code>http://192.168.1.50:8990</code>. Enter your setup code, choose an installation-administrator password of at least 12 characters, and select <strong>Continue</strong>.</p>
+		<p>No SSH tunnel is needed for this LAN setup. The browser uses the Linux server’s address, not <code>127.0.0.1</code>, which would mean the computer running your browser. Next time, sign in with your administrator password. Local viewing remains separate from installation administration.</p>
+		<p>Keep setup on your trusted home network. Never forward port 8990 on your router or put it on the public reverse proxy.</p>
+		<details><summary>Optional encrypted SSH route for a separate server</summary>
+			<p>Keep <code>TELLYBOX_SETUP_BIND=127.0.0.1</code> on that server. On the computer running your browser, open a terminal and run, replacing the example user/IP:</p>
+			<pre><code class="language-shell">ssh -N -o ExitOnForwardFailure=yes -L 8990:127.0.0.1:8990 alex@192.168.1.50</code></pre>
+			<p>Leave that terminal open and browse to <code>http://127.0.0.1:8990</code>. The SSH connection encrypts the traffic between the computers. If local port 8990 is busy, use <code>-L 18990:127.0.0.1:8990</code> and browse to <code>http://127.0.0.1:18990</code>.</p>
+		</details>
+	</article>
+
+	<article class="install-step" id="step-services">
+		<p class="step-label">STEP 5 · IN THE SETUP PAGE</p><h3>Connect your services</h3>
+		<p>Enable what you want. Jellyfin connects your local collection; Dispatcharr adds live TV and streamed titles. Use either, both, or add other integrations later.</p>
+		<p>Each service has an <strong>Enabled</strong> or <strong>Off</strong> badge. Click its row to expand the controls. Your relay status appears above the services.</p>
+		<figure><a href="./images/setup-service-rows.png" target="_blank" rel="noopener"><img src="./images/setup-service-rows.png" alt="Tellybox setup with compact Jellyfin and Dispatcharr rows, Enabled and Off badges, and expand arrows" loading="lazy" width="1265" height="712"></a><figcaption>Example installation. Open a row to edit its connection; the badge shows whether it is enabled.</figcaption></figure>
+		<ol><li>Open the service row, enable it and enter its address and required credentials.</li><li>For Dispatcharr, tick the features you use: Live TV and 24/7, On-demand catalogue, Recordings or Catch-up.</li><li>Select <strong>Save settings</strong>, then <strong>Test saved connection</strong>.</li><li>Once it connects, select <strong>Apply &amp; restart media</strong>.</li></ol>
+		<p><strong>Save</strong> keeps a draft. <strong>Apply</strong> puts it into use and briefly interrupts viewers. If the media service cannot start, the previous configuration is restored. Restarting the container keeps the last applied settings; it does not activate an unapplied draft.</p>
+		<p>If a service runs on the same computer as Tellybox, select <strong>Runs on this server</strong>. Tellybox fills in the host address and usual port; change the port if yours differs, then test the connection. “This server” means the computer running Docker, even when you open setup from another computer.</p>
+		<div class="table-wrap"><table><thead><tr><th>Where the media service runs</th><th>What to choose</th></tr></thead><tbody>
+			<tr><td>On the same Windows, Mac or Linux Docker host</td><td>Select <strong>Runs on this server</strong> and check its port.</td></tr>
+			<tr><td>On another home machine</td><td>Use its actual LAN address, such as <code>http://192.168.1.60:8096</code>.</td></tr>
+			<tr><td>In another container on a shared Docker network</td><td>Use its container DNS name and service port, such as <code>http://jellyfin:8096</code>.</td></tr>
+		</tbody></table></div>
+		<p>Uncheck that option to enter a custom address. Same-server services must be reachable on a host port, including services running in other containers. If you only expose a service on a shared Docker network, use its container DNS name instead.</p>
+		<details><summary>How the same-server address works</summary><p>Inside Tellybox’s container, <code>localhost</code> means that container. The shortcut uses <code>host.docker.internal</code>, with a host-gateway mapping supplied by Compose for Linux. The service must accept connections from Docker; a service listening only on host loopback may need its listening address changed. See <a href="https://docs.docker.com/desktop/features/networking/networking-how-tos/" target="_blank" rel="noopener">Docker’s networking instructions</a>.</p></details>
+		<p>Jellyfin needs an API key and a dedicated viewer’s user ID. Dispatcharr VOD and recording controls need its personal API key. To request local copies through Seerr, fill in each destination’s server ID, quality profile ID and root folder to match its Radarr/Sonarr configuration. All three are required for that request type; leaving them blank still allows discovery. The specials checkbox controls season-zero requests.</p>
+		<p>Return here whenever you want to change connections or optional features. Blank secret fields keep their saved values. People, favourites and viewing controls stay in the normal Tellybox settings page.</p>
+	</article>
+
+	<article class="install-step" id="step-home">
+		<p class="step-label">STEP 6 · WHEN YOU’RE READY TO WATCH</p><h3>Open Tellybox</h3>
+		<p>In setup, open <strong>Addresses &amp; local access</strong> and enter your server’s details. For the example server at <code>192.168.1.50</code>:</p>
+			<div class="table-wrap"><table><thead><tr><th>Setting</th><th>Example</th></tr></thead><tbody>
+				<tr><td>Local playback address</td><td><code>http://192.168.1.50:8082</code></td></tr>
+				<tr><td>Trusted home networks</td><td><code>192.168.1.0/24</code></td></tr>
+				<tr><td>Local hostnames</td><td><code>localhost, 127.0.0.1, 192.168.1.50</code></td></tr>
+				<tr><td>Public address and relay fields</td><td>Leave blank for home-only use.</td></tr>
+			</tbody></table></div>
+		<p>The subnet must match your network; <code>/24</code> is an example, not a value to copy everywhere. Save and Apply. You already enabled the LAN port in step 2.</p>
+		<p>Open <code>http://SERVER_IP:8082</code> on your phone, TV or computer using the server’s actual IP. For this example, it is <code>http://192.168.1.50:8082</code>. The server keeps running after you close the SSH terminal.</p>
+		<p>Keep ports 8082 and 8990 off the public internet. For viewing away from home, follow <a href="#remote">the optional HTTPS relay setup</a>. The apps use the same viewing address; see <a href="#apps">phone and TV setup</a>.</p>
+	</article>
+
+	<article class="install-step" id="server-updates">
+		<p class="step-label">LATER · KEEP YOUR SERVER UP TO DATE</p><h3>Update the same installation</h3>
+		<p>Back up your <a href="#restore">configuration</a> first and choose a time when a brief playback interruption is acceptable. Connect to Linux as before and use the same project folder:</p>
+		<pre><code class="language-shell">cd ~/tellybox-homelab
+git status --short
+git pull --ff-only</code></pre>
+		<p>If Git reports local changes or cannot update cleanly, stop and resolve that before proceeding. Keep your existing <code>.env</code> and Docker configuration volume; do not copy <code>.env.example</code> over your settings.</p>
+		<p>After the pull succeeds, rebuild and replace the container:</p>
+		<pre><code class="language-shell">docker compose up -d --build --wait
+docker compose ps</code></pre>
+		<p>Your settings, accounts and favourites remain in the existing volume. If your original project folder has a different name, use that folder throughout. Phone and TV app updates are offered separately in the apps.</p>
+	</article>
+
+	<details class="panel troubleshooting"><summary>Something didn’t work?</summary>
+		<h3>Git cannot download the source</h3><p>Check the repository address is <code>https://github.com/jharrisuk/tellybox-homelab.git</code> and that your Linux server can reach GitHub over HTTPS. The public repository does not require an invitation or login.</p>
+		<h3>Docker cannot connect</h3><p>Check you are running the command inside the SSH connection to Linux. Check that Docker is running on that server and that your account has permission to use it.</p>
+		<h3>The setup page won’t open</h3><p>Use <code>http://SERVER_IP:8990</code>, including <code>http://</code>, with the private IP set in <code>TELLYBOX_SETUP_BIND</code>. Check the server firewall and whether guest Wi-Fi isolates devices. If you edited <code>.env</code> after starting Tellybox, run <code>docker compose up -d --wait</code> on the server to recreate the container. For the optional SSH-forward method, keep its terminal open and use its loopback address instead.</p>
+		<h3>The container isn’t healthy</h3><p>Run these in the project folder and read the error before changing anything:</p>
+		<pre><code class="language-shell">docker compose ps
+docker compose logs --tail=100 tellybox</code></pre>
+		<h3>No films or channels appear</h3><p>Check that a media service is enabled, its connection test passes and its saved settings have been applied. Verify that the source itself has media or channels. Fresh installations start with every integration off.</p>
+		<h3>Services on this server won’t connect</h3><p>Select <strong>Runs on this server</strong> and check its port. The service must accept connections from Docker. A service in another container needs a published port or a shared Docker network.</p>
+		<h3>Works here, but not on my phone</h3><p>Check the LAN viewing settings above, your firewall, and whether guest Wi-Fi isolates devices. Docker publishes ports using its own networking rules. Keep the Linux server and Docker running while watching.</p>
+	</details>
+</section>

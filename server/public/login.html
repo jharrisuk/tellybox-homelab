@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta name="theme-color" content="#101310">
+	<title>Sign in · Tellybox</title>
+	<link rel="icon" href="/icon.svg" type="image/svg+xml">
+	<link rel="stylesheet" href="/style.css">
+	<script src="/auth.js" defer></script>
+	<script src="/connection-status.js" defer></script>
+</head>
+<body class="auth-page">
+	<main class="auth-card">
+		<a class="brand" href="/"><img class="brand-logo" src="/tellybox-logo.png" alt="Tellybox"></a>
+		<p class="eyebrow">YOUR COLLECTION, WHEREVER YOU ARE</p>
+		<h1>Welcome back.</h1>
+		<p class="auth-description">Enter the shared remote access password to settle in.</p>
+		<form id="loginForm">
+			<label class="auth-field" for="password">Password<input id="password" name="password" type="password" autocomplete="current-password" maxlength="200" required></label>
+			<button class="button primary" type="submit">Sign in</button>
+		</form>
+		<form id="emailLogin" hidden>
+			<label class="auth-field">Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label>
+			<label class="preference-row"><span>Remember this browser</span><input name="remember" type="checkbox" checked></label>
+			<button class="button primary">Continue</button>
+		</form>
+		<form id="emailCode" hidden><label class="auth-field">Email code<input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" required></label><button class="button primary">Continue</button><button type="button" id="anotherCode" class="button secondary">Use another email</button></form>
+		<section id="approvalPending" class="approval-pending" hidden aria-label="Approval pending">
+			<p class="approval-status">Request received</p>
+			<p id="pendingEmail"></p>
+			<p>We’ll email you when approved. No sign-in code has been sent yet.</p>
+			<button id="checkApproval" class="button primary" type="button">Check approval</button>
+			<button id="changePendingEmail" class="button secondary" type="button">Use another email</button>
+		</section>
+		<p id="authMessage" role="status"></p>
+		<p class="auth-note">This browser stays signed in for 30 days. Home-network access stays password-free.</p>
+	</main>
+</body>
+</html>

@@ -1,0 +1,26 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; background: #101310; color: #f3f3e9; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1080px; margin: auto; padding: 32px 24px 48px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 48px; }
+.brand { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+.dot, .eyebrow { color: #c7ed89; }
+.badge { border: 1px solid #3b4734; border-radius: 99px; padding: 7px 13px; font-size: 13px; }
+.eyebrow { letter-spacing: .13em; font-size: 11px; font-weight: 700; }
+h1 { font-size: clamp(26px, 4vw, 44px); letter-spacing: -.04em; line-height: 1.12; margin: 12px 0; }
+.muted, #overview, footer { color: #a4ada0; line-height: 1.6; }
+.screen { margin-top: 24px; background: #080a08; border: 1px solid #30372e; border-radius: 16px; overflow: hidden; }
+video { display: block; width: 100%; max-height: 70vh; aspect-ratio: 16 / 9; }
+.actions { display: flex; align-items: center; gap: 18px; margin: 20px 0; flex-wrap: wrap; }
+button, select { font: inherit; min-height: 48px; border-radius: 10px; padding: 12px 16px; }
+button { border: 0; background: #c7ed89; color: #15200b; font-weight: 700; cursor: pointer; }
+button:disabled, select:disabled { opacity: .5; cursor: default; }
+.settings { display: flex; gap: 16px; flex-wrap: wrap; }
+label { font-size: 13px; color: #a4ada0; flex: 1 1 180px; }
+select { display: block; width: 100%; margin-top: 6px; background: #1a1e19; border: 1px solid #30372e; color: #f3f3e9; }
+:focus-visible { outline: 3px solid #c7ed89; outline-offset: 3px; }
+#overview { max-width: 76ch; margin-top: 28px; }
+footer { border-top: 1px solid #30372e; padding-top: 20px; margin-top: 32px; font-size: 12px; }
+@media(max-width: 600px) { main { padding: 20px 16px 32px; } header { margin-bottom: 32px; } .settings { gap: 12px; } label { flex-basis: 140px; } }
+
+section button { display:block; width:100%; text-align:left; margin:8px 0; padding:14px 18px; }

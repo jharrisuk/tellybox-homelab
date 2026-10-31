@@ -1,0 +1,9 @@
+.search-page { max-width: 1440px; }
+#globalSearch { display:flex; gap:12px; margin:24px 0 16px; }
+#globalSearch .search { flex:1; min-width:0; }
+#globalSearch input { width:100%; }
+.search-page section { margin-top:36px; }
+.search-page .discover-card { text-decoration:none; color:inherit; }
+.search-page .search-action { color:var(--accent, #c4ed87); font-weight:600; min-height:2.5em; }
+.search-page .discover-grid { margin:18px 0; }
+@media (max-width:600px) { #globalSearch { gap:8px; } #globalSearch .button { padding:12px; } }

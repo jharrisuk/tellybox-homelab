@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101310">
+	<title>Search — Tellybox</title>
+	<link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/discover.css"><link rel="stylesheet" href="/search.css">
+	<script src="/navigation.js" defer></script><script src="/search.js" defer></script><script src="/connection-status.js" defer></script>
+</head>
+<body>
+	<header class="topbar">
+		<a class="brand" href="/" aria-label="Tellybox home"><img class="brand-logo" src="/tellybox-logo.png" alt="Tellybox"></a>
+		<button class="menu-toggle" id="menuToggle" aria-controls="siteNavigation" aria-expanded="false"><span class="menu-icon" aria-hidden="true">☰</span><span>Menu</span></button>
+		<div id="siteNavigation" class="navigation-panel">
+			<nav aria-label="Media libraries"><a class="nav-item" href="/">Home</a><a class="nav-item" href="/discover">Discover</a><a class="nav-item" href="/?view=movies">Films</a><a class="nav-item" href="/?view=tvshows">Series</a><a class="nav-item" href="/?view=livetv">Live TV</a><a class="nav-item" href="/?view=nonstop">24/7</a><a class="nav-item" href="/?view=recordings">Recordings</a></nav>
+			<div class="account-actions"><a id="activityLink" hidden>Activity</a><a id="remoteSettings" hidden>Settings</a><button id="signOut" class="button quiet" hidden>Sign out</button></div>
+		</div>
+	</header>
+	<main class="discovery search-page">
+		<h1>Find something good</h1>
+		<form id="globalSearch" role="search"><label class="search"><span aria-hidden="true">⌕</span><input id="query" type="search" maxlength="200" placeholder="Search films, series and channels" aria-label="Search films, series and channels" autocomplete="off"></label><button class="button primary" aria-label="Search">Search</button></form>
+		<div id="searchTypes" class="filters" aria-label="Search type"><button class="chip" data-type="all">Everything</button><button class="chip" data-type="movie">Films</button><button class="chip" data-type="tv">Series</button></div>
+		<p id="searchHint" class="status">Watch what’s here. Add what’s missing.</p>
+		<section id="availableSection" hidden><h2>Watch now</h2><p class="status" role="status"></p><div class="discover-grid"></div><button class="button secondary" hidden>Show more</button></section>
+		<section id="channelsSection" hidden><h2>Live TV & 24/7</h2><p class="status" role="status"></p><div class="discover-grid"></div><button class="button secondary" hidden>Show more</button></section>
+		<section id="episodesSection" hidden><h2>Episodes</h2><p class="status" role="status"></p><div class="discover-grid"></div><button class="button secondary" hidden>Show more</button></section>
+		<section id="moreSection" hidden><h2>More titles</h2><p class="status" role="status"></p><div class="discover-grid"></div><button class="button secondary" hidden>Show more</button></section>
+	</main>
+</body>
+</html>

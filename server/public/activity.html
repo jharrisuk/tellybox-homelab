@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>Activity · Tellybox</title>
+	<link rel="icon" href="/icon.svg" type="image/svg+xml">
+	<link rel="stylesheet" href="/style.css">
+	<script src="/activity.js" defer></script>
+	<script src="/connection-status.js" defer></script>
+</head>
+<body class="auth-page">
+	<main class="auth-card activity-card">
+		<a class="brand" href="/"><img class="brand-logo" src="/tellybox-logo.png" alt="Tellybox"></a>
+		<p class="eyebrow">ONLY VISIBLE AT HOME</p>
+		<h1>Activity</h1>
+		<p class="auth-description">See who's connecting and what's playing. IP addresses identify connections, not people; a household or mobile network can share one address.</p>
+		<div class="activity-stats" id="stats"></div>
+		<div class="settings-actions"><a href="/settings">Password settings →</a><button class="button secondary" id="revokeAll">Sign out all remote browsers</button></div>
+		<p id="activityMessage" role="status">Loading activity…</p>
+		<h2>Watching now</h2>
+		<p class="auth-note">Playback seen in the last two minutes. Positions come from the player; a connection does not prove someone is watching.</p>
+		<div id="watching"></div>
+		<section id="downloadingSection" hidden><h2>Downloading now</h2><div id="downloading"></div></section>
+		<h2>Time watched</h2><div id="viewingTotals"></div><p id="viewingSince" class="auth-note"></p>
+		<h2>Signed-in remote browsers</h2>
+		<p class="auth-note">Saved logins, including browsers currently closed. Signing out stops their stream; change the password too if it has been shared.</p>
+		<div id="browsers"></div>
+		<h2>Recent activity</h2>
+		<div class="activity-filters"><label>Show <select id="filter"><option value="all">Everything</option><option value="remote">Remote only</option><option value="login">Login attempts</option><option value="playback">Viewing</option></select></label><label>IP address <input id="ipFilter" type="search" placeholder="Filter by IP"></label></div>
+		<p class="auth-note">Kept for 30 days, up to the latest 5,000 records. The latest 200 matching records are shown. Tracking starts with this update and covers Tellybox only.</p>
+		<div id="history"></div>
+		<p class="auth-note">Refreshes every 15 seconds. Proxy IP forwarding is accepted only from explicitly trusted connectors.</p>
+		<a href="/">Back to the collection →</a>
+	</main>
+</body>
+</html>

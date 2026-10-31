@@ -1,0 +1,10 @@
+node_modules
+data
+auth-data
+private
+runtime
+test
+*.log
+.env
+**/*service-account*.json
+**/google-services.json

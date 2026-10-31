@@ -1,0 +1,1081 @@
+{
+	"format": 1,
+	"serverVersion": "0.26.2",
+	"files": [
+		{
+			"path": ".env.example",
+			"bytes": 426,
+			"sha256": "b5e0b1bd2a79918964d15ac923061f543e61fe8cc99cd1df192db81a351e9da0"
+		},
+		{
+			"path": ".gitattributes",
+			"bytes": 168,
+			"sha256": "2e9b1e0869acbf4cd6fb9d3823bd0a5f29b2939c82de76bd047d6d2d9aa6abc1"
+		},
+		{
+			"path": ".github/workflows/verify.yml",
+			"bytes": 1133,
+			"sha256": "7ab2d89cd28eb33cd1e83589a2219b99eb01a5df31b6b2480f08cdcd4a44bfee"
+		},
+		{
+			"path": ".gitignore",
+			"bytes": 244,
+			"sha256": "679eca0aa6217c8bcb8bc966dfb5469ae8752d7f43236bd9caa892700ae0b833"
+		},
+		{
+			"path": "APP-TERMS.md",
+			"bytes": 2173,
+			"sha256": "4f968dabd7268b4749774405e1fdcc68b1b55d1a1168229a18aac45192ec023d"
+		},
+		{
+			"path": "APP-THIRD-PARTY-NOTICES.txt",
+			"bytes": 236404,
+			"sha256": "e975b82af975a41928ec78bd7bdb32f176079f9bed947b7da93dea1412183984"
+		},
+		{
+			"path": "BRANDING.md",
+			"bytes": 977,
+			"sha256": "51ec35484aac96415343df4f1620f14e3c77e45bc057f681fc3bdba2b85790ca"
+		},
+		{
+			"path": "compose.yaml",
+			"bytes": 663,
+			"sha256": "d0fc1d20e577f19d180d7e20b752e50a49ce1ad9fd526b0c4c0aab7712e177f1"
+		},
+		{
+			"path": "CONTRIBUTING.md",
+			"bytes": 1265,
+			"sha256": "7bd8734101b719042cd86bd9df1f445c768625d423d7981f51ca8d08b40c0e5d"
+		},
+		{
+			"path": "docs/build-guide.mjs",
+			"bytes": 16346,
+			"sha256": "f2d9d62ae218cedd23f31803bec2d6238008b9a67a47c45ddfc1600127e18a5f"
+		},
+		{
+			"path": "docs/guide-extra.css",
+			"bytes": 3025,
+			"sha256": "0e7737ad2443b2694883235dbc0bb0ab6000a2e7e9184afe7776c1474ac4b194"
+		},
+		{
+			"path": "docs/guide.js",
+			"bytes": 971,
+			"sha256": "672b6dcdced3efb5bd80157da15506c29d445a3774e2b0c53c9e524d0779cadc"
+		},
+		{
+			"path": "docs/install.html",
+			"bytes": 15533,
+			"sha256": "c0e981f294d7346586647d596ad7055cfb59e2400a1faeb54952c1c8bf8e2df5"
+		},
+		{
+			"path": "docs/PRIVACY.md",
+			"bytes": 6738,
+			"sha256": "407fd00f00c7144bd36dd8f26d67546d0b502a29c946ae5961881f83a1fadf64"
+		},
+		{
+			"path": "docs/site/guide.css",
+			"bytes": 11498,
+			"sha256": "cc3a1166d56eb0a91f41a72b0e1653ab79ed206f31aef7200fe41b764370d499"
+		},
+		{
+			"path": "docs/site/guide.js",
+			"bytes": 971,
+			"sha256": "672b6dcdced3efb5bd80157da15506c29d445a3774e2b0c53c9e524d0779cadc"
+		},
+		{
+			"path": "docs/site/images/setup-relay-status.png",
+			"bytes": 35609,
+			"sha256": "b7aafd28d69f6fc4f8e8a4e933847c745144284d32bfb664d259ac9711b0ca2f"
+		},
+		{
+			"path": "docs/site/images/setup-service-rows.png",
+			"bytes": 46997,
+			"sha256": "81096d862922d204f59c57b172dddb4fd2197525d37836b669141d90e7981090"
+		},
+		{
+			"path": "docs/site/index.html",
+			"bytes": 39640,
+			"sha256": "9e71f74f24c2d60ba5009dee06b6aa343537f396c2be1d215f44d09a43a6f6c6"
+		},
+		{
+			"path": "docs/story.html",
+			"bytes": 930,
+			"sha256": "a8f730716d768ffe40362bd001b554f8dbb044b566750d36370fd5a150067bd0"
+		},
+		{
+			"path": "LICENSE",
+			"bytes": 4563,
+			"sha256": "ffcca38841adb694b6f380647e15f17c446a4d1656fed51a1e2041d064c94cc8"
+		},
+		{
+			"path": "LICENSE-SCOPE.md",
+			"bytes": 2035,
+			"sha256": "5483d80b4e38fff2c5b1d6db2593e35cf7e4645bf8210e916e6052291cd56ac2"
+		},
+		{
+			"path": "NOTICE",
+			"bytes": 801,
+			"sha256": "0f765dd59053dd480d1ec952a089854a6727fff8a60be907c0994aa12df24256"
+		},
+		{
+			"path": "packaging/check-container.mjs",
+			"bytes": 2047,
+			"sha256": "8472f1fe0af27c8986be1df3c079ccbc50d9a0b48602753676386d80423b9c17"
+		},
+		{
+			"path": "README.md",
+			"bytes": 5657,
+			"sha256": "5eb2e91f04e75699f41b0abb4625f8f48bb02656558bdfa4880ec220a646e460"
+		},
+		{
+			"path": "relay/example.json",
+			"bytes": 225,
+			"sha256": "022be7aeaf8e23da75eeaad948acdfa10e2ea67a98904e37ebd723dfa8eafa33"
+		},
+		{
+			"path": "relay/setup.mjs",
+			"bytes": 2043,
+			"sha256": "f1535891c0958533dc9e08e9c7e59167ee0c1e1d1376b301bc99b1d8a843c4a0"
+		},
+		{
+			"path": "SECURITY.md",
+			"bytes": 902,
+			"sha256": "efbc034200724989acf207b9ba8506c085f4356ff914f6ce1ba34a53ecdefe78"
+		},
+		{
+			"path": "server/.dockerignore",
+			"bytes": 110,
+			"sha256": "13307cf0e5fcff9df9d046bd05ee0b1d67c3577e11d8c6910447b4a85216ced5"
+		},
+		{
+			"path": "server/account-limits.mjs",
+			"bytes": 4090,
+			"sha256": "28199066003fa0df5298f3d38ba7f546966ce3abbb42ec7febd2da175d026c6b"
+		},
+		{
+			"path": "server/activity.mjs",
+			"bytes": 4940,
+			"sha256": "688cd9b444abb90ced7d9cb037458b85c428d390a1375588e2b98626189016cc"
+		},
+		{
+			"path": "server/admin-push.mjs",
+			"bytes": 8853,
+			"sha256": "22bbb0fcf2b045142c97d70d14fa522913570362e7cc4dd51255befb5ac24ef9"
+		},
+		{
+			"path": "server/app-access.mjs",
+			"bytes": 11621,
+			"sha256": "2869e9f93387229a6149fe3201cbb4cd3047c6fe887f65a573abdf3c7133a676"
+		},
+		{
+			"path": "server/app-updates.mjs",
+			"bytes": 4555,
+			"sha256": "da2c6335f7ba6ace96bbf4d42366b9f80ed3b22195cde1531f069b17ac2fa601"
+		},
+		{
+			"path": "server/auth.mjs",
+			"bytes": 23154,
+			"sha256": "63f9eac1c5dbfc45b706c2631c499dc8fff35b34e9611e62b2709210385a21ff"
+		},
+		{
+			"path": "server/cast.mjs",
+			"bytes": 1014,
+			"sha256": "85d221f1733b304b35aebb4aece6d8264bb3ff79b383cc6ba485457224be180a"
+		},
+		{
+			"path": "server/catchup-player.mjs",
+			"bytes": 6701,
+			"sha256": "189384af917d58050e4a4c6891a2937b8ed23f0b23b9fecb30140f7433ec0a75"
+		},
+		{
+			"path": "server/catchup.mjs",
+			"bytes": 2253,
+			"sha256": "2a15643cb1ba522508e6b043f7955925e88baece1965edb0062512288b7d8832"
+		},
+		{
+			"path": "server/discovery-feeds.mjs",
+			"bytes": 9344,
+			"sha256": "3658a83a47e3c72b43b0a807fe2990625f488dfc02486258d0dca061e3cac37a"
+		},
+		{
+			"path": "server/dispatcharr-guide.mjs",
+			"bytes": 7007,
+			"sha256": "9e2b1f111ce4ce66ed31e737507f251fca8ed8c4fc072de6933cd4ec73bc49c7"
+		},
+		{
+			"path": "server/dispatcharr-player.mjs",
+			"bytes": 6586,
+			"sha256": "d37890dac7afecd95dbd5faad9846dd6dd5f8452c372731dcdffbf52a0da89e0"
+		},
+		{
+			"path": "server/dispatcharr.mjs",
+			"bytes": 11637,
+			"sha256": "8ac1c7b54974a51b7d94e6e6e9a544f7ff5c5f5dc417c99a04e1e2b3e09cc42f"
+		},
+		{
+			"path": "server/Dockerfile",
+			"bytes": 576,
+			"sha256": "c9fa285cca1f393d1943a986d8f453d84d2b9699bf6f4dddfef7c6a5b4f42d4a"
+		},
+		{
+			"path": "server/download-limit.mjs",
+			"bytes": 1737,
+			"sha256": "6d1c77738a9287c0ab0127c6004a0b00c1f58a4a171cfb2f8fcc647f0713c6b8"
+		},
+		{
+			"path": "server/download-options.mjs",
+			"bytes": 896,
+			"sha256": "77c2557d21ab7e2e9fa3a456785989e1e2002d95e4e7f061c37936f50b21a04e"
+		},
+		{
+			"path": "server/episode-next.mjs",
+			"bytes": 3266,
+			"sha256": "8316c4a92698d111c7569fbcf8c4238af5d9fb4083e0ea0a8bf4a27d8c4ad2e7"
+		},
+		{
+			"path": "server/episode-order.mjs",
+			"bytes": 822,
+			"sha256": "7d9d2ef4c633b6ef6e7f6012206c64115b917a6cd17851b0b73ec4907fd2cb6e"
+		},
+		{
+			"path": "server/favourites.mjs",
+			"bytes": 12190,
+			"sha256": "ad49cbe96e2cd2140eadffa2c195349a27d538a8ee4ce343f7cab59226a48146"
+		},
+		{
+			"path": "server/global-search.mjs",
+			"bytes": 2470,
+			"sha256": "347f2d294711a5d8b8de056abf4036b70c448df08afb357993a07ccdf679aaa5"
+		},
+		{
+			"path": "server/home-network.mjs",
+			"bytes": 1605,
+			"sha256": "ed8ade522aa1046c17603d858025639e93c9755e6a9914ddb22d41b1e3644ffc"
+		},
+		{
+			"path": "server/homelab/admin.mjs",
+			"bytes": 7757,
+			"sha256": "d7243c1bb6a2537b3ab1b71cd1caa086f2a6954d4b0179090b1e565d717999e9"
+		},
+		{
+			"path": "server/homelab/apply.mjs",
+			"bytes": 2020,
+			"sha256": "74dfd6f8220f19818ff8b58beff4c5b0ebf8b2776d01726ecaa165ca1d218736"
+		},
+		{
+			"path": "server/homelab/config.mjs",
+			"bytes": 13307,
+			"sha256": "737a9a0fc335fc46ee7febaa366001415e8eecb85eb1179e60d7d5a04b453a70"
+		},
+		{
+			"path": "server/homelab/import-apps.mjs",
+			"bytes": 6578,
+			"sha256": "262778ce98c3ce0346d816f4f45a2eaaf03074d67525f79866aed82c85018d78"
+		},
+		{
+			"path": "server/homelab/launch.mjs",
+			"bytes": 2858,
+			"sha256": "54fbdeb73a4b9a2d2fb08753c6f5e90da65ace1c447a7fa1b33dd7e4d7c1fff6"
+		},
+		{
+			"path": "server/homelab/migrate.mjs",
+			"bytes": 8024,
+			"sha256": "e7b01d41c4f0b71d2fb7ec473fd3b3ab11d0a15d022a68b056a154fa0b492312"
+		},
+		{
+			"path": "server/homelab/public/index.html",
+			"bytes": 5931,
+			"sha256": "7c224b6f5629820e1529aa570a56f445d8ab3101b6ff1105db77c907ef76b20f"
+		},
+		{
+			"path": "server/homelab/public/notification-mode.mjs",
+			"bytes": 435,
+			"sha256": "0591a08e9066a139af2754ec61826a94e0dec502e39488a20efe91122908a8a1"
+		},
+		{
+			"path": "server/homelab/public/service-location.mjs",
+			"bytes": 885,
+			"sha256": "353e843ee611bc790d44135ab8597f6c0efa791ae658dae6ea8ab3c78f1095f7"
+		},
+		{
+			"path": "server/homelab/public/setup.css",
+			"bytes": 8472,
+			"sha256": "a510ebd601cc1b17804c4d6b9397c63e465640a7056755dd16d1fd712cac56d0"
+		},
+		{
+			"path": "server/homelab/public/setup.js",
+			"bytes": 17089,
+			"sha256": "ae2b4706e581c7a333e54bb94a2a74e153f442a9892c329fbb4ad8eca73c97eb"
+		},
+		{
+			"path": "server/homelab/relay-core.mjs",
+			"bytes": 4432,
+			"sha256": "fb404317af1c0e484bf1dec45909e93a47bd4758da9c51bf6e140f67e7835cb4"
+		},
+		{
+			"path": "server/homelab/relay-health.mjs",
+			"bytes": 2803,
+			"sha256": "28857e6a3d4020a8eb46cd69207ed53b03e19e62c7cbd2e5272a483323a57997"
+		},
+		{
+			"path": "server/homelab/relay-jobs.mjs",
+			"bytes": 5875,
+			"sha256": "cb6a63a15f2cba0c606f6ed044a0f080607355cd0d4d5816100ba449de39adfd"
+		},
+		{
+			"path": "server/homelab/runtime.mjs",
+			"bytes": 1036,
+			"sha256": "2605df19b224227631dcece03585f0119e3a3e99bf2a5163af0ad98caf5f31ae"
+		},
+		{
+			"path": "server/homelab/services.mjs",
+			"bytes": 12134,
+			"sha256": "5a596793e27a147f45f45818d0c3e1b3ee013eba56bc89ece1b29a23e4cdbaa3"
+		},
+		{
+			"path": "server/homelab/setup-hosts.mjs",
+			"bytes": 1728,
+			"sha256": "67276cbb200395325219141655466dc7b9639e5f843741a522a5bae4b0826004"
+		},
+		{
+			"path": "server/insights.mjs",
+			"bytes": 6273,
+			"sha256": "9129ef708f10d8620366ad25102cb61811da7a98570f04c38d05bdc31a3ef4f2"
+		},
+		{
+			"path": "server/json-store.mjs",
+			"bytes": 544,
+			"sha256": "0851af64d33edad1d5de8d4bf5fd1f1a56ca06edb2aa33a78d538fffb0d28347"
+		},
+		{
+			"path": "server/live-tv.mjs",
+			"bytes": 2993,
+			"sha256": "43408951b5790ae8b261fc25c78e96ccb0c5fc98837dfa727b58e51f9947de39"
+		},
+		{
+			"path": "server/login-protection.mjs",
+			"bytes": 3018,
+			"sha256": "9f2adca1cd6cb4b2d5e79f497385facdb0bf2f2ad33eb17ffc403cbc5541f34e"
+		},
+		{
+			"path": "server/media-segments.mjs",
+			"bytes": 3668,
+			"sha256": "8e72c8f191ddffd330cca1a7946058495a71d78a8210bacabd1929f07759bb2a"
+		},
+		{
+			"path": "server/nonstop-metadata.mjs",
+			"bytes": 3853,
+			"sha256": "c8adb2f124e8dcd39a6531019d330f074464d6e17e0a7584bf26c03f011d2c26"
+		},
+		{
+			"path": "server/package-lock.json",
+			"bytes": 28842,
+			"sha256": "ca1646d2d57be36417833d99dd8e8cedb1f1d93ba3a44922c2d52f2a060d542e"
+		},
+		{
+			"path": "server/package.json",
+			"bytes": 271,
+			"sha256": "18f22f2dad7f4ba32adc9a03debed74b79fd087669e3ab36200542146791ab7b"
+		},
+		{
+			"path": "server/people.mjs",
+			"bytes": 12670,
+			"sha256": "b756a78740fa1275f009e2ada3e28bdfc304bad0994044a097b45fcf2babd48d"
+		},
+		{
+			"path": "server/playback-profile.mjs",
+			"bytes": 1721,
+			"sha256": "cbd475fb48b9c434a9136dda2531530e028c5d362fba124a5dd7bb22f05b40ae"
+		},
+		{
+			"path": "server/public/activity.html",
+			"bytes": 2494,
+			"sha256": "b727e0bb9b9faf62985cfee1214fb8e0404110a5331095cc9245611df3b801d8"
+		},
+		{
+			"path": "server/public/activity.js",
+			"bytes": 7763,
+			"sha256": "09a3a7e7b66b424abc72aaf6c2009c19b8aa58fc06e032a5b3aec07ec2ba499e"
+		},
+		{
+			"path": "server/public/admin-downloads.js",
+			"bytes": 1884,
+			"sha256": "1d3b656326d9a3054278cc9ba86f7543b3542448b19cd63ba39c4b5eeafc6b5d"
+		},
+		{
+			"path": "server/public/app.js",
+			"bytes": 102518,
+			"sha256": "699921d136b34cff9e2de00972f3e6100363dd0fdee1d1bfcaae9f7c5b66eed7"
+		},
+		{
+			"path": "server/public/apps.html",
+			"bytes": 1174,
+			"sha256": "e291b5592fce3b07d07d0b7d3d4ba58b5b6737f4ffa4ed02164e0866e145c310"
+		},
+		{
+			"path": "server/public/apps.js",
+			"bytes": 12650,
+			"sha256": "35a5c3e62d552e4c2fed70cfbbed07f9725d1981280b15615368e019d384ec32"
+		},
+		{
+			"path": "server/public/auth.js",
+			"bytes": 10749,
+			"sha256": "1ad2642fe7e4dc2ed1691c5049ee15a0e852407cdaa79cc2fa1898ca02c2f011"
+		},
+		{
+			"path": "server/public/cast-load.mjs",
+			"bytes": 1542,
+			"sha256": "13b3263d83de396d98c0194bb6ab3f69673ff78a4ff99d0bc5479a5449c59c7b"
+		},
+		{
+			"path": "server/public/coming-calendar.js",
+			"bytes": 1262,
+			"sha256": "b59a7266920c06c82a5407ecb881dab333a95a46d62939c9f56e01052943754b"
+		},
+		{
+			"path": "server/public/connection-status.js",
+			"bytes": 3137,
+			"sha256": "dd112b32c2503534f878b2347191e9091a8304c50b888774ddca504c238d7dc9"
+		},
+		{
+			"path": "server/public/discover.css",
+			"bytes": 7712,
+			"sha256": "3e30c94239198e6f2aaa5de01f8eca1912ed400d3e648f35131d7bed533ddfe7"
+		},
+		{
+			"path": "server/public/discover.html",
+			"bytes": 4694,
+			"sha256": "e34e25b851072c55343cb7a712db34a029aa26751268f211b29bf5c4abb3e82e"
+		},
+		{
+			"path": "server/public/discover.js",
+			"bytes": 23712,
+			"sha256": "6e6ba4c456ae01960c6ce50b37256b2f278379963205a10003956b9433aa3404"
+		},
+		{
+			"path": "server/public/dispatcharr-settings.js",
+			"bytes": 4210,
+			"sha256": "605925714aecbaf91737a25f12e9a55ee3d0ac5af796add4bf89feaf312435ce"
+		},
+		{
+			"path": "server/public/icon.svg",
+			"bytes": 486,
+			"sha256": "17eee5a8e69d18126d85b35b1d23ce11a8989d7b76124635c0288f5767127af5"
+		},
+		{
+			"path": "server/public/index.html",
+			"bytes": 12027,
+			"sha256": "29094170987b452ede517c10a58be4811380c4291e57d1fb3a607108643befd2"
+		},
+		{
+			"path": "server/public/installation-settings.js",
+			"bytes": 1652,
+			"sha256": "e665ac39dbd91586a2ab34b9fc5dede07130813640c3e3b20bf99e757585b0df"
+		},
+		{
+			"path": "server/public/legal.html",
+			"bytes": 2853,
+			"sha256": "ddfe08f741d5fd5fe4031c92581cd1e604aaf1bb2cd19ff1bd25a1333443c918"
+		},
+		{
+			"path": "server/public/local-request.mjs",
+			"bytes": 797,
+			"sha256": "e558f2192abab4140646b6da8b3f45d060067a6c533265efc0ebbd4c44b9231b"
+		},
+		{
+			"path": "server/public/login-protection.js",
+			"bytes": 3750,
+			"sha256": "01d94d1947c61ed31332de0b88207bfaad3df253425569cd76d9a40496a6d959"
+		},
+		{
+			"path": "server/public/login.html",
+			"bytes": 2348,
+			"sha256": "1c45f1b26b34948b778d889609e52995a1153a0301b0eeb1f5b7e9901187077c"
+		},
+		{
+			"path": "server/public/navigation.js",
+			"bytes": 2172,
+			"sha256": "061f84cc4157b65391586bf944c456adbe2dd242703be3d98b1deb058b69a9a4"
+		},
+		{
+			"path": "server/public/people-directory.js",
+			"bytes": 15355,
+			"sha256": "e235d1eb7e2fb3d81cde06d12505da8e9848459ae6857f0a2f09b563fe8828e6"
+		},
+		{
+			"path": "server/public/people.js",
+			"bytes": 4510,
+			"sha256": "4fdfe57806722cad5abfd45b4def9289c8bd2f88e22b22bd4b14c8fe37e59bfd"
+		},
+		{
+			"path": "server/public/remote-controls.js",
+			"bytes": 1255,
+			"sha256": "8fd3056ae2da92f83ccfa1060bd5235a5fd2c0528c3fee27cb0e2bf060fb210d"
+		},
+		{
+			"path": "server/public/search.css",
+			"bytes": 541,
+			"sha256": "7f75732cfc12ac020723c3b5cbee4aa98eca88899862f11053fb04c6ca8e37a3"
+		},
+		{
+			"path": "server/public/search.html",
+			"bytes": 3089,
+			"sha256": "581a0beb3a6dc2ff97a84a1f07885c7efed2faeb0bf09cccbe9bbb1068ad66d2"
+		},
+		{
+			"path": "server/public/search.js",
+			"bytes": 4555,
+			"sha256": "3620974967712dbf9bc6b0030d4b1979d3f957bc7cc5020d1fa2b8c383f321ad"
+		},
+		{
+			"path": "server/public/server-health.js",
+			"bytes": 6133,
+			"sha256": "6f8f94d9879ebfe711ce307f2fe4dd84507bad0b0deb4645473cab6d5e57c7a0"
+		},
+		{
+			"path": "server/public/server-version.js",
+			"bytes": 517,
+			"sha256": "9d80680ceaef84a8264d8dc12ed19e3bc2be76cff94395b527c4665b8e67e970"
+		},
+		{
+			"path": "server/public/settings.html",
+			"bytes": 16385,
+			"sha256": "05ff7eba81fd04eb31c507225d0c82f7143b511469a4e20938bc4399f2247105"
+		},
+		{
+			"path": "server/public/settings.js",
+			"bytes": 836,
+			"sha256": "fd348d6877d94e2f2b5f98de1468844ff42ae367b03b1f5b2ebeee39bedfa12e"
+		},
+		{
+			"path": "server/public/share-player.css",
+			"bytes": 2005,
+			"sha256": "cc8e0489d8b107208184372d0887ebba4d180eee1b74611b33d0b948010c3df1"
+		},
+		{
+			"path": "server/public/share-player.html",
+			"bytes": 1522,
+			"sha256": "4be25aed2c4713cd9b9ea4ecb2ce4bd27ea8e0e44c9e57281db4019ee50c973b"
+		},
+		{
+			"path": "server/public/share-player.js",
+			"bytes": 6505,
+			"sha256": "e37ff0d43eaeab887ab2af6ce8f93af3a83de78e76a25b198d944b9ce323bfc8"
+		},
+		{
+			"path": "server/public/style.css",
+			"bytes": 61912,
+			"sha256": "e938ebc41e8665bc39de67faa1b1677eb27bb121bc3037d67c5e88aa49346e82"
+		},
+		{
+			"path": "server/public/subtitle-settings.js",
+			"bytes": 1733,
+			"sha256": "4483e70a0b18b2b1c438e53c2ba6bc30246b9373eef641b3f3e5978d684507de"
+		},
+		{
+			"path": "server/public/taste.js",
+			"bytes": 3376,
+			"sha256": "5394cac284b7c7b41a9d75f9f7bd21069a925710a8df3a3d7b9d476d6e319abd"
+		},
+		{
+			"path": "server/public/tellybox-logo.png",
+			"bytes": 1220099,
+			"sha256": "0a52ac7e3188807afea666aa57aace75e984f46a3751d614bb1d80f0803e8d78"
+		},
+		{
+			"path": "server/public/tellybox-mark.svg",
+			"bytes": 455,
+			"sha256": "8a23b8d783f0bdb4738f5ecdc782fa700ad57f79c8e0f35377208d96281f1771"
+		},
+		{
+			"path": "server/public/third-party-notices.txt",
+			"bytes": 86809,
+			"sha256": "7d5cdd8ea20678d1b63115bdaff0331de42d3004f20e56447bd949a3a4de8c7e"
+		},
+		{
+			"path": "server/public/tmdb-logo.svg",
+			"bytes": 2295,
+			"sha256": "8ba2ac31f354005783fab473602c34c3f4fd207150182061e425d366e4f34596"
+		},
+		{
+			"path": "server/public/visitor-ui.js",
+			"bytes": 1629,
+			"sha256": "07c0b595dec8a4d12535496c7afa81fea12e7930b795efc4376149dd9f6a39d9"
+		},
+		{
+			"path": "server/push-gateway-client.mjs",
+			"bytes": 5397,
+			"sha256": "833731bdf182eda8fd16155ba77011c7a2e7784f2be716371239498bce8bd556"
+		},
+		{
+			"path": "server/recording-deletion.mjs",
+			"bytes": 4153,
+			"sha256": "1f37e3375fad3774784e22d4ca7c633abfeb70c2951e8b3accb6cd0dbcfee943"
+		},
+		{
+			"path": "server/recordings.mjs",
+			"bytes": 6093,
+			"sha256": "dd2fb1c6d9f82ece7c76282666142d0b0e8a2108d903f5313f39a8da0ef3c799"
+		},
+		{
+			"path": "server/release-version.mjs",
+			"bytes": 549,
+			"sha256": "1ce52d7f4d00fb7e2740ffd28a6e1ed94c46c0386c00962cd592ba176d7db88a"
+		},
+		{
+			"path": "server/remote-controls.mjs",
+			"bytes": 1356,
+			"sha256": "40266ddabddb51794a047f6bd71b4ecbb1fc7e1b7361f7dffd9cb733d7d819c9"
+		},
+		{
+			"path": "server/seerr.mjs",
+			"bytes": 12600,
+			"sha256": "f6e4dead057c56980af43c0d8713d7bc9ddb8cc997581a876d1307d4a3e59955"
+		},
+		{
+			"path": "server/server-health.mjs",
+			"bytes": 1713,
+			"sha256": "300865d93c360f95574e61589e4963cd09663f9a99541f1bbc746f98f268d9ef"
+		},
+		{
+			"path": "server/server.mjs",
+			"bytes": 73535,
+			"sha256": "25b092e814d0d48e5a5ff3265b1d478b367d36cb94c6f12c0d0d8ab34a8457cc"
+		},
+		{
+			"path": "server/shares.mjs",
+			"bytes": 5752,
+			"sha256": "362f5506f42fb2699167f7c67585446bb63de41e31ef6ef2465a530b0c464eaa"
+		},
+		{
+			"path": "server/subtitle-choice.mjs",
+			"bytes": 919,
+			"sha256": "9de5e68de520ed73fee931726a8446ccf5c164dce07520e887847f2e5528b6e5"
+		},
+		{
+			"path": "server/subtitle-lookup.mjs",
+			"bytes": 12535,
+			"sha256": "52417d022cfed9692724e09f40f9fc37804689fe5957dd0f1fd5b301aa61c225"
+		},
+		{
+			"path": "server/test/activity.test.mjs",
+			"bytes": 3157,
+			"sha256": "7ab66d15d4f9a4b0562e7ff7298cefa81f511247cf92a91b3b0fca21a8171862"
+		},
+		{
+			"path": "server/test/admin-dashboard-ui.test.mjs",
+			"bytes": 5407,
+			"sha256": "9d3e9fd9a267b37c529f2516a1d5d1e2e80b83fa353ece2fee9fe5ac5f0cf176"
+		},
+		{
+			"path": "server/test/admin-push-gateway.test.mjs",
+			"bytes": 5546,
+			"sha256": "70cb89bd32f9141292b2d631efe629cff560b5960dcc01d95f5e371d49994509"
+		},
+		{
+			"path": "server/test/admin-push.test.mjs",
+			"bytes": 5919,
+			"sha256": "a1a497ec75054aa75745a7c13c662b0a4cf83edb8f059dd3c7ccdcb8ff334ef6"
+		},
+		{
+			"path": "server/test/app-access.test.mjs",
+			"bytes": 14393,
+			"sha256": "ee94cf5c62db09f79658d3142b62f3c020a1df5e07b540259e79e958b41443b2"
+		},
+		{
+			"path": "server/test/app-updates.test.mjs",
+			"bytes": 9451,
+			"sha256": "0f73df420a87b4b2bb81e3e54c1d767386b9127e0e69b4731aa3a152551c034c"
+		},
+		{
+			"path": "server/test/auth.test.mjs",
+			"bytes": 32109,
+			"sha256": "05f0aa7ce40ffe906b91c417eb66f77eccfa64007da750c9db7b74714bf5f939"
+		},
+		{
+			"path": "server/test/browser-download.test.mjs",
+			"bytes": 10043,
+			"sha256": "a791ae1f2f028df89cdaf08317e64be2c77d761605eff223ee8145671bf0e3f9"
+		},
+		{
+			"path": "server/test/cast-load.test.mjs",
+			"bytes": 2138,
+			"sha256": "983681a2231303061e210a3e2a2f42ee95add9ee4b51b3f03cdef333040cdb36"
+		},
+		{
+			"path": "server/test/cast.test.mjs",
+			"bytes": 12741,
+			"sha256": "0f44f018b49af6f303ee9ad5de1ad4998c5a7101e4d27501fb71b1bc41b7fb98"
+		},
+		{
+			"path": "server/test/catchup-player.test.mjs",
+			"bytes": 3842,
+			"sha256": "5a9549b38750a2ffb144f6810da0a606094948143498dcc0d452551fee6c6acd"
+		},
+		{
+			"path": "server/test/catchup-progress.test.mjs",
+			"bytes": 2279,
+			"sha256": "b369b402e87e08262992f095422c20220dfd925eab33ae61114dedd81b216c1e"
+		},
+		{
+			"path": "server/test/coming-calendar.test.mjs",
+			"bytes": 1745,
+			"sha256": "dbeb10805460d220d28ee545c0f37bf57eaa06dafa2677d49c6a700079d510ab"
+		},
+		{
+			"path": "server/test/connection-status.test.mjs",
+			"bytes": 2212,
+			"sha256": "1bc6b10d9588ffff1bc2c9d4b2a6afd63d59734368004910c1deadbb4ce349cf"
+		},
+		{
+			"path": "server/test/discovery-feeds.test.mjs",
+			"bytes": 8692,
+			"sha256": "a3e58c2c058b3d3750360364091c7bba262149f5b4c69eb7cbf1286d69b66934"
+		},
+		{
+			"path": "server/test/dispatcharr-access.test.mjs",
+			"bytes": 3926,
+			"sha256": "e4aa41c765f24afbf18632e5305ae158f6ec14589d111d7980122e03b3c92c54"
+		},
+		{
+			"path": "server/test/dispatcharr.test.mjs",
+			"bytes": 10687,
+			"sha256": "6ee3488d4ac3d103662bafe3e44b3a7ad4d93e33dc8094c8d28f9926cbb76b86"
+		},
+		{
+			"path": "server/test/download-limit.test.mjs",
+			"bytes": 2374,
+			"sha256": "6a7e8064ed21491400ed6f30de564c5f63ab96a0faabf3656b83bf4af6f7e0a9"
+		},
+		{
+			"path": "server/test/email-identity.test.mjs",
+			"bytes": 6092,
+			"sha256": "a7fa46c2ecd5a6c2352cd3a596658472ade73623b729e12bb12faf4c73d801bf"
+		},
+		{
+			"path": "server/test/email-login-ui.test.mjs",
+			"bytes": 2607,
+			"sha256": "e35e3b59f4603767501e67ca8724575ed872cbe54995efe7b5d9b57cd4df1fe8"
+		},
+		{
+			"path": "server/test/enabled-fixture.mjs",
+			"bytes": 608,
+			"sha256": "f2c5a1a23c6849d3b32bdc56804c05ec7e3df97118e8a9509c954d2d5caf4340"
+		},
+		{
+			"path": "server/test/episode-end.test.mjs",
+			"bytes": 1160,
+			"sha256": "93ee49f41be73ae5f0d8a5f43adeb636f36d4a497049fee044fc304e36cb36c8"
+		},
+		{
+			"path": "server/test/episode-order.test.mjs",
+			"bytes": 819,
+			"sha256": "10eca8f39b362f2c65ae48a791344f9e1ecf8d84a9b5e50bf9c3e5069ab66a52"
+		},
+		{
+			"path": "server/test/favourite-order.test.mjs",
+			"bytes": 3453,
+			"sha256": "7a9797263f27c8cbaab1b581b1e49d0390be209ba08aaf26ab5b9b2f5dcf095e"
+		},
+		{
+			"path": "server/test/favourites.test.mjs",
+			"bytes": 10518,
+			"sha256": "42ef757be570c5c7210f3a8f998ae29833ddc0aa31a9174c0cd3bd54121692d3"
+		},
+		{
+			"path": "server/test/global-search.test.mjs",
+			"bytes": 4300,
+			"sha256": "d87e3d9b27ba43315cac8051dce5264a40413016c9a573b240698670105eedfe"
+		},
+		{
+			"path": "server/test/home-network.test.mjs",
+			"bytes": 1336,
+			"sha256": "68c1b7d3101655ad4823e2ef34ed86f27502bf7dc12c4554e0ded4eb1812f823"
+		},
+		{
+			"path": "server/test/homelab-app-edition.test.mjs",
+			"bytes": 2464,
+			"sha256": "f42e2e9d46582da3d03cdeaa8ec19d58ba731ca5fd14db37c690a870445f4460"
+		},
+		{
+			"path": "server/test/homelab-import-apps.test.mjs",
+			"bytes": 4662,
+			"sha256": "b7b36d1bb0bf9e74796f3b2de14ad5ab518fb15670b6709193f321ecbedb0f9f"
+		},
+		{
+			"path": "server/test/homelab-local-entry.test.mjs",
+			"bytes": 1270,
+			"sha256": "80d913ff05fe8d3e0f255a57884b38803ff83435ba1865e6185d3aa337b08fa5"
+		},
+		{
+			"path": "server/test/homelab-migration.test.mjs",
+			"bytes": 7872,
+			"sha256": "f4858748ca861d88915c7e606ad6e08093a7b58b4dc347f593fe83b1efbb1514"
+		},
+		{
+			"path": "server/test/homelab-notifications.test.mjs",
+			"bytes": 3271,
+			"sha256": "f9821ad7393cd14b1420ef6b4854ac340551bf9de2908adcf22e4c8d264377a6"
+		},
+		{
+			"path": "server/test/homelab-relay-health.test.mjs",
+			"bytes": 3552,
+			"sha256": "cee65e8cf2cfac1e893c91dc09bbdc97350dc7cd61464dbb6ddae340f8b937bf"
+		},
+		{
+			"path": "server/test/homelab-relay-jobs.test.mjs",
+			"bytes": 3385,
+			"sha256": "9b40a453449db37fb1bdc8e539ca900d2239f93571a9972ea01aaa66c20f215e"
+		},
+		{
+			"path": "server/test/homelab-relay.test.mjs",
+			"bytes": 1618,
+			"sha256": "9fb406812064488c9484b04cefc6729b95aac7b8b63af698046246d3ca4db44a"
+		},
+		{
+			"path": "server/test/homelab-service-location.test.mjs",
+			"bytes": 3872,
+			"sha256": "62ac48be92f1e1e048e12c0c1fbab507fbaa5050657dbb5333593114d87a0391"
+		},
+		{
+			"path": "server/test/homelab.test.mjs",
+			"bytes": 13318,
+			"sha256": "9faa096b4ca2c653dd9f300e28f1a119e4a61b50893c4a59a682ee0d541b12cc"
+		},
+		{
+			"path": "server/test/insights.test.mjs",
+			"bytes": 4927,
+			"sha256": "a4236b20ff82dd59fa029921745e8315d48d99ca1300b36a8246c38a5438aea8"
+		},
+		{
+			"path": "server/test/live-playback.test.mjs",
+			"bytes": 4844,
+			"sha256": "8aca02d2b2a293f46985669cb59ebc45688714267614d047e0377af959dc9316"
+		},
+		{
+			"path": "server/test/live-tv.test.mjs",
+			"bytes": 2493,
+			"sha256": "4c262c7dc7ab09b82f9019790cab02dd9e473b22af9b751a058dc1bc9ae14d74"
+		},
+		{
+			"path": "server/test/local-request.test.mjs",
+			"bytes": 1205,
+			"sha256": "bb84f9e6d99e7a4dc80125b97320bc621c2f66647579bd2a5ac31f5d1149aeb7"
+		},
+		{
+			"path": "server/test/local-subtitles.test.mjs",
+			"bytes": 4802,
+			"sha256": "c0902995878a471c7ef13c3075074bbe7aa59e99dbe025370c5d9904333d324d"
+		},
+		{
+			"path": "server/test/login-protection.test.mjs",
+			"bytes": 3400,
+			"sha256": "6d565f4dee1c13a2d63a8946d79ec41560e57bda6b4092111cbf1c51a0383660"
+		},
+		{
+			"path": "server/test/next-batch.test.mjs",
+			"bytes": 5980,
+			"sha256": "23af33026d688ef5603e38046b30531f84f3c1ef5a7096cef2e7387175f5f687"
+		},
+		{
+			"path": "server/test/nonstop-metadata.test.mjs",
+			"bytes": 2903,
+			"sha256": "fdd0d42660dd5c341c58aebd6a063768f35fe07fe61719ee25692cf9b1a16be0"
+		},
+		{
+			"path": "server/test/playback-041.test.mjs",
+			"bytes": 4082,
+			"sha256": "a503d1bd11bccfc801b529e050452539b14241a7e602dc1ec6e1e79ff1c47e0d"
+		},
+		{
+			"path": "server/test/playback-captions.test.mjs",
+			"bytes": 4469,
+			"sha256": "2913cbbafd5664164b3677b618f4b00ba8e2176f398b1c23cf90baf63d4d8459"
+		},
+		{
+			"path": "server/test/push-gateway-client.test.mjs",
+			"bytes": 7924,
+			"sha256": "e5c8b15fec615786789278f0f6de284764503b5570f3293b3474a100bcfb61fa"
+		},
+		{
+			"path": "server/test/recording-deletion.test.mjs",
+			"bytes": 5057,
+			"sha256": "a611f9a75700553d97d910c466d5cc56a2cc13c46353fd5b06a29709c046cf95"
+		},
+		{
+			"path": "server/test/recordings.test.mjs",
+			"bytes": 5879,
+			"sha256": "a7a0c6082c686b324e007167645d49cebba229fa39acf26445748b1f357580d1"
+		},
+		{
+			"path": "server/test/release-version.test.mjs",
+			"bytes": 3211,
+			"sha256": "3836e2181033d2359ee27838b3be403748676ff11f1156c16a8257d057d34b47"
+		},
+		{
+			"path": "server/test/remote-controls.test.mjs",
+			"bytes": 10052,
+			"sha256": "644c252af8c67833afa0d5460033ea3c5e9814aaa2e9dafdc9874a71bb777d2a"
+		},
+		{
+			"path": "server/test/seerr.test.mjs",
+			"bytes": 12000,
+			"sha256": "c403726f34a3c3340727466252016342812af8345dd2fb938dcf64b52e753ea9"
+		},
+		{
+			"path": "server/test/series-index.test.mjs",
+			"bytes": 7008,
+			"sha256": "29e05f7255c785985bfeffc26c7d7dce156fb536c2c2328e499fbc7672e2dbfe"
+		},
+		{
+			"path": "server/test/server-health.test.mjs",
+			"bytes": 2045,
+			"sha256": "34721c34ad6fb613c098b16144558730b55709ca3e7c8dff0f09358fa8c1f1d7"
+		},
+		{
+			"path": "server/test/shares.test.mjs",
+			"bytes": 16274,
+			"sha256": "60aed3e44e13159741c2e2f5425711557486ded3d0cb34983dbafaf06e11776f"
+		},
+		{
+			"path": "server/test/start-over.test.mjs",
+			"bytes": 6625,
+			"sha256": "14e1c49b676f76beaabf3c4abed27ba09ae28e77ce155437e18a3c76f764311a"
+		},
+		{
+			"path": "server/test/stream.test.mjs",
+			"bytes": 1537,
+			"sha256": "7884fd3813832b32edca896ac00b0848933f9a54a30462bcf09ca8f4da906b0e"
+		},
+		{
+			"path": "server/test/subtitle-choice.test.mjs",
+			"bytes": 4208,
+			"sha256": "77e6abe68fe3a9076adc5641b67f5df13d3f8b40ddb0fcdc7b5dfa8915d399a6"
+		},
+		{
+			"path": "server/test/subtitle-lookup.test.mjs",
+			"bytes": 9057,
+			"sha256": "ac1684eb7082441d24d8e356bfca1fa4e44e0ca8bb678a4ad997adf6a6ee8629"
+		},
+		{
+			"path": "server/test/trending.test.mjs",
+			"bytes": 6727,
+			"sha256": "b8deedd96cf9825cd1302114015ad5ac60f6c96d26f3e2222050d4759fac9b76"
+		},
+		{
+			"path": "server/test/tunnel.test.mjs",
+			"bytes": 2492,
+			"sha256": "5bbcd4cedebe0dc76f37a787d0567ae08efe31e584ad13f518abd0379fb4aea1"
+		},
+		{
+			"path": "server/test/tv-control.test.mjs",
+			"bytes": 4105,
+			"sha256": "3e21e8652364f3dded2819f25e626a20311fb4b12460418ce3ddac475a65b4db"
+		},
+		{
+			"path": "server/test/tv-releases.test.mjs",
+			"bytes": 3396,
+			"sha256": "43cc665ed8b9803d0edbf4449047ec92f29242d4e47b5d04d5b51de304230831"
+		},
+		{
+			"path": "server/test/uk-tv-charts.test.mjs",
+			"bytes": 6932,
+			"sha256": "78741fa71cea9e65ce1103da4ba33b36dbe5435c3fea1f0675f9d723639f990b"
+		},
+		{
+			"path": "server/test/upload-limit.test.mjs",
+			"bytes": 5727,
+			"sha256": "0b722aeb84f592f06019efc50906a0189b2e528242a1bd1ce4194eef471582bb"
+		},
+		{
+			"path": "server/test/vod-metadata.test.mjs",
+			"bytes": 4615,
+			"sha256": "346098724d71d563cf88c1a922fd7418dc467cbc47c08aa19d2c80c62e4fe6e4"
+		},
+		{
+			"path": "server/test/vod-subtitles.test.mjs",
+			"bytes": 3360,
+			"sha256": "cba2e644db1badcb5bc2ef99befc271956bad092bf84d257e3ea1b7b03e04efd"
+		},
+		{
+			"path": "server/test/vod.test.mjs",
+			"bytes": 12034,
+			"sha256": "f3471d8a93cc5347db2d94cc7d92f3bf64bed11a32cb4049078c33711c14f6b8"
+		},
+		{
+			"path": "server/test/warmup.test.mjs",
+			"bytes": 1005,
+			"sha256": "501e146e39800315c497409cf89994414bc279c183f52c748e6c706cd1c71c5d"
+		},
+		{
+			"path": "server/test/watched-progress.test.mjs",
+			"bytes": 1944,
+			"sha256": "f02e7fae4f7c0b46ab999dd0599173781668cfe34f9706c6b44ba07f0a09ee0f"
+		},
+		{
+			"path": "server/trending.mjs",
+			"bytes": 10408,
+			"sha256": "4542e3b71996d81e6437d3d5d03689a90819848b7fc471ebf3f4e57651e52d23"
+		},
+		{
+			"path": "server/tunnel.mjs",
+			"bytes": 1699,
+			"sha256": "69a133b13b45f68bf60716722b6656bda43224ca2ef6ed5c78b93f2c719b5123"
+		},
+		{
+			"path": "server/tv-control.mjs",
+			"bytes": 2984,
+			"sha256": "2b8cffd146d140e1ad3c2ecad85a4a3249fb9a73edfcd7233fafec4f3c364452"
+		},
+		{
+			"path": "server/tv-releases.mjs",
+			"bytes": 2133,
+			"sha256": "458280feac1dd324825aaecc9c6cc8fa5d545551ddfa46b75fcb041e8ab54d78"
+		},
+		{
+			"path": "server/uk-tv-charts.mjs",
+			"bytes": 6434,
+			"sha256": "afbf96208335a060c5d251a718bbc6fc27b722a80c2f68ff91a860ac8d7c4d31"
+		},
+		{
+			"path": "server/upload-limit.mjs",
+			"bytes": 6129,
+			"sha256": "7d0e400165e3b0933fb8cb6831c3bd3396dd242ed356fe34207248e20a22a143"
+		},
+		{
+			"path": "server/viewing-time.mjs",
+			"bytes": 1943,
+			"sha256": "f0809394fa80bc0ceb94f2c1fdeea4ca13b6b02bdb480eba58b63427a4005ad2"
+		},
+		{
+			"path": "server/vod-captions.mjs",
+			"bytes": 1476,
+			"sha256": "d2171478531cd6211b1ec748ea5cbc67706723436701accf8cf0422a17cf3965"
+		},
+		{
+			"path": "server/vod-library.mjs",
+			"bytes": 19758,
+			"sha256": "e7882f2f7e39300864d69bc56cd69a427518433a024dc272a159d3e9656a61e7"
+		},
+		{
+			"path": "server/vod-metadata.mjs",
+			"bytes": 4704,
+			"sha256": "3893f2d01755c4ffc1b12f3dbb2b812cf5861a42cf753bdfa90309a12d210a19"
+		},
+		{
+			"path": "server/vod-player.mjs",
+			"bytes": 17528,
+			"sha256": "e62074072b9a6e4ef7c4a01bd39a49e5ad45cd4de9a70dd204572ac781954d46"
+		},
+		{
+			"path": "server/warmup.mjs",
+			"bytes": 1041,
+			"sha256": "9ed97bbe1cd745844559bc173898d4dd133b8ab98e2df2953816e8d1553c19fb"
+		},
+		{
+			"path": "THIRD-PARTY-NOTICES.txt",
+			"bytes": 86809,
+			"sha256": "7d5cdd8ea20678d1b63115bdaff0331de42d3004f20e56447bd949a3a4de8c7e"
+		}
+	]
+}

@@ -1,0 +1,70 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { createPeople } from '../people.mjs';
+import { createViewingTime } from '../viewing-time.mjs';
+import { chooseNext } from '../episode-next.mjs';
+import { createMediaSegments, cleanSegments } from '../media-segments.mjs';
+const temp = t => { const d = mkdtempSync(path.join(tmpdir(),'tellybox-batch-')); t.after(()=>rmSync(d,{recursive:true,force:true})); return d; };
+const ep = (s,e,extra={}) => ({Id:`${s}-${e}`,Type:'Episode',ParentIndexNumber:s,IndexNumber:e,...extra});
+test('email ownership, pending gate, approval, single use, restart and revocation', async t => {
+	const d=temp(t); let sent,now=1000000; const events=[];
+	const p=createPeople(d,{clock:()=>now,deliver:async value=>{sent=value;},audit:{record:(...args)=>events.push(args)}});
+	p.configure({enabled:true,key:'re_fixture_only_123456',from:'watch@example.test'});
+	assert.deepEqual(await p.request('Person@example.test','one'),{status:'pending'});assert.equal(sent,undefined);
+	const person=p.list().people[0];await p.manage({id:person.id,action:'approve'});
+	const c=await p.request('Person@example.test','one');
+	assert.equal(readFileSync(path.join(d,'people.json'),'utf8').includes(sent.code),false);
+	const login=p.verify({...c,code:sent.code,name:'First Person',remember:true},{ip:'one'});
+	assert.equal(p.session(login.token).status,'approved');
+	assert.throws(()=>p.verify({...c,code:sent.code},{ip:'one'}));
+	assert.equal(p.session(login.token).personName,'person@example.test');
+	assert.equal(createPeople(d,{clock:()=>now}).session(login.token).personId,person.id);
+	p.manage({id:person.id,action:'device',deviceId:'a'.repeat(32)});assert.equal(p.device('a'.repeat(32)).personId,person.id);
+	p.manage({id:person.id,action:'revoke'});assert.equal(p.session(login.token),null);assert.deepEqual(p.device('a'.repeat(32)),{});
+	assert.equal(events[0][0],'person_requested');
+});
+test('codes expire, attempts bounded, prototype keys rejected and Resend test sender rejected', async t=>{
+	let sent,now=1000;const p=createPeople(temp(t),{clock:()=>now,deliver:async v=>{sent=v;}});
+	assert.throws(()=>p.configure({enabled:true,key:'re_fixture_only_123456',from:'onboarding@resend.dev'}));
+	p.configure({enabled:true,key:'re_fixture_only_123456',from:'watch@example.test'});
+	await p.request('a@example.test','a');await p.manage({id:p.list().people[0].id,action:'approve'});
+	const c=await p.request('a@example.test','a');
+	for(let i=0;i<5;i++)assert.throws(()=>p.verify({...c,code:'00000000',name:'Test'},{ip:'a'}));
+	assert.throws(()=>p.verify({...c,code:sent.code,name:'Test'},{ip:'a'}));
+	assert.throws(()=>p.verify({challenge:'__proto__',code:'12345678'},{ip:'b'}),e=>e.status===401);
+	assert.throws(()=>p.manage({id:'__proto__',action:'approve'}),e=>e.status===404);
+	await p.request('b@example.test','b');await p.manage({id:p.list().people.find(u=>u.email==='b@example.test').id,action:'approve'});
+	const second=await p.request('b@example.test','b');now+=600001;
+	assert.throws(()=>p.verify({...second,code:sent.code,name:'Test'},{ip:'b'}));
+});
+test('watch minutes exclude pause, buffering, repeated reports, seek and offline gaps',t=>{
+	let now=0;const v=createViewingTime(temp(t),{clock:()=>now});v.begin('one',{personId:'p',personName:'Person'});
+	v.update('one',{position:0,playing:true}); now=10000;v.update('one',{position:10,playing:true});
+	v.update('one',{position:10,playing:true});now=20000;v.update('one',{position:1000,playing:true});
+	now=30000;v.update('one',{position:1000,playing:true});now=40000;v.update('one',{position:1010,playing:false});
+	now=120000;v.update('one',{position:1090,playing:true});assert.equal(v.snapshot().users[0].seconds,10);
+	now=130000;v.update('one',{position:1110,playing:true,rate:2});assert.equal(v.snapshot().users[0].seconds,20);
+	v.begin('local',{local:true,personId:'p',personName:'Person'});v.update('local',{position:0,playing:true});now+=10000;v.update('local',{position:10,playing:true});assert.equal(v.snapshot().users[1].name,'Local');
+	v.begin('download',{},'download');v.update('download',{position:0,playing:true});assert.equal(v.snapshot().users.length,2);
+});
+test('next episode never jumps gaps or movies and verifies season boundaries',()=>{
+	assert.equal(chooseNext(ep(1,1),[ep(1,3)]).status,'gap');
+	assert.equal(chooseNext(ep(1,1),[ep(1,2)]).item.Id,'1-2');
+	assert.equal(chooseNext(ep(1,8),[ep(2,1)]).status,'gap');
+	assert.equal(chooseNext(ep(1,8),[ep(2,1)],{seasons:[{seasonNumber:1,episodeCount:8}]}).item.Id,'2-1');
+	assert.equal(chooseNext({Type:'Movie'},[ep(1,1)]).status,'not-episode');
+	assert.equal(chooseNext(ep(1,8),[],null,true).status,'unknown');
+	assert.equal(chooseNext(ep(1,8),[]).status,'unavailable');
+	assert.equal(chooseNext(ep(1,8),[],{last_episode_to_air:{season_number:1,episode_number:8},status:'Ended'}).status,'complete');
+});
+test('IntroDB matches identity and caches, community markers remain optional',async t=>{
+	let calls=0;const item=async id=>id==='series'?{ProviderIds:{Imdb:'tt1234567'}}:ep(1,1,{Id:id,SeriesId:'series',RunTimeTicks:600e7});
+	const service=createMediaSegments({directory:temp(t),item,jelly:async()=>{throw Error('No segments');},fetcher:async()=>{calls++;return new Response(JSON.stringify({imdb_id:'tt1234567',season:1,episode:1,intro:{start_sec:10,end_sec:45,confidence:.95,submission_count:4}}));}});
+	const [a,b]=await Promise.all([service.get('dispatch-episode-1-1'),service.get('dispatch-episode-1-1')]);
+	assert.equal(calls,1);assert.equal(a.segments[0].exact,false);assert.deepEqual(a,b);await service.get('dispatch-episode-1-1');assert.equal(calls,1);
+	assert.equal(cleanSegments([{type:'Intro',start:0,end:9999},{type:'Intro',start:-1,end:40},{type:'Intro',start:10,end:45}],600).length,1);
+});
+

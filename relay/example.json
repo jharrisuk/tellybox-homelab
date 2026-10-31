@@ -1,0 +1,9 @@
+{
+	"hostname": "watch.example.com",
+	"sshHost": "203.0.113.10",
+	"sshUser": "ubuntu",
+	"sshPort": 22,
+	"keyFile": "/home/you/.ssh/relay",
+	"knownHostsFile": "/home/you/.ssh/known_hosts",
+	"homeTailscaleIp": "100.100.10.20"
+}

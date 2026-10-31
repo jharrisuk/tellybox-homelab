@@ -1,0 +1,24 @@
+name: tellybox-homelab
+services:
+  tellybox:
+    build: ./server
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${TELLYBOX_BIND:-127.0.0.1}:${TELLYBOX_PORT:-8082}:8082"
+      - "${TELLYBOX_RELAY_BIND:-127.0.0.1}:8083:8083"
+      - "${TELLYBOX_SETUP_BIND:-127.0.0.1}:8990:8990"
+    environment:
+      SETUP_ALLOWED_HOSTS: "${TELLYBOX_SETUP_BIND:-127.0.0.1}"
+    volumes:
+      - configuration:/config
+    tmpfs:
+      - /tmp:size=1073741824,mode=1777
+    stop_grace_period: 15s
+volumes:
+  configuration:

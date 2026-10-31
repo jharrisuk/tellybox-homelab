@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="robots" content="noindex, nofollow"><title>Shared with you · Tellybox</title>
+	<link rel="icon" href="/icon.svg"><link rel="stylesheet" href="/share-player.css">
+	<script src="/share-hls.js" defer></script><script src="/share-player.js" defer></script>
+</head>
+<body><main>
+	<header><span class="brand">Tellybox<span class="dot">.</span></span><span class="badge">Shared with you</span></header>
+	<p class="eyebrow">SOMETHING GOOD TO WATCH</p>
+	<h1 id="title">Loading your video…</h1>
+	<p id="expires" class="muted"></p>
+	<div class="screen"><video id="video" controls playsinline preload="none"></video></div>
+	<div class="actions"><button id="play" disabled>▶ Watch now</button><span id="status" role="status" aria-live="polite">Opening this shared link…</span></div>
+	<div class="settings">
+		<label>Subtitles<select id="subtitles" disabled><option value="-1">Off</option></select></label>
+		<label>Audio<select id="audio" disabled><option>Default audio</option></select></label>
+		<label>Quality<select id="quality" disabled><option value="4000000">Data saver · 4 Mbps</option><option value="8000000" selected>Standard · 8 Mbps</option><option value="20000000">High · 20 Mbps</option></select></label>
+	</div>
+	<p id="overview"></p>
+	<footer>This link opens this video only. No account needed. Access ends at the time shown above.</footer>
+</main></body>
+</html>

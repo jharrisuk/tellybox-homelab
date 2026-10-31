@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>App access · Tellybox</title>
+	<link rel="icon" href="/icon.svg"><link rel="stylesheet" href="/style.css">
+	<script src="/apps.js" defer></script>
+</head>
+<body class="auth-page"><main class="auth-card settings-card">
+	<a class="brand" href="/">Tellybox</a><h1>App access</h1>
+	<p>Phones and TVs connecting from your trusted home network are approved automatically as viewers. For remote requests, check the code on the device before approving it.</p>
+	<p>Viewers can browse, watch, request and download. Admins can also approve devices, change roles, revoke access and view activity. Set your own device to Admin here.</p>
+	<p id="appMessage" role="status">Loading devices…</p>
+	<div id="appDevices"></div>
+	<button class="button secondary" id="refreshApps">Refresh</button> <a href="/settings">Back to settings →</a>
+	<p class="auth-note">Pending requests expire after 24 hours. Approval lasts one year. Revoking a device stops new server access; files already downloaded can still be played offline.</p>
+</main></body>
+</html>

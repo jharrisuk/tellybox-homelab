@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta name="theme-color" content="#101310"><title>Settings · Tellybox</title>
+		<script src="/installation-settings.js" defer></script>
+		<script src="/dispatcharr-settings.js?v=20261024-auth" defer></script>
+		<script src="/subtitle-settings.js?v=1" defer></script>
+	<link rel="icon" href="/icon.svg"><link rel="stylesheet" href="/style.css">
+	<script src="/auth.js" defer></script>
+	<script src="/people-directory.js" defer></script><script src="/people.js" defer></script><script src="/remote-controls.js" defer></script><script src="/login-protection.js" defer></script><script src="/admin-downloads.js" defer></script><script src="/apps.js" defer></script><script src="/settings.js" defer></script><script src="/server-health.js" defer></script>
+	<script src="/connection-status.js" defer></script>
+	<script src="/server-version.js" defer></script>
+</head>
+<body class="settings-page">
+	<header class="settings-header"><a class="brand" href="/"><img class="brand-logo" src="/tellybox-logo.png" alt="Tellybox"></a><a class="button quiet" href="/">Back to watching</a></header>
+	<main class="settings-shell">
+		<p class="eyebrow">MAKE YOURSELF AT HOME</p><h1>Your Tellybox</h1><p class="settings-intro">A little housekeeping. Then back to the good stuff.</p>
+		<nav class="settings-tabs" aria-label="Settings sections">
+			<button class="chip active" data-panel="overview" aria-pressed="true">Overview</button>
+			<button class="chip" data-panel="people" aria-pressed="false">People & devices</button>
+			<button class="chip" data-panel="watching" aria-pressed="false">Watching</button>
+			<button class="chip" data-panel="server" aria-pressed="false">Server</button>
+		</nav>
+		<section data-settings="overview">
+			<div class="settings-heading"><div><h2>Everything in one place</h2><p>Check in, make a change, then get back to watching.</p></div></div>
+			<div class="admin-overview">
+				<article class="settings-box"><p class="eyebrow">PEOPLE &amp; DEVICES</p><h3 id="deviceSummary">Checking devices…</h3><button class="button secondary" data-open-panel="people">Manage devices &amp; favourites</button></article>
+				<article class="settings-box"><p class="eyebrow">APPROVALS</p><h3 id="approvalSummary">Checking requests…</h3><button class="button secondary" data-open-panel="people">Review requests</button></article>
+				<article class="settings-box"><p class="eyebrow">ACTIVITY</p><h3>Who’s watching?</h3><a class="button secondary" href="/activity">Open viewing activity</a></article>
+				<article class="settings-box"><p class="eyebrow">YOUR SERVER</p><h3>Connections &amp; storage</h3><button class="button secondary" data-open-panel="server">Check server status</button></article>
+			</div>
+			<section class="settings-box" aria-labelledby="remoteTitle">
+				<div class="settings-heading"><div><p class="eyebrow">AWAY FROM HOME</p><h2 id="remoteTitle">Remote viewing</h2></div><button id="remoteToggle" class="button secondary" disabled>Checking…</button></div>
+				<p id="remoteState" role="status">Checking remote access…</p>
+				<label class="preference-row"><span><strong>IPTV films &amp; series</strong><small>Allow remote streaming from the IPTV catalogue.</small></span><input id="remoteVod" type="checkbox" disabled></label>
+				<label class="preference-row"><span><strong>IPTV 24/7 channels</strong><small>Allow remote viewing of always-on channels.</small></span><input id="remoteNonstop" type="checkbox" disabled></label>
+				<p class="auth-note">Changes apply to current streams. Pausing also stops remote downloads. Home viewing stays available.</p>
+				<p id="remoteMessage" role="status"></p>
+			</section>
+			<section class="settings-box" aria-labelledby="apkHeading">
+				<div class="settings-heading"><h2 id="apkHeading">Get the apps</h2><button id="refreshApks" class="button secondary">Refresh</button></div>
+				<p id="apkMessage" role="status">Checking the latest downloads…</p>
+				<div class="apk-downloads">
+					<div><a id="phoneApk" class="button secondary" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/></svg>Download for Android phone</a><p id="phoneApkVersion"></p></div>
+					<div><a id="tvApk" class="button secondary" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 22l4-4 4 4"/></svg>Download for Android TV</a><p id="tvApkVersion"></p></div>
+				</div>
+			</section>
+		</section>
+		<section data-settings="people" hidden>
+			<div class="settings-heading"><div><h2>People &amp; devices</h2><p>Access, favourites and viewing limits.</p></div><button class="button secondary" id="refreshPeople">Refresh</button></div>
+			<nav class="access-tabs" aria-label="People and device lists">
+				<button class="chip active" data-access-tab="accounts" aria-pressed="true">Accounts <span class="access-count" hidden></span></button>
+				<button class="chip" data-access-tab="devices" aria-pressed="false">Unlinked devices <span class="access-count" hidden></span></button>
+				<button class="chip" data-access-tab="browsers" aria-pressed="false">Home browsers</button>
+			</nav>
+			<label class="access-search">Search people &amp; devices<input id="accessSearch" type="search" placeholder="Email, device or browser name" autocomplete="off"></label>
+			<p id="peopleMessage" role="status"></p>
+			<section data-access-panel="accounts">
+				<div class="access-toolbar"><h3>Email accounts</h3><label>Show <select id="accountStatus"><option value="all">All accounts</option><option value="pending">Awaiting approval</option><option value="approved">Approved</option><option value="revoked">Blocked</option></select></label></div>
+				<div id="webPeople" class="access-list"></div><p class="access-empty" hidden>No matching accounts.</p>
+			</section>
+			<section data-access-panel="devices" hidden>
+				<div class="access-toolbar"><h3>Unlinked phones &amp; TVs</h3><div id="deviceTools"><button class="button secondary" id="refreshApps">Refresh devices</button></div></div>
+				<p class="auth-note">Devices linked to an account appear under that account.</p>
+				<p id="appMessage" role="status">Loading devices…</p><div id="appDevices" class="access-list"></div><p class="access-empty" hidden>No matching devices.</p>
+			</section>
+			<section data-access-panel="browsers" hidden>
+				<h3>Home browsers</h3><p class="auth-note">Link a browser to an account’s favourites. Home access stays login-free.</p>
+				<div id="homeBrowsers" class="access-list"></div><p class="access-empty" hidden>No matching home browsers.</p>
+			</section>
+			<details class="settings-box access-security"><summary>Sign-in protection</summary>
+			<section class="settings-box" aria-labelledby="signInHeading">
+				<div class="settings-heading"><h3 id="signInHeading">Sign-in protection</h3><button class="button secondary" id="refreshSignIns">Refresh</button></div>
+				<p id="signInMessage" role="status">Loading sign-in activity…</p>
+				<div id="signInSummary" class="signin-summary"></div><div id="signInConnections"></div>
+				<details id="signInHistory"><summary>Recent failed sign-ins &amp; overrides</summary><div id="signInEvents" class="signin-events"></div></details>
+			</section>
+			</details>
+			<details class="settings-box"><summary>Email sign-in</summary>
+				<form id="emailSettings"><label class="auth-field">Sender email<input name="from" type="email" required autocomplete="off"></label><label class="auth-field">Resend API key<input name="key" type="password" autocomplete="new-password" placeholder="Leave blank to keep the saved key"></label><label class="preference-row"><span>Use email codes for remote guests</span><input name="enabled" type="checkbox"></label><p>Requires a verified sender domain. Enabling this replaces shared-password sign-in.</p><button class="button primary">Save email settings</button></form><p id="emailMessage" role="status"></p>
+			</details>
+			<details class="settings-box"><summary>Who can do what?</summary><p><strong>Viewer:</strong> watch and request films and shows. Downloads need to be enabled for their account.</p><p><strong>Admin:</strong> also approve devices, manage settings and see activity. Only give this to someone you trust to manage Tellybox.</p><p>Pending requests expire after 24 hours. Approved devices have access for a year. Revoking access stops online access; existing offline downloads remain on the device.</p></details>
+			<details class="settings-box"><summary>Browser access & remote password</summary>
+				<p>Guests sign in away from home. Approved apps keep their own device access; local web access needs no login.</p>
+				<p id="passwordState" class="auth-note">Checking password settings…</p>
+				<form id="passwordForm">
+					<label class="auth-field" for="password">New remote password<input id="password" type="password" autocomplete="new-password" minlength="12" maxlength="200" required></label>
+					<label class="auth-field" for="confirmPassword">Confirm password<input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" maxlength="200" required></label>
+					<p class="auth-note">At least 12 characters. Changing this signs out remote browsers.</p><button class="button primary">Save password</button>
+				</form><p id="authMessage" role="status"></p><button class="button secondary" id="revokeSessions">Sign out remote browsers</button>
+			</details>
+			<a class="settings-link" href="/activity">Viewing activity & signed-in browsers <span>→</span></a>
+		</section>
+		<section data-settings="watching" hidden>
+			<div class="settings-box"><h2>Make watching yours</h2><p>These preferences belong to this browser.</p><label class="preference-row"><span><strong>English subtitles</strong><small>Choose the first available English track when a title starts. You can still change it in the player.</small></span><input id="englishSubtitles" type="checkbox"></label></div>
+			<div class="settings-box"><h2>At home, stream directly</h2><p>Choose “Use local streaming” on the home page to send video directly from your home server.</p></div>
+		</section>
+		<section data-settings="server" hidden>
+			<div id="installationSettings" class="settings-box" hidden>
+				<div class="settings-heading"><div><h2>Installation settings</h2><p>Manage services, notifications and your relay.</p></div><a id="installationSettingsLink" class="button secondary" target="_blank" rel="noopener noreferrer">Open installation settings ↗</a></div>
+				<p class="auth-note">Opens on your home network. Your installation administrator password is required.</p>
+			</div>
+			<div class="settings-box"><h2>English subtitles</h2><p>Automatically look for missing English subtitles when a film or episode opens. Works with local and streamed titles. Existing English tracks take priority; Live TV and 24/7 are excluded.</p>
+				<p id="subtitleConnectionStatus" role="status">Checking subtitle connection…</p>
+				<label class="preference-row"><span><strong>Find missing English subtitles</strong><small>Downloads are cached. Your OpenSubtitles allowance applies. Captions from another release may need a different timing.</small></span><input id="subtitleLookupEnabled" type="checkbox" checked></label>
+				<details class="connection-edit"><summary>Connect OpenSubtitles</summary><form id="subtitleConnectionForm" autocomplete="off">
+					<label class="auth-field">OpenSubtitles.com API key<input name="key" type="password" required autocomplete="new-password"></label>
+					<details><summary>Use my account allowance (optional)</summary><label class="auth-field">Username<input name="username" autocomplete="off"></label><label class="auth-field">Password<input name="password" type="password" autocomplete="new-password"></label><p class="auth-note">To renew your OpenSubtitles sign-in automatically, these credentials are saved privately on this home server. They are never sent to the apps.</p></details>
+					<p class="auth-note">Create an API key under your OpenSubtitles.com profile → API Consumers. Without an account sign-in, the service provides a smaller daily download allowance. Enable English subtitles in your player preferences to select the found track automatically.</p>
+					<button class="button primary">Connect subtitles</button>
+				</form></details>
+			</div>
+			<div class="settings-box"><h2>Dispatcharr</h2><p>Live TV and 24/7 use your Dispatcharr playlist directly. Connect the catalogue below to include its films and series.</p>
+				<p id="dispatcharrStatus" role="status">Checking connection…</p>
+				<details class="connection-edit"><summary>Change connection</summary><form id="dispatcharrForm" autocomplete="off">
+					<label class="auth-field">Personal API key (recommended)<input type="password" name="key" autocomplete="new-password"></label>
+					<p class="auth-note">Find your API key in your Dispatcharr profile. It avoids the daily expiry of a sign-in connection.</p>
+					<details><summary>Or connect temporarily with your Dispatcharr sign-in</summary><label class="auth-field">Username<input name="username" autocomplete="off"></label><label class="auth-field">Password<input name="password" type="password" autocomplete="new-password"></label></details>
+					<p class="auth-note">Saved only on your home server. Your password is exchanged for a connection token and is not stored.</p><button class="button primary">Connect catalogue</button>
+				</form>
+				</details>
+				<h3>Streamed catalogue</h3><p id="dispatcharrCatalogueStatus" role="status">Checking catalogue…</p>
+				<p id="seriesIndexStatus" class="auth-note" role="status">Checking saved episode lists…</p>
+				<button id="refreshDispatcharrCatalogue" class="button secondary" type="button">Refresh catalogue</button>
+				<h3>Programme guide</h3><p id="dispatcharrGuideHealth" role="status">Checking listings…</p>
+			</div>
+			<section class="settings-box server-health" aria-labelledby="serverHealthTitle">
+				<div class="settings-heading"><div><p class="eyebrow">YOUR HOME SERVER</p><h2 id="serverHealthTitle">How things are running</h2></div><button id="refreshHealth" class="button secondary" type="button">Refresh stats</button></div>
+				<p id="healthStatus" role="status">Open this section to load server readings.</p>
+				<div id="healthMetrics" class="health-grid"></div>
+				<h3 class="health-storage-title">Storage</h3><div id="healthDisks" class="health-disks"></div>
+				<details class="health-more"><summary>A little more detail</summary><dl id="healthDetails"></dl></details>
+				<p class="auth-note">CPU, memory and disks describe the Ubuntu machine. Host readings update once a minute; this page refreshes every 30 seconds while visible. Free disk space excludes space reserved by the filesystem.</p>
+			</section>
+			<div class="settings-box"><h2>Your address</h2><p id="tunnelState" role="status">Checking…</p><a id="tunnelLink" target="_blank" rel="noopener noreferrer" hidden></a><p id="tunnelNote" class="auth-note"></p></div>
+			<div class="settings-box"><h2>Leave room for everything else</h2><p>One shared upload allowance for remote streams, casting and downloads. Local playback is unrestricted.</p>
+				<form id="uploadForm"><label class="auth-field" for="uploadMbps">Maximum upload (Mbps)<input id="uploadMbps" type="number" min="0" max="1000" step="1" inputmode="numeric" required disabled></label><p class="auth-note">Daily schedule · UK time. Outside these hours, the normal limit applies.</p><div id="uploadPeriods"></div><button id="addUploadPeriod" class="button secondary" type="button">＋ Time period</button><button class="button primary" type="submit" disabled>Save upload limit</button></form>
+				<p id="uploadMessage" role="status"></p><p class="auth-note">0 means unlimited. Applies to current transfers. Small network overhead is additional; choose lower player quality if video buffers.</p>
+			</div>
+		</section>
+	</main>
+	<footer><a class="credits-link" href="/legal.html">Credits &amp; licences</a><span data-server-version hidden></span></footer>
+</body>
+</html>

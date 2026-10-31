@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#101510">
+	<title>Tellybox HomeLab · Setup</title>
+	<link rel="stylesheet" href="/setup.css"><script src="/setup.js" type="module"></script>
+	<script src="/server-version.js" defer></script>
+</head>
+<body>
+	<header><a class="brand" href="/">Telly<span>box</span><small>HOMELAB</small></a><span class="pill">Installation settings</span></header>
+	<main>
+		<section id="signIn" class="welcome">
+			<p class="eyebrow">YOUR HOME. YOUR SETUP.</p><h1>Make it yours.</h1><p class="intro">Connect the services you use. Leave the rest switched off.</p>
+			<form id="loginForm" class="panel login">
+				<h2 id="loginTitle">Open installation settings</h2>
+				<label id="bootstrapLabel" hidden>First setup code<input id="bootstrap" autocomplete="off" spellcheck="false"><small>Read private/bootstrap.json on the server. This code can be used once.</small></label>
+				<label>Administrator password<input id="password" type="password" autocomplete="current-password" minlength="12" maxlength="200" required><small>At least 12 characters. Separate from viewing access.</small></label>
+				<button class="primary" type="submit">Continue <span aria-hidden="true">→</span></button>
+			</form>
+		</section>
+		<div id="settings" hidden>
+			<div class="page-heading"><div><p class="eyebrow">INSTALLATION</p><h1>Your Tellybox.</h1><p class="intro">Enable what you want. Leave the rest switched off.</p></div><button id="logout" class="quiet">Sign out</button></div>
+			<div class="notice" id="runtime" role="status"></div>
+			<section class="panel" id="relayPanel">
+				<p class="eyebrow">REMOTE VIEWING</p><h2>Your relay</h2>
+				<div id="relayHealth" class="relay-health" role="status" aria-live="polite"></div>
+				<button id="relayHealthCheck" class="quiet" type="button">Refresh status</button>
+				<details id="relaySetup"><summary>Set up a new relay</summary>
+					<p>For a fresh Ubuntu 24.04 server. Existing relays do not need to be installed again.</p>
+					<form id="relayForm"><div class="fields">
+						<label>Relay SSH address<input name="sshHost" required placeholder="Server IP or hostname"></label>
+						<label>SSH username<input name="sshUser" required placeholder="ubuntu"></label>
+						<label>SSH port<input name="sshPort" type="number" min="1" max="65535" value="22" required></label>
+						<label>Public viewing hostname<input name="hostname" required placeholder="watch.example.com"></label>
+						<label>Home server’s Tailscale IP<input name="homeTailscaleIp" required placeholder="100.x.x.x"></label>
+						<label>Dedicated private SSH key<input id="relayKey" type="file"><small>Saved only in this installation’s private volume. Use a dedicated key; leave empty to keep it.</small></label>
+					</div><label>Verified known-hosts entry<textarea name="knownHosts" rows="3" spellcheck="false" placeholder="server-address ssh-ed25519 AAAA…"></textarea><small>Verify the host fingerprint through the provider’s console first. Never accept an unverified key. Leave empty to keep the saved entry.</small></label>
+					<button type="submit">Save relay connection</button><span id="relaySaved" class="test-result"></span>
+					</form>
+				<div class="relay-actions"><button id="relayCheck" type="button">Check connection</button><button id="relayPlan" type="button">Review setup</button></div>
+				<div id="relayReview" hidden><h3>Review the changes</h3><div id="relayPlanText"></div><label>Confirm the public hostname<input id="relayConfirm" autocomplete="off" spellcheck="false"></label><button class="primary" id="relayInstall" type="button">Set up this relay</button></div>
+				<p id="relayStatus" role="status"></p><pre id="relayOutput" hidden></pre>
+				</details>
+			</section>
+			<form id="configuration">
+				<div id="integrations"></div>
+				<section class="panel notifications"><h2>Administrator notifications</h2>
+					<label>Notification provider<select id="notificationMode"><option value="off">Off</option><option value="standard">Standard Tellybox HomeLab</option><option value="custom">Custom Firebase</option></select></label>
+					<p id="notificationHint"></p><div id="customNotifications" hidden></div>
+				</section>
+				<section class="panel" id="appDownloads">
+					<h2>App downloads</h2><p>Choose which Android phone and TV apps this installation offers.</p>
+					<label>Apps for this installation<select id="appEdition"><option value="public">HomeLab apps</option><option value="personal">Custom apps</option></select></label>
+					<p id="appEditionHint">Official HomeLab apps ask for your server address. App updates come directly from the Tellybox publisher.</p>
+					<label id="appPackageLabel" hidden>Android package name<input id="appPackage" placeholder="com.example.myapp" autocomplete="off" spellcheck="false"><small>Must match both APKs you publish on this installation. No custom apps or credentials are supplied.</small></label>
+				</section>
+				<section class="panel network"><h2>Addresses &amp; local access</h2><p>Use addresses reachable from this installation. Leave remote settings blank for a home-only setup.</p><div id="networkFields" class="fields"></div></section>
+				<details class="panel"><summary>How remote access fits together</summary><div id="infrastructure"></div></details>
+				<div class="savebar"><span id="saveStatus">Changes take effect when you apply them.</span><button type="submit" class="primary">Save settings</button><button type="button" id="apply">Apply &amp; restart media</button></div>
+			</form>
+
+		</div>
+		<p id="message" role="status" aria-live="polite"></p>
+	</main>
+	<footer>Tellybox HomeLab · <span data-server-version hidden></span><p>Installation settings are kept off the public viewing route.</p></footer>
+</body>
+</html>

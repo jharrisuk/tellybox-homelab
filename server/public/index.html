@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta name="theme-color" content="#101310">
+	<title>Tellybox — Make yourself at home</title>
+	<link rel="icon" href="/icon.svg" type="image/svg+xml">
+	<link rel="stylesheet" href="/style.css">
+	<script src="/vendor/hls.min.js" defer></script>
+	<script src="/visitor-ui.js" defer></script>
+	<script src="/coming-calendar.js" defer></script>
+	<script src="/navigation.js" defer></script>
+	<script src="/taste.js" defer></script>
+	<script src="/app.js" defer></script>
+	<script src="/connection-status.js" defer></script>
+	<script src="/server-version.js" defer></script>
+</head>
+<body>
+	<header class="topbar">
+		<a class="brand" href="/" aria-label="Tellybox home"><img class="brand-logo" src="/tellybox-logo.png" alt="Tellybox"></a>
+		<button class="menu-toggle" id="menuToggle" aria-controls="siteNavigation" aria-expanded="false"><span class="menu-icon" aria-hidden="true">☰</span><span>Menu</span></button>
+		<div id="siteNavigation" class="navigation-panel">
+			<nav id="nav" aria-label="Media libraries"><button class="nav-item active" data-library="home">Home</button><a class="nav-item" href="/discover">Discover</a></nav>
+			<div class="account-actions"><a href="/activity" id="activityLink" hidden>Activity</a> <a href="/settings" id="remoteSettings" hidden>Settings</a><button class="button quiet" id="signOut" hidden>Sign out</button></div>
+		</div>
+	</header>
+	<main>
+		<section id="localRouting" class="local-routing" aria-label="Streaming connection" hidden>
+			<span id="localRoutingStatus" role="status"></span>
+			<button id="localRoutingButton" class="button quiet">Use local streaming</button>
+			<a id="localSiteLink" hidden>Open local site</a>
+		</section>
+		<section id="comingSoon" class="coming-section" aria-labelledby="comingTitle" hidden>
+			<div class="coming-calendar" id="comingCalendar" aria-label="Coming up in the next seven days">
+				<div class="calendar-heading"><h2>Next 7 days</h2><span>Coming up</span></div>
+				<div class="calendar-days" id="calendarDays"></div>
+				<p id="calendarSummary" class="calendar-summary" role="status">Checking what’s coming up…</p>
+			</div>
+			<div class="shelf-heading"><div><h2 id="comingTitle">Coming soon</h2><p class="shelf-description">The next episodes and films already on our list.</p></div><a class="button quiet" href="/discover">Add something →</a></div>
+		<section class="hero" id="hero" aria-label="Coming soon highlight" hidden>
+			<img id="heroImage" alt="" hidden>
+			<div class="hero-content">
+				<p class="eyebrow" id="heroEyebrow">NEXT ON OUR LIST</p>
+				<h1 id="heroTitle">Make yourself at home.</h1>
+				<p class="hero-description" id="heroDescription">The whole collection, yours to explore. Find something good and settle in.</p>
+				<div class="hero-meta" id="heroMeta"></div>
+				<button class="button primary" id="heroPlay" hidden>View show</button>
+				<button class="button secondary" id="heroDetails" hidden>More info</button>
+				<button class="button quiet" id="anotherPick">Next highlight →</button>
+			</div>
+		</section>
+			<div class="filters" id="comingFilters" aria-label="Coming soon category"><button class="chip active" data-coming="tv" aria-pressed="true">TV episodes</button><button class="chip" data-coming="movie" aria-pressed="false">Films</button></div>
+			<p id="comingStatus" class="status" role="status">Checking what’s on the way…</p>
+			<div id="comingGrid" class="coming-grid"></div>
+			<button id="comingMore" class="button quiet" aria-controls="comingGrid" aria-expanded="false" hidden>Show all upcoming</button>
+			<p class="coming-note">Broadcast and release dates may change. Titles become watchable here once they’ve been added to the collection.</p>
+		</section>
+		<section class="releases" id="favouriteShelf" hidden><div class="shelf-heading"><div><h2>Favourites</h2><p class="shelf-description">Your pinned films and shows on this device.</p></div></div><div class="release-grid" id="favouriteGrid"></div></section>
+		<section class="releases" id="tvReleases" aria-labelledby="tvReleasesTitle" hidden>
+			<div class="shelf-heading"><div><h2 id="tvReleasesTitle">Recently released TV</h2><p class="shelf-description">Recent episodes and series from your collection and Dispatcharr.</p></div><button class="button quiet" id="allTvReleases">See all TV →</button></div>
+			<p id="tvReleasesStatus" class="status" role="status">Finding recent episodes…</p>
+			<div class="release-grid" id="tvReleaseGrid" aria-label="Recently released Series"></div>
+		</section>
+		<section class="releases" id="releases" aria-labelledby="releasesTitle" hidden>
+			<div class="shelf-heading"><div><h2 id="releasesTitle">New films to watch</h2><p class="shelf-description">Recent releases, ready to play now.</p></div><button class="button quiet" id="allReleases">See all films →</button></div>
+			<p id="releasesStatus" class="status" role="status">Finding new releases…</p>
+			<div class="release-grid" id="releaseGrid" aria-label="Newly released films"></div>
+		</section>
+		<section class="collection" aria-labelledby="collectionTitle">
+			<div class="collection-toolbar">
+				<div><p class="eyebrow">SOMETHING FOR EVERYONE</p><h2 id="collectionTitle">The collection <span id="count"></span></h2></div>
+				<div class="tools"><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a film, show or episode…" aria-label="Search the collection"></label><label><span class="sr-only">Where to watch</span><select id="source"><option value="">Local &amp; streamed</option><option value="local">On this server</option><option value="streamed">Streamed catalogue</option></select></label><label><span class="sr-only">Sort collection</span><select id="sort"><option value="new">Recently added</option><option value="release">Release date · newest</option><option value="az">A–Z</option><option value="rating">Top rated</option><option value="imdb">IMDb rating</option><option value="rotten">Rotten Tomatoes rating</option><option value="tmdb">TMDB rating</option></select></label></div>
+			</div>
+			<label class="library-category" id="genreLabel">Category <select id="genre"><option value="">All categories</option></select></label>
+			<div class="filters" id="filters"><button class="chip active" data-type="all">Everything</button><button class="chip" data-type="movies">Films</button><button class="chip" data-type="tvshows">Series</button><button class="chip" data-type="favourites">★ Favourites</button></div>
+			<p id="status" class="status" role="status">Connecting to the collection…</p>
+			<div id="channelGroups" class="channel-groups" aria-label="Channel groups" hidden></div>
+			<a id="searchEverywhere" class="button secondary" hidden>Search everywhere · add missing titles</a>
+			<div class="grid" id="grid"></div>
+			<section id="recordingsView" aria-label="Recordings" hidden>
+				<div class="recordings-toolbar"><p>Saved by Dispatcharr. Choose a programme in the TV guide to record it.</p><button id="refreshRecordings" class="button secondary">↻ Refresh</button></div>
+				<div id="recordingFilters" class="filters" aria-label="Recording status"><button class="chip active" data-recording-filter="all">All</button><button class="chip" data-recording-filter="completed">Ready to watch</button><button class="chip" data-recording-filter="scheduled">Scheduled</button><button class="chip" data-recording-filter="recording">Recording now</button></div>
+				<div id="recordingsList" class="recordings-list"></div>
+				<div id="olderRecordings" class="recordings-toolbar"></div>
+			</section>
+			<section id="liveGuide" aria-label="Live TV guide" hidden>
+				<div class="guide-toolbar"><p id="guideSummary" role="status"></p><button class="button quiet" id="onlyFavourites" aria-pressed="false">☆ All channels</button><button class="button quiet" id="catchupGuide">Catch up</button><button class="button quiet" id="refreshGuide">↻ Refresh guide</button></div>
+				<div hidden class="guide-head" aria-hidden="true"><span>CHANNEL</span><span>ON NOW</span><span>UP NEXT</span><span></span></div>
+				<div id="guideRows" class="guide-rows"></div>
+				<p class="guide-note">Times are local to your device. Select a programme for details and the next 24 hours.</p><p id="guideFreshness" class="guide-note" role="status"></p>
+			</section>
+			<div class="more"><button class="button secondary" id="loadMore" hidden>Show more</button></div>
+		</section>
+	</main>
+	<footer><a class="brand footer-brand" href="/">Telly<span class="brand-server">box</span></a><p>A little nostalgia. A lot to watch.</p><a class="credits-link" href="/legal.html">Credits &amp; licences</a><span data-server-version hidden></span></footer>
+	<dialog id="details" aria-labelledby="detailsTitle"><button class="close" id="closeDetails" aria-label="Close details">×</button><div id="detailsBody"></div></dialog>
+	<dialog id="player" aria-labelledby="playerTitle">
+		<div class="player-header"><div><p class="eyebrow">NOW PLAYING ON TELLYBOX</p><h2 id="playerTitle"></h2></div><button class="close" id="closePlayer" aria-label="Stop playback and close">×</button></div>
+		<div class="video-stage"><video id="video" controls playsinline preload="metadata"></video><div id="playerLoading" class="brand-loading player-loading" role="status" aria-label="Loading video" hidden><img src="/tellybox-mark.svg" alt=""><span class="loading-dots" aria-hidden="true">•••</span></div></div>
+		<p id="playerStatus" role="status">Preparing your stream…</p>
+		<button id="skipIntro" class="button secondary skip-intro" type="button" hidden>Skip intro</button>
+		<div id="upNext" class="up-next" hidden></div>
+		<button id="previousChannel" class="button secondary" hidden>Previous channel</button>
+		<p id="streamRoute" class="player-note" role="status"></p>
+		<div class="cast-panel">
+			<button class="button secondary" id="castButton" disabled><svg width="20" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21 3H3a2 2 0 0 0-2 2v3h2V5h18v14h-7v2h7a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2ZM1 18v3h3a3 3 0 0 0-3-3Zm0-4v2a5 5 0 0 1 5 5h2a7 7 0 0 0-7-7Zm0-4v2a9 9 0 0 1 9 9h2A11 11 0 0 0 1 10Z"/></svg> Cast to TV</button>
+			<p id="castStatus" role="status">Google Cast · phone and TV must be on the same Wi-Fi.</p>
+			<a id="castSecureLink" hidden target="_blank" rel="noopener">Open secure Tellybox for casting →</a>
+			<div id="castControls" hidden>
+				<button class="button secondary" id="castPause">Pause TV</button>
+				<label class="cast-seek">Position <input id="castSeek" type="range" min="0" max="100" value="0" step="1" aria-label="TV playback position"><span id="castTime"></span></label>
+				<button class="button quiet" id="castStop">Watch here instead</button>
+			</div>
+		</div>
+		<div class="player-settings">
+			<label>Quality<select id="quality"><option value="20000000">Auto · up to 20 Mbps</option><option value="80000000">High · up to 80 Mbps</option><option value="8000000">Lower · up to 8 Mbps</option><option value="4000000">Light · up to 4 Mbps</option></select></label>
+			<label>Audio<select id="audioTrack"><option value="">Default</option></select></label>
+			<label>Subtitles<select id="subtitleTrack"><option value="-1">Off</option></select></label>
+			<button class="button secondary" id="retryPlayer">Try compatibility mode</button>
+		</div>
+		<p class="player-note">Progress is remembered in this browser. Guests can watch independently.</p>
+		<label class="browser-preference"><input id="autoNext" type="checkbox"> Play the next episode after a 10-second countdown</label>
+		<label class="browser-preference"><input id="defaultEnglish" type="checkbox"> Start videos with English subtitles</label>
+	</dialog>
+</body>
+</html>
