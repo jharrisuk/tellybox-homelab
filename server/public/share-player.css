@@ -9,8 +9,12 @@ header { display: flex; align-items: center; justify-content: space-between; gap
 .eyebrow { letter-spacing: .13em; font-size: 11px; font-weight: 700; }
 h1 { font-size: clamp(26px, 4vw, 44px); letter-spacing: -.04em; line-height: 1.12; margin: 12px 0; }
 .muted, #overview, footer { color: #a4ada0; line-height: 1.6; }
-.screen { margin-top: 24px; background: #080a08; border: 1px solid #30372e; border-radius: 16px; overflow: hidden; }
+.screen { position: relative; margin-top: 24px; background: #080a08; border: 1px solid #30372e; border-radius: 16px; overflow: hidden; }
 video { display: block; width: 100%; max-height: 70vh; aspect-ratio: 16 / 9; }
+.live-controls { position: absolute; left: 14px; right: 14px; bottom: 14px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.live-controls[hidden] { display: none; }
+.live-badge { margin-right: auto; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 99px; background: #7d1d1d; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: .08em; }
+.live-controls button { min-height: 40px; padding: 8px 12px; border: 1px solid #ffffff54; background: #101310cc; color: #fff; font-size: 13px; }
 .actions { display: flex; align-items: center; gap: 18px; margin: 20px 0; flex-wrap: wrap; }
 button, select { font: inherit; min-height: 48px; border-radius: 10px; padding: 12px 16px; }
 button { border: 0; background: #c7ed89; color: #15200b; font-weight: 700; cursor: pointer; }

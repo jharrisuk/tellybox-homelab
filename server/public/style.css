@@ -210,6 +210,14 @@ dialog::backdrop { background: #000b; backdrop-filter: blur(7px); }
 .player-header h2 { font-size: 20px; }
 video { display: block; width: 100%; max-height: 61dvh; aspect-ratio: 16 / 9; background: black; }
 #playerStatus { color: var(--muted); font-size: 12px; margin: 15px 24px; }
+.live-controls { position: absolute; left: 14px; right: 14px; bottom: 14px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; pointer-events: none; }
+.live-controls[hidden], .viewing-notice[hidden], .viewing-blocked[hidden] { display: none; }
+.live-controls > * { pointer-events: auto; }
+.live-badge { margin-right: auto; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 99px; background: #7d1d1d; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: .08em; }
+.live-button { min-height: 40px; padding: 8px 12px; border: 1px solid #ffffff54; border-radius: 8px; background: #101310cc; color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+.viewing-notice { color: var(--green); }
+.viewing-blocked { margin: 0 24px 18px; padding: 18px; border: 1px solid #6b5a2a; border-radius: 12px; background: #2a2415; }
+.viewing-blocked p { margin: 0 0 14px; color: var(--text); line-height: 1.5; }
 .player-settings { display: flex; align-items: end; gap: 14px; flex-wrap: wrap; padding: 6px 24px 14px; }
 .player-settings label { display: flex; flex-direction: column; gap: 8px; font-size: 11px; color: var(--muted); }
 .player-settings select { max-width: 270px; }

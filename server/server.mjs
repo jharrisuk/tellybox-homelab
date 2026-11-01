@@ -25,9 +25,11 @@ import { insightsFromFile, score } from './insights.mjs';
 import { recentTvEpisodes, episodeReleaseDates } from './tv-releases.mjs';
 import { createShares, installPublicShares } from './shares.mjs';
 import {createAccountLimits} from './account-limits.mjs';
+import {createSessionLimits} from './session-limits.mjs';
 import {createRemoteControls} from './remote-controls.mjs';
 import { createUploadLimit } from './upload-limit.mjs';
 import { primeStream } from './warmup.mjs';
+import { proxyImage } from './image-proxy.mjs';
 import { deviceProfile, textSubtitle, wantsSubtitleLookup, srtToVtt } from './playback-profile.mjs';
 import { readFile } from 'node:fs/promises';
 import { subtitleChoice, englishSubtitle } from './subtitle-choice.mjs';
@@ -98,7 +100,9 @@ app.all('/cast-stream/:ticket/:session/:resource', async (req, res) => {
 
 const activity = createActivity(process.env.AUTH_DIR || path.join(root, 'auth-data'), { bandwidth: () => uploadLimit.status(), transfer: id => uploadLimit.measuredMbps(id) });
 const accountLimits=createAccountLimits(process.env.AUTH_DIR||path.join(root,'auth-data'),{resolveViewer:viewer=>auth.viewerAccount(viewer)});
+const sessionLimits=createSessionLimits({accountLimits,exists:id=>sessions.has(id)});
 const remoteControls=createRemoteControls(process.env.AUTH_DIR||path.join(root,'auth-data'));
+const isAdmin=req=>req.jserverApp?.role==='admin';
 const uploadLimit = createUploadLimit(process.env.AUTH_DIR || path.join(root, 'auth-data'));
 const shares = createShares(process.env.AUTH_DIR || path.join(root, 'auth-data'), {
 	onRevoke: owner => { for (const session of sessions.values()) if (session.owner === owner) void stop(session); }
@@ -152,6 +156,12 @@ app.use((req, res, next) => {
 
 const insights = insightsFromFile(path.join(path.dirname(configPath), 'insights.json'));
 installTvControl(app, { auth, sessions });
+// Only the signed-in caller's own allowance. No person, device or other account details.
+app.get('/api/viewing-status', (req, res) => {
+	res.set('Cache-Control', 'no-store');
+	const admin = isAdmin(req);
+	res.json(accountLimits.viewing(req.jserverViewer, { admin, activeSessions: sessionLimits.count(req.jserverViewer, { admin }) }));
+});
 function dispatcharrAdmin(req, res, next) {
 	if (!auth.isLocal(req) || req.get('authorization') || req.get('x-jserver-app')) return res.status(403).json({error:'Open the local Tellybox settings to manage Dispatcharr.'});
 	if (req.method !== 'GET' && (!req.is('application/json') || req.get('origin') !== req.jserverOrigin)) return res.sendStatus(403);
@@ -315,21 +325,15 @@ app.get('/api/web/art/:kind/:id',async(req,res)=>{
 	if(!['movie','series'].includes(req.params.kind)||!/^\d+$/.test(req.params.id))return res.sendStatus(404);
 	const item=await vodLibrary.raw(`dispatch-${req.params.kind}-${req.params.id}`),logo=Number(item.data.logo?.id);
 	if(!Number.isSafeInteger(logo)||logo<=0)return res.sendStatus(404);
-	const response=await fetch(new URL(`/api/vod/vodlogos/${logo}/cache/`,dispatcharr.origin),{redirect:'error',signal:AbortSignal.timeout(15000)});
-	const type=response.headers.get('content-type')||'';
-	if(!response.ok||!/^image\/(png|jpeg|webp|gif)(?:;|$)/i.test(type)){await response.body?.cancel();return res.sendStatus(404);}
-	const chunks=[];let size=0;for await(const chunk of response.body){size+=chunk.length;if(size>3*1024*1024)return res.sendStatus(413);chunks.push(chunk);}
-	res.set('Cache-Control','private, max-age=1800').type(type).send(Buffer.concat(chunks));
+	return proxyImage(res,{url:new URL(`/api/vod/vodlogos/${logo}/cache/`,dispatcharr.origin),maxBytes:3*1024*1024,
+		allow:/^image\/(png|jpeg|webp|gif)(?:;|$)/i,cache:'private, max-age=1800',label:'Artwork'});
 });
 app.get('/api/web/tmdb-art/:type/:id/:kind',async(req,res)=>{
 	const {type,id,kind}=req.params;
 	if(!['movie','tv'].includes(type)||!/^\d+$/.test(id)||!['poster','backdrop'].includes(kind))return res.sendStatus(404);
 	const image=await vodMetadata.artwork(type,id,kind);if(!image)return res.sendStatus(404);
-	const response=await fetch(`https://image.tmdb.org/t/p/${kind==='backdrop'?'w1280':'w500'}${image}`,{redirect:'error',signal:AbortSignal.timeout(10000)});
-	const mime=response.headers.get('content-type')||'';
-	if(!response.ok||!/^image\/(png|jpeg|webp)(?:;|$)/i.test(mime)){await response.body?.cancel();return res.sendStatus(404);}
-	const chunks=[];let size=0;for await(const chunk of response.body){size+=chunk.length;if(size>5*1024*1024)return res.sendStatus(413);chunks.push(chunk);}
-	res.set('Cache-Control','private, max-age=86400').type(mime).send(Buffer.concat(chunks));
+	return proxyImage(res,{url:`https://image.tmdb.org/t/p/${kind==='backdrop'?'w1280':'w500'}${image}`,maxBytes:5*1024*1024,
+		allow:/^image\/(png|jpeg|webp)(?:;|$)/i,cache:'private, max-age=86400',timeoutMs:10000,label:'TMDB artwork'});
 });
 const vodSources=new Map();
 async function vodSource(id) {
@@ -400,12 +404,8 @@ app.get('/api/dispatcharr/channels/:id/image', async (req,res) => {
 	if(!channel?.logo)return res.sendStatus(404);
 	const url=new URL(channel.logo,dispatcharr.origin);
 	if(url.origin!==dispatcharr.origin || !/^\/api\/channels\/logos\/\d+\/cache\/$/.test(url.pathname))return res.sendStatus(404);
-	const response=await fetch(url,{redirect:'error',signal:AbortSignal.timeout(10000)});
-	const type=response.headers.get('content-type')||'';
-	if(!response.ok||!/^image\/(png|jpeg|webp|gif)(?:;|$)/i.test(type)){await response.body?.cancel();return res.sendStatus(404);}
-	const chunks=[];let size=0;
-	for await(const chunk of response.body){size+=chunk.length;if(size>3*1024*1024)return res.sendStatus(413);chunks.push(chunk);}
-	res.set('Cache-Control','private, max-age=1800').type(type).send(Buffer.concat(chunks));
+	return proxyImage(res,{url,maxBytes:3*1024*1024,allow:/^image\/(png|jpeg|webp|gif)(?:;|$)/i,
+		cache:'private, max-age=1800',timeoutMs:10000,label:'Channel image'});
 });
 
 app.get('/api/releases/tv', async (req, res) => {
@@ -580,11 +580,8 @@ app.get('/images/:id/:kind', async (req, res) => {
 	const id = itemId(req.params.id);
 	const kind = req.params.kind === 'Backdrop' ? 'Backdrop' : 'Primary';
 	const width = Math.min(1920, Math.max(100, Number(req.query.width) || 400));
-	const response = await fetch(new URL(`/Items/${id}/Images/${kind}?maxWidth=${width}&quality=85`, upstream), { headers: headers(), signal: AbortSignal.timeout(15000) });
-	if (!response.ok) return res.sendStatus(404);
-	res.setHeader('Content-Type', response.headers.get('content-type') || 'image/jpeg');
-	res.setHeader('Cache-Control', 'private, no-store');
-	await pipeline(Readable.fromWeb(response.body), res);
+	return proxyImage(res,{url:new URL(`/Items/${id}/Images/${kind}?maxWidth=${width}&quality=85`, upstream),headers:headers(),
+		maxBytes:10*1024*1024,cache:'private, no-store',label:'Image',fallbackType:'image/jpeg'});
 });
 
 export function safeStreamUrl(value, base, item) {
@@ -623,24 +620,42 @@ async function lookupEnglish(item,{release='',fingerprint='',duration=0}={}) {
 async function preparePlayback(req, res) {
 	remoteControls.guard(req.jserverViewer,{itemId:req.body.id});
 	accountLimits.guard(req.jserverViewer,req.body.download===true);
-	if (req.body.download !== true) return preparePlaybackContent(req, res);
-	if (!req.jserverApp) return res.sendStatus(403);
-	const slot = { key: downloadOwner(req), id: randomUUID() };
-	const finish = downloadLimit.enter(slot.key, slot.id);
-	req.downloadSlot = slot;
-	try { return await preparePlaybackContent(req, res); }
-	finally { finish([...sessions.values()].some(session => session.downloadSlot === slot) && res.writableEnded && res.statusCode < 400); }
+	const sessionId=randomUUID(),download=req.body.download===true;
+	// Reserve before any asynchronous preparation. The check and insert are one
+	// synchronous step, so simultaneous requests cannot both take the last screen.
+	// The reservation stays pending until the session is committed after insertion.
+	if(!download)sessionLimits.acquire(sessionId,req.jserverViewer,{admin:isAdmin(req),pending:true});
+	try {
+		if (download) {
+			if (!req.jserverApp) return res.sendStatus(403);
+			const slot = { key: downloadOwner(req), id: randomUUID() };
+			const finish = downloadLimit.enter(slot.key, slot.id);
+			req.downloadSlot = slot;
+			try { return await preparePlaybackContent(req, res, sessionId); }
+			finally { finish([...sessions.values()].some(session => session.downloadSlot === slot) && res.writableEnded && res.statusCode < 400); }
+		}
+		const result=await preparePlaybackContent(req, res, sessionId);
+		// A validation response before playback started must not hold a screen.
+		if(sessions.has(sessionId))sessionLimits.commit(sessionId);
+		else sessionLimits.release(sessionId);
+		return result;
+	} catch (error) {
+		const session=sessions.get(sessionId);
+		if(session)await stop(session).catch(()=>{});
+		sessionLimits.release(sessionId);
+		throw error;
+	}
 }
-async function preparePlaybackContent(req, res) {
-	if(String(req.body.id||'').startsWith('catchup-'))return prepareCatchup(req,res);
-	if (String(req.body.id || '').startsWith('dispatch-live-')) return prepareDirectChannel(req,res);
-	if (/^dispatch-(?:movie-\d+|episode-\d+-\d+)$/.test(req.body.id||''))return prepareVod(req,res);
-	if (/^dispatch-recording-\d+$/.test(req.body.id||''))return prepareVod(req,res);
+async function preparePlaybackContent(req, res, sessionId) {
+	if(String(req.body.id||'').startsWith('catchup-'))return prepareCatchup(req,res,sessionId);
+	if (String(req.body.id || '').startsWith('dispatch-live-')) return prepareDirectChannel(req,res,sessionId);
+	if (/^dispatch-(?:movie-\d+|episode-\d+-\d+)$/.test(req.body.id||''))return prepareVod(req,res,sessionId);
+	if (/^dispatch-recording-\d+$/.test(req.body.id||''))return prepareVod(req,res,sessionId);
 	const id = itemId(req.body.id);
 	const device = 'jimbo-' + randomUUID();
 	const item = await jelly(`/Users/${connection().userId}/Items/${id}`);
 	if (req.body.download && (!req.jserverApp || !['Movie', 'Episode'].includes(item.Type))) return res.status(403).json({ error: 'Offline preparation requires an approved app and an available film or episode.' });
-	const session = { downloadSlot: req.downloadSlot, download: req.body.download === true, id: randomUUID(), itemId: id, owner: req.jserverOwner, device, updated: Date.now(), position: 0, playMethod: 'DirectPlay' };
+	const session = { downloadSlot: req.downloadSlot, download: req.body.download === true, admin:isAdmin(req), id: sessionId, itemId: id, owner: req.jserverOwner, device, updated: Date.now(), position: 0, playMethod: 'DirectPlay' };
 	if (req.jserverShare) {
 		if (!['Movie', 'Episode', 'TvChannel'].includes(item.Type) || item.IsVirtualItem) return res.sendStatus(404);
 		session.shareToken = req.jserverShareToken;
@@ -749,29 +764,27 @@ async function preparePlaybackContent(req, res) {
 	});
 }
 
-async function prepareCatchup(req,res){
+async function prepareCatchup(req,res,sessionId){
 	if(!features.catchup)return res.status(404).json({error:'Catch-up is not enabled on this server.'});
 	if(req.jserverShare||req.body.download)return res.sendStatus(403);
-	if([...sessions.values()].filter(s=>s.direct&&s.owner===req.jserverOwner).length>=3)return res.status(429).json({error:'Stop a stream before opening another.'});
 	const item=await catchup.resolve(req.body.id),channel=(await dispatcharr.channels()).find(c=>'dispatch-live-'+c.id===item.ChannelId);
 	if(!channel)return res.sendStatus(404);
 	const direct=await catchupPlayer.start(channel,item);
 	if(!auth.validOwner(req.jserverOwner)||res.destroyed){await direct.stop();return res.sendStatus(401);}
-	const session={id:randomUUID(),itemId:item.Id,owner:req.jserverOwner,updated:Date.now(),position:0,kind:'hls',playMethod:direct.method,direct,resource:Buffer.from('index.m3u8').toString('base64url')};
+	const session={id:sessionId,admin:isAdmin(req),itemId:item.Id,owner:req.jserverOwner,updated:Date.now(),position:0,kind:'hls',playMethod:direct.method,direct,resource:Buffer.from('index.m3u8').toString('base64url')};
 	session.viewer=req.jserverViewer;sessions.set(session.id,session);activity.begin(session.id,req.jserverViewer,item,{purpose:'watch'});
 	res.json({session:session.id,url:directStreamLink(session,session.resource),kind:'hls',live:false,duration:direct.duration,subtitleIndex:-1,subtitles:[],audio:direct.audio,method:direct.method});
 }
 
-async function prepareDirectChannel(req,res) {
+async function prepareDirectChannel(req,res,sessionId) {
 	if(req.body.download)return res.sendStatus(403);
 	const channel=(await dispatcharr.channels()).find(c=>'dispatch-live-'+c.id===req.body.id);
 	if(!channel)return res.status(404).json({error:'This channel is no longer in Dispatcharr.'});
 	remoteControls.guard(req.jserverViewer,{nonstop:channel.nonstop});
-	if([...sessions.values()].filter(s=>s.direct&&s.owner===req.jserverOwner).length>=3)return res.status(429).json({error:'Stop a TV stream before opening another.'});
 	const quality=[2000000,4000000,8000000,20000000,80000000].includes(req.body.quality)?req.body.quality:20000000;
 	const direct=await directPlayer.start(channel,{quality,compatibility:Boolean(req.body.compatibility),audioIndex:req.body.audioIndex});
 	if(!auth.validOwner(req.jserverOwner)||res.destroyed){await direct.stop();return res.sendStatus(401);}
-	const session={nonstop:Boolean(channel.nonstop),id:randomUUID(),itemId:req.body.id,owner:req.jserverOwner,updated:Date.now(),position:0,kind:'hls',playMethod:direct.method,direct,
+	const session={nonstop:Boolean(channel.nonstop),id:sessionId,admin:isAdmin(req),itemId:req.body.id,owner:req.jserverOwner,updated:Date.now(),position:0,kind:'hls',playMethod:direct.method,direct,
 		resource:Buffer.from('index.m3u8').toString('base64url')};
 	if(req.jserverShare){session.shareToken=req.jserverShareToken;session.shareExpires=req.jserverShare.expires;}
 	session.viewer=req.jserverViewer;sessions.set(session.id,session);
@@ -781,9 +794,8 @@ async function prepareDirectChannel(req,res) {
 	res.json({session:session.id,url:directStreamLink(session,session.resource),kind:'hls',live:true,duration:0,subtitleIndex:-1,subtitles:[],audio:direct.audio,method:direct.method});
 }
 
-async function prepareVod(req,res) {
+async function prepareVod(req,res,sessionId) {
 	if(req.jserverShare||req.body.download)return res.sendStatus(403);
-	if([...sessions.values()].filter(s=>s.vod&&s.owner===req.jserverOwner).length>=2)return res.status(429).json({error:'Stop another streamed title before starting this one.'});
 	const recorded=String(req.body.id).startsWith('dispatch-recording-');
 	const item=recorded?await recordings.item(req.body.id):await vodLibrary.item(req.body.id);
 	if(recorded&&!item?.Playable)return res.status(409).json({error:'This recording is not ready to play yet. It will appear as ready when Dispatcharr finishes saving it.'});
@@ -792,7 +804,7 @@ async function prepareVod(req,res) {
 	const direct=await vodPlayer.start(source,{textSubtitles:req.body.textSubtitles===true,quality:req.body.quality,audioIndex:req.body.audioIndex,subtitleIndex:req.body.subtitleIndex,preferEnglishSubtitles:req.body.preferEnglishSubtitles,
 		...(lookupAvailable?{lookupSubtitles:duration=>lookupEnglish(item,{fingerprint:source.uuid,duration})}:{})});
 	if(!auth.validOwner(req.jserverOwner)||res.destroyed){await direct.stop();return res.sendStatus(401);}
-	const session={id:randomUUID(),itemId:item.Id,owner:req.jserverOwner,updated:Date.now(),position:0,kind:'hls',playMethod:'Transcode',direct,vod:true,resource:Buffer.from('index.m3u8').toString('base64url')};
+	const session={id:sessionId,admin:isAdmin(req),itemId:item.Id,owner:req.jserverOwner,updated:Date.now(),position:0,kind:'hls',playMethod:'Transcode',direct,vod:true,resource:Buffer.from('index.m3u8').toString('base64url')};
 	session.captionSources=direct.captionSources;
 	for(const track of direct.subtitles)if(session.captionSources?.has(track.index))track.url=directStreamLink(session,Buffer.from(`subtitle-${track.index}.vtt`).toString('base64url'));
 	session.viewer=req.jserverViewer;sessions.set(session.id,session);activity.begin(session.id,req.jserverViewer,item,{purpose:'watch'});
@@ -849,6 +861,8 @@ async function proxyStream(req, res, session, ticket = '') {
 	// Re-evaluate the media connection; a session prepared at home may move away.
 	const connection=auth.identity(req);
 	session.viewer={...session.viewer,local:connection.local,home:connection.home};
+	// Account links can change while a stream is open. Re-key it and count it now.
+	sessionLimits.touch(session.id,session.viewer,{admin:session.admin||isAdmin(req),download:Boolean(session.download)});
 	remoteControls.guard(session.viewer,session);
 	accountLimits.guard(session.viewer,Boolean(session.download));
 	const slot = session.downloadSlot;
@@ -955,10 +969,17 @@ async function sendMedia(body, req, res, signal, onBytes) {
 	async function* checked(){for await(const chunk of source){
 		remoteControls.guard(session?.viewer||req.jserverViewer,session);
 		accountLimits.guard(session?.viewer||req.jserverViewer,Boolean(session?.download||onBytes));
-		if(session&&!session.download)accountLimits.media(session.id,session.viewer);
+		if(session&&!session.download){sessionLimits.media(session.id,session.viewer,{admin:session.admin||isAdmin(req)});accountLimits.media(session.id,session.viewer);}
 		yield chunk;
 	}}
-	const transfer=auth.isLocal(req)?checked():uploadLimit.stream(checked(),signal,req.params.session||`download:${req.jserverOwner}:${req.params.id}`);
+	const viewer=session?.viewer||req.jserverViewer||{};
+	const highPriority=Boolean(session?.admin||isAdmin(req)||viewer.home);
+	const transfer=auth.isLocal(req)
+		? checked()
+		: uploadLimit.stream(checked(),signal,req.params.session||`download:${req.jserverOwner}:${req.params.id}`,{
+			account:accountLimits.key(viewer)||req.jserverOwner||'guest',
+			weight:highPriority?3:1
+		});
 	await pipeline(onBytes || session?.download ? progress(transfer) : transfer, res, { signal });
 }
 
@@ -973,6 +994,9 @@ async function report(session, action, values = {}) {
 
 async function stop(session) {
 	if (session.stopping) return session.stopping;
+	// Free the remote screen as soon as stopping begins; Jellyfin cleanup can
+	// outlive the player, and a failed cleanup must not keep a slot forever.
+	sessionLimits.release(session.id);
 	session.stopping = (async () => {
 	clearTimeout(session.warmTimer);
 	for (const controller of session.controllers || []) controller.abort();
@@ -983,7 +1007,7 @@ async function stop(session) {
 		jelly(`/Videos/ActiveEncodings?DeviceId=${session.device}&PlaySessionId=${session.playSessionId}`, { method: 'DELETE', device: session.device }),
 		...(session.liveStreamId ? [jelly('/LiveStreams/Close?' + new URLSearchParams({ liveStreamId: session.liveStreamId }), { method: 'POST', device: session.device })] : [])
 	]);
-	})().then(() => { accountLimits.end(session.id);sessions.delete(session.id); if (session.downloadSlot) downloadLimit.release(session.downloadSlot.key, session.downloadSlot.id); }).catch(error => { session.stopping = null; throw error; });
+	})().then(() => { accountLimits.end(session.id);sessionLimits.release(session.id);sessions.delete(session.id); if (session.downloadSlot) downloadLimit.release(session.downloadSlot.key, session.downloadSlot.id); }).catch(error => { sessionLimits.release(session.id); session.stopping = null; throw error; });
 	return session.stopping;
 }
 
@@ -996,12 +1020,19 @@ async function updateSession(req, res) {
 	if(req.body.action!=='stop'){remoteControls.guard(session.viewer,session);accountLimits.guard(session.viewer,Boolean(session.download));}
 	session.updated = Date.now();
 	if (Number.isFinite(req.body.position)) session.position = Math.max(0, req.body.position);
+	// Stop always wins. It must not touch the screen reservation (which may have
+	// expired or moved while the session was open). stop() aborts controllers and
+	// releases the screen at once, then completes upstream cleanup.
+	if (req.body.action === 'stop') {
+		await stop(session);
+		return res.sendStatus(204);
+	}
 	session.direct?.touch?.(Boolean(req.body.paused));
-	accountLimits.heartbeat(session.id,!req.body.paused&&!req.body.buffering&&req.body.action!=='stop');
+	if(!session.download)sessionLimits.touch(session.id,req.jserverViewer||session.viewer,{admin:session.admin||isAdmin(req),heartbeat:true});
+	accountLimits.heartbeat(session.id,!req.body.paused&&!req.body.buffering);
 	const fallback = ['disabled', 'away', 'unreachable', 'playback-failed'].includes(req.body.localFallback) ? req.body.localFallback : undefined;
 	activity.update(session.id, { position: session.position, heartbeat: true, rate: req.body.rate, state: req.body.buffering ? 'buffering' : req.body.paused ? 'paused' : 'playing', ...(fallback ? { localFallback: fallback } : {}) });
-	if (req.body.action === 'stop') await stop(session);
-	else if (['start', 'progress'].includes(req.body.action)) await report(session, req.body.action, req.body);
+	if (['start', 'progress'].includes(req.body.action)) await report(session, req.body.action, req.body);
 	res.sendStatus(204);
 }
 
@@ -1015,13 +1046,17 @@ setInterval(() => {
 	}
 }, 60000).unref();
 
+// Prepare/warm-up TTLs and idle sessions must release remote screens even if a
+// client never sends another heartbeat or media request.
+setInterval(()=>sessionLimits.tick(),15000).unref();
+
 app.get('/vendor/hls.min.js', (req, res) => res.sendFile(path.join(root, 'node_modules/hls.js/dist/hls.min.js')));
 app.use(express.static(path.join(root, 'public')));
 app.use((error, req, res, next) => {
 	if (res.headersSent) return next(error);
 	console.error('Request failed:', req.method, /^\/(cast-stream|share)\//.test(req.path) ? '/capability/[redacted]' : req.path.split('/').slice(0, 3).join('/'), error.name);
 	if (error.retryAfter) res.set('Retry-After', String(error.retryAfter));
-	res.status(error.status || 500).json({ error: error.message || 'Something went wrong. Please try again.' });
+	res.status(error.status || 500).json({ error: error.message || 'Something went wrong. Please try again.', ...(error.code ? { code:error.code } : {}), ...(error.retryAfter ? { retryAfter:error.retryAfter } : {}) });
 });
 
 if (process.env.NODE_ENV !== 'test') {

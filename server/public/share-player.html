@@ -11,7 +11,8 @@
 	<p class="eyebrow">SOMETHING GOOD TO WATCH</p>
 	<h1 id="title">Loading your video…</h1>
 	<p id="expires" class="muted"></p>
-	<div class="screen"><video id="video" controls playsinline preload="none"></video></div>
+	<div class="screen"><video id="video" controls playsinline preload="none"></video>
+		<div id="liveControls" class="live-controls" hidden><span class="live-badge"><span aria-hidden="true">●</span> LIVE</span><button type="button" id="livePlay">Play live</button><button type="button" id="liveMute" aria-pressed="false">Mute</button><button type="button" id="liveFullscreen">Fullscreen</button></div></div>
 	<div class="actions"><button id="play" disabled>▶ Watch now</button><span id="status" role="status" aria-live="polite">Opening this shared link…</span></div>
 	<div class="settings">
 		<label>Subtitles<select id="subtitles" disabled><option value="-1">Off</option></select></label>

@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.4",
+	"serverVersion": "0.26.5",
 	"files": [
 		{
 			"path": ".env.example",
@@ -49,8 +49,8 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 16428,
-			"sha256": "df0d02dc97de241e297cde7e76def12299072cafba72d650849ceee1713047aa"
+			"bytes": 18003,
+			"sha256": "fbd79b32804077cff86e9318aeca0bcb22e943247bced92413ca70505fb1681b"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -94,8 +94,8 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 39515,
-			"sha256": "8a7e036c030b7d00f532f9b3e785e2b8ec6fe0b85090c1fa7fd444d15cb41d1c"
+			"bytes": 41090,
+			"sha256": "9fe831386cec3398beaba58ce3742dfcda1724dfb6896b248b188b7db73c3f00"
 		},
 		{
 			"path": "docs/story.html",
@@ -149,8 +149,8 @@
 		},
 		{
 			"path": "server/account-limits.mjs",
-			"bytes": 4032,
-			"sha256": "b702f7856425cf5892b011b73c2a3ca502a6ff3b8feca73f803169003b89e31a"
+			"bytes": 6520,
+			"sha256": "331abcb2fd22554b05796a7ae062ef7602e163e3a7f39e286b93d09c099abfa4"
 		},
 		{
 			"path": "server/activity.mjs",
@@ -343,6 +343,11 @@
 			"sha256": "67276cbb200395325219141655466dc7b9639e5f843741a522a5bae4b0826004"
 		},
 		{
+			"path": "server/image-proxy.mjs",
+			"bytes": 4299,
+			"sha256": "6cd1a5db7832260e4ee81b272663209024b0e01eb21aba154a80f5d13b793e56"
+		},
+		{
 			"path": "server/insights.mjs",
 			"bytes": 6273,
 			"sha256": "9129ef708f10d8620366ad25102cb61811da7a98570f04c38d05bdc31a3ef4f2"
@@ -375,12 +380,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 28842,
-			"sha256": "7a35afa31fa9d8a4fa5569d38a63c0dd4acced1532706f2e01d34831fe4da81a"
+			"sha256": "b4c9a1da7bb8dcb4c2ae65db798af9dd58c568541a93d6f707b809771bb1b996"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 271,
-			"sha256": "0adbd71eed442f2704fff543f9b2985567d18e186140c87844f88dca2b081100"
+			"sha256": "882b2744c0b4fc668bef4e332dee5f19e1e28fa4655afa181a1e297baec219db"
 		},
 		{
 			"path": "server/people.mjs",
@@ -409,8 +414,8 @@
 		},
 		{
 			"path": "server/public/app.js",
-			"bytes": 102518,
-			"sha256": "699921d136b34cff9e2de00972f3e6100363dd0fdee1d1bfcaae9f7c5b66eed7"
+			"bytes": 112918,
+			"sha256": "6b5416f6964cdca9309f24a1612c1ea268d60005ce47fdd7d0f09e9f77e5a3e7"
 		},
 		{
 			"path": "server/public/apps.html",
@@ -469,13 +474,13 @@
 		},
 		{
 			"path": "server/public/index.html",
-			"bytes": 11900,
-			"sha256": "3cc94c0be0529fd5308312b88f0195f9a8086b5766bba753e8fa42f15ac3e5fc"
+			"bytes": 12582,
+			"sha256": "28dd89fe408fe53cc243457d7e112a1a6e4d1bbb12623e1af984a1ae4fe7d866"
 		},
 		{
 			"path": "server/public/installation-settings.js",
-			"bytes": 1652,
-			"sha256": "e665ac39dbd91586a2ab34b9fc5dede07130813640c3e3b20bf99e757585b0df"
+			"bytes": 1766,
+			"sha256": "036a9bba44763d86128c963e077843669f749ca3782043d2065b7860fd3b0a8c"
 		},
 		{
 			"path": "server/public/legal.html",
@@ -509,8 +514,8 @@
 		},
 		{
 			"path": "server/public/people.js",
-			"bytes": 4478,
-			"sha256": "d3008753bd7c397a55313828f27e3d519162774f196445dea32ff8d850adfbab"
+			"bytes": 5312,
+			"sha256": "1505801696ecb7b3e9dfd6dab37c03fbc36757ecfd653f24c3d40824ddcbb322"
 		},
 		{
 			"path": "server/public/remote-controls.js",
@@ -554,23 +559,23 @@
 		},
 		{
 			"path": "server/public/share-player.css",
-			"bytes": 2005,
-			"sha256": "cc8e0489d8b107208184372d0887ebba4d180eee1b74611b33d0b948010c3df1"
+			"bytes": 2584,
+			"sha256": "498158250bfecda9025daa111fb6b003a8948871152cf9327a21a525c8081356"
 		},
 		{
 			"path": "server/public/share-player.html",
-			"bytes": 1522,
-			"sha256": "4be25aed2c4713cd9b9ea4ecb2ce4bd27ea8e0e44c9e57281db4019ee50c973b"
+			"bytes": 1840,
+			"sha256": "18058cfc17076d85cd95bd9ef7839a8366b258d9c96d82851763aebcf5c8c23b"
 		},
 		{
 			"path": "server/public/share-player.js",
-			"bytes": 6505,
-			"sha256": "e37ff0d43eaeab887ab2af6ce8f93af3a83de78e76a25b198d944b9ce323bfc8"
+			"bytes": 9903,
+			"sha256": "e43d67c148db7d1af624ab15722b89e7d83fecea25004630976c980a0cf379fd"
 		},
 		{
 			"path": "server/public/style.css",
-			"bytes": 61175,
-			"sha256": "2d765714a720e2771b696604ebf59ea1e0dfa442e3a924ed55a1e4b487afe6fc"
+			"bytes": 62141,
+			"sha256": "88b0e25d7d49c331d0938e2ecada483c440dc43d3e5aaa62d281c0a36b6e2782"
 		},
 		{
 			"path": "server/public/subtitle-settings.js",
@@ -644,8 +649,13 @@
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 74086,
-			"sha256": "e0fb49ecc4b78bdabbe71819ffe0717e0392abdf3f12e7ace41f9be58e2601bd"
+			"bytes": 75308,
+			"sha256": "d4b4b2b6fe805b7dcefbcbb124f9307edb3aa3bb2786e79829b8e8a844954730"
+		},
+		{
+			"path": "server/session-limits.mjs",
+			"bytes": 4162,
+			"sha256": "14b74131bb6ec4e0ae81b014730168a8150dffd59e83e126105cba8948be341a"
 		},
 		{
 			"path": "server/shares.mjs",
@@ -858,6 +868,11 @@
 			"sha256": "9faa096b4ca2c653dd9f300e28f1a119e4a61b50893c4a59a682ee0d541b12cc"
 		},
 		{
+			"path": "server/test/image-proxy.test.mjs",
+			"bytes": 4159,
+			"sha256": "c02d5844a294db879bc8ad4f0c490e95436c1972a520a82f01826e775fa43471"
+		},
+		{
 			"path": "server/test/insights.test.mjs",
 			"bytes": 4927,
 			"sha256": "a4236b20ff82dd59fa029921745e8315d48d99ca1300b36a8246c38a5438aea8"
@@ -933,6 +948,16 @@
 			"sha256": "3ee9ef63b292cf72471cfecd8516efb972513c2fd608be3ea13266b416439b94"
 		},
 		{
+			"path": "server/test/remote-policy-web.test.mjs",
+			"bytes": 17094,
+			"sha256": "ef39f2aa1cb8c40944f083886acd81d71b1c2e783d4ff2ad722706f668988a2c"
+		},
+		{
+			"path": "server/test/remote-sessions.test.mjs",
+			"bytes": 11384,
+			"sha256": "b6950316859404f4959a6d4283520dbf8e942e642f1e2567a1b7b7ebd2c6fa64"
+		},
+		{
 			"path": "server/test/seerr.test.mjs",
 			"bytes": 11833,
 			"sha256": "ee944c79858b0c836b36f3296f6a63aa4ae5e469b8659b471ef17ab2d11a95ee"
@@ -946,6 +971,11 @@
 			"path": "server/test/server-health.test.mjs",
 			"bytes": 2045,
 			"sha256": "34721c34ad6fb613c098b16144558730b55709ca3e7c8dff0f09358fa8c1f1d7"
+		},
+		{
+			"path": "server/test/session-limits.test.mjs",
+			"bytes": 11583,
+			"sha256": "b02035f962cfba496872214d49fe061304a5d18842cd2e7650dcfc203ae5755c"
 		},
 		{
 			"path": "server/test/shares.test.mjs",
@@ -1003,6 +1033,11 @@
 			"sha256": "0b722aeb84f592f06019efc50906a0189b2e528242a1bd1ce4194eef471582bb"
 		},
 		{
+			"path": "server/test/upload-priority.test.mjs",
+			"bytes": 6743,
+			"sha256": "db291e94ed3d258f9aa5a5fdf83769659b181d06f27cf4ccc5dd73693342b5e6"
+		},
+		{
 			"path": "server/test/vod-metadata.test.mjs",
 			"bytes": 4615,
 			"sha256": "346098724d71d563cf88c1a922fd7418dc467cbc47c08aa19d2c80c62e4fe6e4"
@@ -1054,8 +1089,8 @@
 		},
 		{
 			"path": "server/upload-limit.mjs",
-			"bytes": 5994,
-			"sha256": "acc51132a7f64e867e7445cffcebd7deb7febc5c99d21b4ae9b1224696e2bc9b"
+			"bytes": 8284,
+			"sha256": "b8aa977d24563b1b829ca88ac28982f193f764d4ae50c5abd619c78d6f6d78cb"
 		},
 		{
 			"path": "server/viewing-time.mjs",

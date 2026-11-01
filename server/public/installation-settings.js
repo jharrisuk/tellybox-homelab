@@ -6,7 +6,8 @@ fetch('/api/capabilities').then(response=>response.json()).then(async data=>{
 		const response=await fetch('/api/auth/status',{cache:'no-store',signal:AbortSignal.timeout(5000)});
 		if(!response.ok)throw Error('Connection unavailable');
 		const access=await response.json();
-		const origin=access.local?location.origin:access.home?access.localPlayback?.origin:null;
+		// Setup accepts explicitly configured private IPs, not discovery aliases such as .local.
+		const origin=access.local||access.home?access.localPlayback?.origin||(access.local?location.origin:null):null;
 		if(origin){
 			const url=new URL(origin);
 			if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('Invalid installation address');

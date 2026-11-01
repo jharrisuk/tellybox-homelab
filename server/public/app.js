@@ -1,5 +1,5 @@
 const $ = selector => document.querySelector(selector);
-const state = { libraries: [], library: null, type: 'all', items: [], total: 0, generation: 0, playing: null, session: null, hls: null, compatibility: false, loading: false };
+const state = { libraries: [], library: null, type: 'all', items: [], total: 0, generation: 0, playing: null, session: null, hls: null, compatibility: false, loading: false, live: false };
 const video = $('#video');
 const details = $('#details');
 const player = $('#player');
@@ -8,6 +8,8 @@ let playGeneration = 0;
 let reporting = false;
 let started = false;
 let viewingStarted = false;
+let viewingWarningShown = false;
+let viewingBlocked = false;
 const casting = { context: null, remote: null, controller: null, active: false, busy: false, lastPosition: 0, route: '', pendingTarget: null };
 const routing = { origin: '', instance: '', direct: false, home: false, checked: false, enabled: false, preferLocal: true, pending: null };
 const coming = { tv: [], movies: [], unavailable: [], type: 'tv', expanded: false, featured: null, loaded: false };
@@ -72,22 +74,61 @@ function updateCastControls() {
 	$('#castControls').hidden = !casting.active;
 	updateRouting();
 	video.hidden = casting.active;
-	const locked = !state.session || casting.active || casting.busy;
+	updateLiveControls();
+	const locked = !state.session || casting.active || casting.busy || viewingBlocked;
 	$('#quality').disabled = locked || state.playbackKind === 'audio';
 	$('#retryPlayer').disabled = locked || state.playbackKind === 'audio';
 	$('#audioTrack').disabled = locked || $('#audioTrack').options.length < 2;
 	$('#subtitleTrack').disabled = locked || $('#subtitleTrack').options.length < 2;
+	$('#castPause').hidden = state.live;
+	$('#castSeek').closest('label').hidden = state.live;
 	if (!casting.active) return;
 	const remote = casting.remote;
-	$('#playerStatus').textContent = remote.playerState === 'BUFFERING' ? 'Buffering on your TV…' : remote.isPaused ? 'Paused on your TV' : 'Playing on your TV';
+	$('#playerStatus').textContent = remote.playerState === 'BUFFERING' ? 'Buffering on your TV…' : state.live ? 'Live on your TV' : remote.isPaused ? 'Paused on your TV' : 'Playing on your TV';
 	if (Number.isFinite(remote.currentTime)) casting.lastPosition = remote.currentTime;
 	$('#castPause').textContent = remote.isPaused ? 'Play TV' : 'Pause TV';
-	$('#castPause').disabled = !remote.canPause;
-	$('#castSeek').disabled = !remote.canSeek || !Number.isFinite(remote.duration) || remote.duration <= 0;
+	$('#castPause').disabled = state.live || !remote.canPause;
+	$('#castSeek').disabled = state.live || !remote.canSeek || !Number.isFinite(remote.duration) || remote.duration <= 0;
 	$('#castSeek').max = String(Number.isFinite(remote.duration) ? remote.duration : 0);
-	if (document.activeElement !== $('#castSeek')) $('#castSeek').value = String(remote.currentTime || 0);
+	if (!state.live && document.activeElement !== $('#castSeek')) $('#castSeek').value = String(remote.currentTime || 0);
 	const minutes = Math.floor((remote.currentTime || 0) / 60);
 	$('#castTime').textContent = `${minutes}:${String(Math.floor((remote.currentTime || 0) % 60)).padStart(2, '0')}`;
+}
+
+function updateLiveControls() {
+	const show = Boolean(state.live) && !casting.active && player.open;
+	$('#liveControls').hidden = !show;
+	if (show) {
+		$('#livePlay').hidden = !video.paused || !video.currentSrc;
+		$('#liveMute').textContent = video.muted ? 'Unmute' : 'Mute';
+		$('#liveMute').setAttribute('aria-pressed', String(video.muted));
+		$('#liveFullscreen').textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen';
+	}
+}
+
+// Native media keys and keyboard shortcuts can still pause or seek a video
+// without on-screen controls. Live playback is pulled back to the live edge.
+function keepLivePlayback() {
+	if (!state.live || casting.active || !player.open || viewingBlocked) return false;
+	video.play().catch(() => {});
+	return true;
+}
+
+function keepLiveEdge() {
+	if (!state.live || casting.active || !player.open || viewingBlocked) return;
+	const seekable = video.seekable;
+	if (!seekable?.length) return;
+	const edge = seekable.end(seekable.length - 1);
+	if (Number.isFinite(edge) && Math.abs(video.currentTime - edge) > 2) video.currentTime = edge;
+}
+
+// Actual playback mode decides this, not the channel or item identity.
+function setLiveMode(live) {
+	state.live = Boolean(live);
+	video.controls = !state.live;
+	video.disablePictureInPicture = state.live;
+	updateLiveControls();
+	updateCastControls();
 }
 
 function setupCast() {
@@ -158,11 +199,11 @@ async function castToTv() {
 			const info = new chrome.cast.media.MediaInfo(url, ticket.contentType);
 			info.metadata = new chrome.cast.media.GenericMediaMetadata();
 			info.metadata.title = $('#playerTitle').textContent;
-			info.streamType = state.playing.Type === 'TvChannel' ? chrome.cast.media.StreamType.LIVE : chrome.cast.media.StreamType.BUFFERED;
+			info.streamType = state.live ? chrome.cast.media.StreamType.LIVE : chrome.cast.media.StreamType.BUFFERED;
 			const load = new chrome.cast.media.LoadRequest(info);
 			const caption=state.captionTracks?.find(track=>track.index===Number($('#subtitleTrack').value)&&track.url);
 			if(caption){const track=new chrome.cast.media.Track(1,chrome.cast.media.TrackType.TEXT);track.trackContentId=url.slice(0,url.lastIndexOf('/')+1)+caption.url.split('/').at(-1);track.trackContentType='text/vtt';track.subtype=chrome.cast.media.TextTrackType.SUBTITLES;track.name=caption.label;info.tracks=[track];load.activeTrackIds=[1];}
-			load.currentTime = state.playing.Type === 'TvChannel' ? 0 : video.currentTime || 0;
+			load.currentTime = state.live ? 0 : video.currentTime || 0;
 			load.autoplay = true;
 			await loadCastMedia(target, load, { isCurrent: () => sessionId === state.session && generation === playGeneration });
 		};
@@ -201,9 +242,9 @@ async function castToTv() {
 }
 
 $('#castButton').onclick = castToTv;
-$('#castPause').onclick = () => casting.controller?.playOrPause();
+$('#castPause').onclick = () => { if (!state.live) casting.controller?.playOrPause(); };
 $('#castSeek').onchange = () => {
-	if (!casting.active || !casting.remote.canSeek) return;
+	if (!casting.active || state.live || !casting.remote.canSeek) return;
 	casting.remote.currentTime = Number($('#castSeek').value);
 	casting.lastPosition = casting.remote.currentTime;
 	casting.controller.seek();
@@ -217,15 +258,26 @@ function element(tag, className, text) {
 	return node;
 }
 
-async function api(url, body, base = '') {
-	const response = await fetch(new URL(url, base || location.origin), { signal: AbortSignal.timeout(url.startsWith('/api/sessions/') ? 15000 : 45000), credentials: base ? 'omit' : 'same-origin', ...(body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }) });
+async function api(url, body, base = '', timeoutOverride) {
+	const timeout = timeoutOverride || (url === '/api/viewing-status' ? 8000 : url.startsWith('/api/sessions/') ? 15000 : 45000);
+	const response = await fetch(new URL(url, base || location.origin), { signal: AbortSignal.timeout(timeout), credentials: base ? 'omit' : 'same-origin', ...(body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }) });
 	if (response.status === 401) { location.replace('/login'); throw new Error('Please sign in again.'); }
 	if (!response.ok) {
-		const error = await response.json().catch(() => ({}));
-		throw new Error(error.error || 'Could not reach Tellybox. Please try again.');
+		const data = await response.json().catch(() => ({}));
+		const error = new Error(data.error || 'Could not reach Tellybox. Please try again.');
+		error.status = response.status; error.code = data.code || null; error.retryAfter = data.retryAfter;
+		throw error;
 	}
 	return response.status === 204 ? null : response.json();
 }
+
+$('#livePlay').onclick = () => { video.play().catch(() => { $('#playerStatus').textContent = 'Tap the video to start live playback.'; }); };
+$('#liveMute').onclick = () => { video.muted = !video.muted; updateLiveControls(); };
+$('#liveFullscreen').onclick = async () => {
+	try { if (document.fullscreenElement) await document.exitFullscreen(); else await $('.video-stage').requestFullscreen(); }
+	catch { /* Fullscreen can be unavailable in some embedded browsers. */ }
+};
+document.addEventListener('fullscreenchange', updateLiveControls);
 
 function imageUrl(item, backdrop = false, width = 400) {
 	if (backdrop && item.BackdropArtwork) return item.BackdropArtwork;
@@ -245,6 +297,29 @@ function meta(item) {
 
 function friendlyType(item) {
 	return ({ Movie: 'Film', Series: 'Series', Episode: 'Episode', MusicAlbum: 'Album', Audio: 'Track', TvChannel: 'Live TV' })[item.Type] || item.Type;
+}
+
+function episodeNumber(item) {
+	const season = Number.isInteger(item?.ParentIndexNumber) && item.ParentIndexNumber > 0 ? 'S' + item.ParentIndexNumber : '';
+	const episode = Number.isInteger(item?.IndexNumber) && item.IndexNumber > 0 ? 'E' + item.IndexNumber : '';
+	return [season, episode].filter(Boolean).join(' ');
+}
+
+function episodeLabel(item) {
+	const series = typeof item?.SeriesName === 'string' ? item.SeriesName.trim() : '';
+	const title = typeof item?.Name === 'string' ? item.Name.trim() : '';
+	const number = episodeNumber(item);
+	const parts = [], seen = new Set();
+	for (const part of [series, number, title]) {
+		const key = part.toLocaleLowerCase();
+		if (!part || seen.has(key)) continue;
+		seen.add(key); parts.push(part);
+	}
+	return parts.join(' · ');
+}
+
+function playbackTitle(item) {
+	return item?.Type === 'Episode' || item?.SeriesName ? episodeLabel(item) : item?.Name || '';
 }
 
 function card(item, releaseDate = false) {
@@ -1042,7 +1117,7 @@ function beginViewing() {
 }
 
 function saveProgress() {
-	if (!state.playing || state.playing.Type === 'TvChannel') return;
+	if (!state.playing || state.live || state.playing.Type === 'TvChannel') return;
 	const position = playbackPosition();
 	let duration = casting.active ? casting.remote.duration : video.duration;
 	let finished=(!casting.active && video.ended) || duration > 0 && position >= Math.max(duration * .95, duration - 90);
@@ -1057,9 +1132,95 @@ function saveProgress() {
 		if(position>0)localStorage.setItem('jimbo-progress-' + state.playing.Id, finished ? '0' : String(Math.floor(position))); } catch {}
 }
 
+function resetViewingState() {
+	viewingWarningShown = false;
+	viewingBlocked = false;
+	$('#viewingBlocked').hidden = true;
+	$('#viewingNotice').hidden = true;
+	$('#viewingBlockedMessage').textContent = '';
+}
+
+function playbackContextCurrent({ generation, session }) {
+	return generation === playGeneration && state.session === session && player.open;
+}
+
+async function queryViewingStatus() {
+	try { return await api('/api/viewing-status'); } catch { return null; }
+}
+
+function showViewingBlocked(message, generation = playGeneration) {
+	if (generation !== playGeneration || !player.open) return;
+	const reason = message || 'Remote viewing is unavailable for this account.';
+	if (viewingBlocked) { $('#viewingBlockedMessage').textContent = reason; return; }
+	viewingBlocked = true;
+	const session = state.session, sessionBase = state.sessionBase;
+	state.session = null; state.sessionBase = '';
+	if (session) void fetch(new URL('/api/sessions/' + session, sessionBase || location.origin), {
+		method: 'POST', keepalive: true, credentials: sessionBase ? 'omit' : 'same-origin',
+		headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'stop', position: 0 })
+	}).catch(() => {});
+	if (casting.active || casting.pendingTarget) {
+		try { (casting.pendingTarget || casting.context?.getCurrentSession())?.endSession(true); } catch {}
+		casting.active = false; casting.pendingTarget = null;
+	}
+	if (state.hls) { state.hls.destroy(); state.hls = null; }
+	setLiveMode(false);
+	video.pause();
+	video.removeAttribute('src');
+	video.load();
+	playerLoading(false);
+	$('#viewingNotice').hidden = true;
+	$('#viewingBlockedMessage').textContent = reason;
+	$('#viewingBlocked').hidden = false;
+	$('#playerStatus').textContent = '';
+	for (const id of ['quality', 'audioTrack', 'subtitleTrack', 'retryPlayer']) $('#' + id).disabled = true;
+	$('#castButton').disabled = true;
+	$('#viewingBlockedBack').focus();
+}
+
+async function checkViewingStatus({ quiet = false } = {}) {
+	if (viewingBlocked || !state.playing || !state.session || !player.open) return null;
+	const generation = playGeneration, session = state.session;
+	const data = await queryViewingStatus();
+	if (!data || !playbackContextCurrent({ generation, session })) return null;
+	if (data.blocked) { showViewingBlocked(data.message, generation); return data; }
+	if (!quiet && !viewingWarningShown && Number.isFinite(data.remainingSeconds) && data.remainingSeconds > 0 && data.remainingSeconds <= 300) {
+		viewingWarningShown = true;
+		const mins = Math.max(1, Math.ceil(data.remainingSeconds / 60));
+		const reset = data.resetAt ? ' Resets ' + new Date(data.resetAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '.' : '';
+		const left = data.remainingSeconds < 60 ? 'Less than a minute of remote viewing time left.' : `About ${mins} minutes of remote viewing time left.`;
+		$('#viewingNotice').textContent = left + reset;
+		$('#viewingNotice').hidden = false;
+	}
+	return data;
+}
+
+function heartbeatBody(action) {
+	return { action, position: playbackPosition(), paused: state.live ? false : casting.active ? casting.remote.isPaused : video.paused, buffering: !casting.active && video.readyState < 3, rate: casting.active ? 1 : video.playbackRate, muted: casting.active ? casting.remote.isMuted : video.muted };
+}
+
+async function sendHeartbeat(action, session, base, timeout) {
+	try {
+		await api('/api/sessions/' + session, heartbeatBody(action), base, timeout);
+		return { error: null };
+	} catch (error) {
+		return { error };
+	}
+}
+
 async function report(action) {
-	if (!state.session) return;
-	await api('/api/sessions/' + state.session, { action, position: playbackPosition(), paused: casting.active ? casting.remote.isPaused : video.paused, buffering: !casting.active && video.readyState < 3, rate: casting.active ? 1 : video.playbackRate, muted: casting.active ? casting.remote.isMuted : video.muted }, state.sessionBase).catch(() => {});
+	const session = state.session;
+	if (!session) return;
+	const generation = playGeneration, sessionBase = state.sessionBase;
+	const { error } = await sendHeartbeat(action, session, sessionBase);
+	if (!error) return;
+	if (action === 'stop' || viewingBlocked) return;
+	if (!playbackContextCurrent({ generation, session })) return;
+	if (error.code === 'VIEWING_LIMIT' || error.code === 'SESSION_LIMIT') {
+		const data = await queryViewingStatus();
+		if (!playbackContextCurrent({ generation, session })) return;
+		showViewingBlocked(data?.message || error.message, generation);
+	} else void checkViewingStatus({ quiet: true });
 }
 
 let nextEpisode = null, nextTimer = null, lastChannel = null, previousChannel = null;
@@ -1106,7 +1267,7 @@ function showNext(ended = video.ended) {
 	}
 	const next = nextEpisode;
 	const preview=element('div','next-preview'),art=element('img');art.src=imageUrl(next);art.alt='';art.onerror=()=>art.hidden=true;
-	const copy=element('div');copy.append(element('small','eyebrow',`UP NEXT · S${next.ParentIndexNumber} E${next.IndexNumber}`),element('strong','',next.Name));preview.append(art,copy);
+	const copy=element('div');copy.append(element('small','eyebrow',['UP NEXT',episodeNumber(next)].filter(Boolean).join(' · ')),element('strong','',next.Name));preview.append(art,copy);
 	const play = element('button', 'button primary', 'Play now');
 	play.onclick = async () => {
 		if (nextBusy) return; nextBusy = true; cancelNext(); play.disabled = true;
@@ -1142,7 +1303,7 @@ async function seriesContinue(item, content, episodes) {
 		const watched = id => localStorage.getItem('tellybox-watched-' + id) === 'true';
 		const target = current >= 0 && getProgress(last) > 10 ? items[current] : (current >= 0 ? items.slice(current + 1).find(episode => episode.ParentIndexNumber > 0 && !watched(episode.Id)) : null) || items.find(episode => episode.ParentIndexNumber > 0 && !watched(episode.Id)) || items[0];
 		if (!target || !content.isConnected) return;
-		const button = element('button', 'button primary series-continue', `${getProgress(target.Id) > 10 ? 'Continue' : watched(target.Id) ? 'Watch again' : 'Watch next'} · S${target.ParentIndexNumber} E${target.IndexNumber} · ${target.Name}`);
+		const button = element('button', 'button primary series-continue', [`${getProgress(target.Id) > 10 ? 'Continue' : watched(target.Id) ? 'Watch again' : 'Watch next'}`, episodeNumber(target), target.Name].filter(Boolean).join(' · '));
 		button.onclick = () => startPlayback(target, getProgress(target.Id));
 		content.insertBefore(button, content.querySelector('.overview'));
 	} catch { /* Season browsing remains available when continuation cannot load. */ }
@@ -1150,7 +1311,10 @@ async function seriesContinue(item, content, episodes) {
 $('#previousChannel').onclick = () => previousChannel && startPlayback(previousChannel);
 document.addEventListener('visibilitychange', () => { if (document.hidden) { nextCancelled = true; cancelNext(); $('#upNext').hidden = true; } });
 async function detach() {
+	const generation = playGeneration;
 	cancelNext(); $('#upNext').hidden = true;
+	setLiveMode(false);
+	$('#viewingNotice').hidden = true;
 	const session = state.session;
 	const sessionBase = state.sessionBase;
 	const position = playbackPosition();
@@ -1163,6 +1327,8 @@ async function detach() {
 	}
 	updateCastControls();
 	if (session) await api('/api/sessions/' + session, { action: 'stop', position, paused: true }, sessionBase);
+	// A newer play may have started while the stop request was in flight.
+	if (generation !== playGeneration) return;
 	if (state.session === session) { state.session = null; state.sessionBase = ''; }
 	if (state.hls) { state.hls.destroy(); state.hls = null; }
 	video.pause();
@@ -1186,6 +1352,7 @@ async function startPlayback(item, position = 0, keepSettings = false) {
 	// Track indexes belong to one file. Choose English afresh for the next episode.
 	keepSettings = keepSettings && state.playing?.Id === item.Id;
 	const generation = ++playGeneration;
+	resetViewingState();
 	saveProgress();
 	if(item.Type==='Catchup'&&!keepSettings&&getProgress(item.Id)>0){
 		const choice=await chooseCatchupResume(item,getProgress(item.Id));if(choice===null||generation!==playGeneration)return;position=choice;
@@ -1207,7 +1374,7 @@ async function startPlayback(item, position = 0, keepSettings = false) {
 	}
 	details.close();
 	if (!player.open) player.showModal();
-	$('#playerTitle').textContent = item.SeriesName ? `${item.SeriesName} · ${item.Name}` : item.Name;
+	$('#playerTitle').textContent = playbackTitle(item);
 	$('#playerStatus').textContent = '';playerLoading(true);
 	$('#retryPlayer').disabled = true;
 	try {
@@ -1221,7 +1388,7 @@ async function startPlayback(item, position = 0, keepSettings = false) {
 		state.session = playback.session;
 		state.sessionBase = sessionBase;
 		state.playbackKind = playback.kind;
-		updateCastControls();
+		setLiveMode(playback.live === true);
 		const audioValue = $('#audioTrack').value;
 		$('#audioTrack').replaceChildren(new Option('Default', ''), ...playback.audio.map(track => new Option(track.label, String(track.index))));
 		$('#audioTrack').value = audioValue;
@@ -1239,7 +1406,8 @@ async function startPlayback(item, position = 0, keepSettings = false) {
 			if (generation !== playGeneration) return;
 			if (position > 0 && !playback.live) video.currentTime = position;
 			if(!state.hls)for(const track of video.textTracks)if(track.label.startsWith('tellybox-subtitle-'))track.mode=track.label==='tellybox-subtitle-'+subtitleValue?'showing':'disabled';
-			video.play().catch(() => { playerLoading(false); $('#playerStatus').textContent = 'Ready. Tap play to start.'; });
+			video.play().catch(() => { playerLoading(false); $('#playerStatus').textContent = 'Ready. Tap play to start.'; updateLiveControls(); });
+			updateLiveControls();
 		};
 		video.onloadedmetadata = begin;
 		if (sessionBase) video.crossOrigin = 'anonymous';
@@ -1247,17 +1415,72 @@ async function startPlayback(item, position = 0, keepSettings = false) {
 		const mediaUrl = new URL(playback.url, sessionBase || location.origin).href;
 		for(const track of playback.subtitles.filter(track=>track.url)){const node=document.createElement('track');node.kind='subtitles';node.label=track.label;node.dataset.index=String(track.index);node.src=new URL(track.url,sessionBase||location.origin).href;node.default=String(track.index)===subtitleValue;video.append(node);node.track.mode=node.default?'showing':'disabled';node.addEventListener('load',()=>{if(node.track.mode==='showing'&&!node.track.cues?.length)$('#playerStatus').textContent='No matching captions available. Video can keep playing.';});}
 		if (playback.kind === 'hls' && Hls.isSupported()) {
-			const hls = new Hls({ maxBufferLength:30,backBufferLength:30,startPosition:playback.live?-1:position });
+			const hls = new Hls({ maxBufferLength:30,backBufferLength:30,startPosition:state.live?-1:position });
 			state.hls = hls;
 			hls.on(Hls.Events.ERROR, (_, data) => {
-				if (data.fatal){playerLoading(false);$('#playerStatus').textContent = 'Playback was interrupted. Try compatibility mode, or choose a lower quality.';}
+				if (data.fatal) void playbackFailed('Playback was interrupted. Try compatibility mode, or choose a lower quality.', hls, data);
 			});
 			hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED,()=>{const selected=Number($('#subtitleTrack').value);hls.subtitleTrack=hls.subtitleTracks.findIndex(t=>t.name==='tellybox-subtitle-'+selected);});
 			hls.loadSource(mediaUrl);
 			hls.attachMedia(video);
 		} else video.src = mediaUrl;
-		$('#playerStatus').textContent = playback.live ? (item.Provider==='Dispatcharr'?'Live from Dispatcharr':'Live TV · ready to play') : playback.method === 'DirectPlay' ? 'Original stream · ready to play' : 'Preparing a stream for your browser…';
-	} catch (error) { playerLoading(false); $('#playerStatus').textContent = error.message; $('#retryPlayer').disabled = false; }
+		$('#playerStatus').textContent = state.live ? (item.Provider==='Dispatcharr'?'Live from Dispatcharr':'Live TV · ready to play') : playback.method === 'DirectPlay' ? 'Original stream · ready to play' : 'Preparing a stream for your browser…';
+	} catch (error) {
+		if (generation !== playGeneration) return;
+		playerLoading(false);
+		if (error.code === 'VIEWING_LIMIT' || error.code === 'SESSION_LIMIT') showViewingBlocked(error.message, generation);
+		else { $('#playerStatus').textContent = error.message; $('#retryPlayer').disabled = state.playbackKind === 'audio'; }
+	}
+}
+
+function policyDenialFromBody(body) {
+	if (!body) return null;
+	let data = body;
+	if (typeof data === 'string') {
+		const text = data.trim();
+		try { data = JSON.parse(text); }
+		catch {
+			const start = text.indexOf('{'), end = text.lastIndexOf('}');
+			if (start < 0 || end <= start) return null;
+			try { data = JSON.parse(text.slice(start, end + 1)); } catch { return null; }
+		}
+	}
+	if (!data || typeof data !== 'object') return null;
+	if (data.code !== 'VIEWING_LIMIT' && data.code !== 'SESSION_LIMIT') return null;
+	return { code: data.code, message: typeof data.error === 'string' ? data.error : typeof data.message === 'string' ? data.message : '' };
+}
+
+function policyDenialFromResponse(response) {
+	return policyDenialFromBody(response?.text) || policyDenialFromBody(response?.data) || policyDenialFromBody(response?.body) || policyDenialFromBody(response);
+}
+
+function policyMessage(denial, fallback) {
+	if (denial?.message) return denial.message;
+	if (denial?.code === 'SESSION_LIMIT') return 'This account has reached its remote screen limit. Stop playback on another screen and try again.';
+	if (denial?.code === 'VIEWING_LIMIT') return 'Remote viewing time for this account has been used.';
+	return fallback;
+}
+
+async function playbackFailed(message, hls, failure) {
+	if (viewingBlocked || (hls && state.hls !== hls)) return;
+	const generation = playGeneration, session = state.session;
+	if (!session) return;
+	const denial = policyDenialFromResponse(failure?.response) || policyDenialFromResponse(failure);
+	if (denial) { showViewingBlocked(policyMessage(denial, message), generation); return; }
+	playerLoading(false);
+	$('#playerStatus').textContent = 'Checking playback status...';
+	$('#retryPlayer').disabled = true;
+	const base = state.sessionBase;
+	const heartbeat = await sendHeartbeat('progress', session, base, 6000);
+	if (viewingBlocked || (hls && state.hls !== hls) || !playbackContextCurrent({ generation, session })) return;
+	const heartbeatDenial = heartbeat.error && (heartbeat.error.code === 'VIEWING_LIMIT' || heartbeat.error.code === 'SESSION_LIMIT')
+		? { code: heartbeat.error.code, message: heartbeat.error.message } : null;
+	if (heartbeatDenial) { showViewingBlocked(policyMessage(heartbeatDenial, message), generation); return; }
+	const data = await queryViewingStatus();
+	if (viewingBlocked || (hls && state.hls !== hls) || !playbackContextCurrent({ generation, session })) return;
+	if (data?.blocked) { showViewingBlocked(data.message, generation); return; }
+	$('#playerStatus').textContent = message;
+	$('#retryPlayer').disabled = state.playbackKind === 'audio';
 }
 
 function closePlayer() {
@@ -1276,16 +1499,23 @@ video.addEventListener('playing', () => {
 		lastChannel = state.playing; $('#previousChannel').hidden = !previousChannel || previousChannel.Id === state.playing.Id;
 	}
 	beginViewing();
+	updateLiveControls();
 	if (!started) { started = true; void report('start'); }
 });
-video.addEventListener('pause', () => { saveProgress(); void report('progress'); });
+video.addEventListener('pause', () => {
+	updateLiveControls();
+	if (keepLivePlayback()) return;
+	saveProgress(); void report('progress');
+});
+video.addEventListener('seeking', keepLiveEdge);
 video.addEventListener('ended', () => { if (casting.active) return; saveProgress(); void report('progress'); updateCastControls(); showNext(true); });
-video.addEventListener('error', () => { if (state.session && !casting.active) $('#playerStatus').textContent = 'This browser could not play the stream. Try compatibility mode below.'; });
+video.addEventListener('error', () => { if (state.session && !casting.active && !viewingBlocked) void playbackFailed('This browser could not play the stream. Try compatibility mode below.'); });
 setInterval(async () => {
 	if (!state.session || reporting) return;
 	reporting = true;
 	saveProgress();
 	await report('progress');
+	if (!viewingBlocked && state.session) await checkViewingStatus();
 	reporting = false;
 }, 10000);
 window.addEventListener('pagehide', () => {
@@ -1323,10 +1553,11 @@ $('#allReleases').onclick = () => {
 $('#closeDetails').onclick = () => details.close();
 $('#closePlayer').onclick = closePlayer;
 player.addEventListener('cancel', event => { event.preventDefault(); closePlayer(); });
-$('#retryPlayer').onclick = () => { state.compatibility = true; void startPlayback(state.playing, video.currentTime || getProgress(state.playing.Id), true); };
-for (const id of ['quality', 'audioTrack']) $('#' + id).onchange = () => state.playing && startPlayback(state.playing, video.currentTime, true);
+$('#retryPlayer').onclick = () => { if (viewingBlocked) return; state.compatibility = true; void startPlayback(state.playing, video.currentTime || getProgress(state.playing.Id), true); };
+for (const id of ['quality', 'audioTrack']) $('#' + id).onchange = () => { if (!viewingBlocked) state.playing && startPlayback(state.playing, video.currentTime, true); };
+$('#viewingBlockedBack').onclick = closePlayer;
 $('#subtitleTrack').onchange=()=>{
-	if(!state.playing)return;
+	if(!state.playing||viewingBlocked)return;
 	const selected=Number($('#subtitleTrack').value),track=state.captionTracks?.find(track=>track.index===selected);
 	if(!state.burnedCaption&&(selected<0||track?.url||track?.hls)){
 		for(const node of video.querySelectorAll('track'))node.track.mode=Number(node.dataset.index)===selected?'showing':'disabled';

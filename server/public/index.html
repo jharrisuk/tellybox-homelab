@@ -97,8 +97,12 @@
 	<dialog id="details" aria-labelledby="detailsTitle"><button class="close" id="closeDetails" aria-label="Close details">×</button><div id="detailsBody"></div></dialog>
 	<dialog id="player" aria-labelledby="playerTitle">
 		<div class="player-header"><div><p class="eyebrow">NOW PLAYING ON TELLYBOX</p><h2 id="playerTitle"></h2></div><button class="close" id="closePlayer" aria-label="Stop playback and close">×</button></div>
-		<div class="video-stage"><video id="video" controls playsinline preload="metadata"></video><div id="playerLoading" class="brand-loading player-loading" role="status" aria-label="Loading video" hidden><img src="/tellybox-mark.svg" alt=""><span class="loading-dots" aria-hidden="true">•••</span></div></div>
+		<div class="video-stage"><video id="video" controls playsinline preload="metadata"></video>
+			<div id="liveControls" class="live-controls" hidden><span class="live-badge"><span aria-hidden="true">●</span> LIVE</span><button type="button" id="livePlay" class="live-button">Play live</button><button type="button" id="liveMute" class="live-button" aria-pressed="false">Mute</button><button type="button" id="liveFullscreen" class="live-button">Fullscreen</button></div>
+			<div id="playerLoading" class="brand-loading player-loading" role="status" aria-label="Loading video" hidden><img src="/tellybox-mark.svg" alt=""><span class="loading-dots" aria-hidden="true">•••</span></div></div>
 		<p id="playerStatus" role="status">Preparing your stream…</p>
+		<p id="viewingNotice" class="player-note viewing-notice" role="status" hidden></p>
+		<section id="viewingBlocked" class="viewing-blocked" role="alert" hidden><p id="viewingBlockedMessage"></p><button type="button" class="button primary" id="viewingBlockedBack">Back to browsing</button></section>
 		<button id="skipIntro" class="button secondary skip-intro" type="button" hidden>Skip intro</button>
 		<div id="upNext" class="up-next" hidden></div>
 		<button id="previousChannel" class="button secondary" hidden>Previous channel</button>
