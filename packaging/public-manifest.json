@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.3",
+	"serverVersion": "0.26.4",
 	"files": [
 		{
 			"path": ".env.example",
@@ -189,8 +189,8 @@
 		},
 		{
 			"path": "server/catchup-player.mjs",
-			"bytes": 6701,
-			"sha256": "189384af917d58050e4a4c6891a2937b8ed23f0b23b9fecb30140f7433ec0a75"
+			"bytes": 7896,
+			"sha256": "329072ab695860b6fb99b7a73a2313050dc79719bc0601f095650c81838a55fd"
 		},
 		{
 			"path": "server/catchup.mjs",
@@ -375,12 +375,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 28842,
-			"sha256": "4a1a14c06b51334ee73eb49c191ef144982316053e03fde24323670f7a7a3762"
+			"sha256": "7a35afa31fa9d8a4fa5569d38a63c0dd4acced1532706f2e01d34831fe4da81a"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 271,
-			"sha256": "8b91b867d47ce59e06efb499b93e67b7bf9389b4e45521dce5edd0fa1aa8ebf0"
+			"sha256": "0adbd71eed442f2704fff543f9b2985567d18e186140c87844f88dca2b081100"
 		},
 		{
 			"path": "server/people.mjs",
@@ -719,13 +719,18 @@
 		},
 		{
 			"path": "server/test/catchup-player.test.mjs",
-			"bytes": 3842,
-			"sha256": "5a9549b38750a2ffb144f6810da0a606094948143498dcc0d452551fee6c6acd"
+			"bytes": 3937,
+			"sha256": "3e611b7d553312e1eb81d14c4ff577b7a9f710fbf89260ace41189442e83b2c6"
 		},
 		{
 			"path": "server/test/catchup-progress.test.mjs",
 			"bytes": 2279,
 			"sha256": "b369b402e87e08262992f095422c20220dfd925eab33ae61114dedd81b216c1e"
+		},
+		{
+			"path": "server/test/catchup-sync.test.mjs",
+			"bytes": 6459,
+			"sha256": "8900ddc6bc3bb6f252d8064f72f2f1fe55d5d734dbed942496493c6a7e08dcf7"
 		},
 		{
 			"path": "server/test/coming-calendar.test.mjs",
