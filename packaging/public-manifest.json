@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.6",
+	"serverVersion": "0.26.7",
 	"files": [
 		{
 			"path": ".env.example",
@@ -49,13 +49,13 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 19230,
-			"sha256": "8f666dd034d38a22de57bbe6828432de92e95d62b94bd108d619c178b7a7fcc4"
+			"bytes": 18728,
+			"sha256": "dfb1b19b6020d4ebd4c1c2d7ff7d9ad1c9e98383bb81967ff616473822e7d284"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 1741,
-			"sha256": "5abf245b03f045c017f9ae6d1a0062d1d89f39011137393c85a4e2d7e46cd985"
+			"bytes": 2404,
+			"sha256": "7b3aa75e9c3ed6325e094c96e81ac220dbffaa538ec2788907133b16626ad152"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -99,8 +99,8 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 42317,
-			"sha256": "e4889004085810d37c9723a5b2874af93dabaf713c1d4963eb0e96d552699240"
+			"bytes": 41815,
+			"sha256": "91d58c0b85ca85a3d0515c3239b6a131d12e538dc482615e823225444f64adf4"
 		},
 		{
 			"path": "docs/story.html",
@@ -215,7 +215,7 @@
 		{
 			"path": "README.md",
 			"bytes": 6169,
-			"sha256": "60cd61e9f6627ae15c954c13783fe72b4d80c2e771798919acb8c9be431d6631"
+			"sha256": "dac873861e2f05c57456f2c9206e95eb195ef32d4cb99dedf25ab01ba1ce377d"
 		},
 		{
 			"path": "relay/example.json",
@@ -264,8 +264,8 @@
 		},
 		{
 			"path": "server/auth.mjs",
-			"bytes": 23154,
-			"sha256": "63f9eac1c5dbfc45b706c2631c499dc8fff35b34e9611e62b2709210385a21ff"
+			"bytes": 23879,
+			"sha256": "265c0b071cb49d1358bc44fb920156ee17c3e5b32eb11d3d437df71e11e73f91"
 		},
 		{
 			"path": "server/broadcast-resume.mjs",
@@ -475,17 +475,22 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 28842,
-			"sha256": "12499d524a561111b372d3983aaa0bb8d3a0d98efded58ca45a2406d857f2f99"
+			"sha256": "623f6302b8b630d03d283df5eab50c147f8aa5b06d286280cb86228f90221935"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 271,
-			"sha256": "9b6595f6da241bc2ea2c97b39a7bfb216f9d2f1729de7d4d211751b77ce71bca"
+			"sha256": "a0312a970e0994f77c9928aa18272e5ab24b4f7e4eb61efcc278ec41e2b79726"
 		},
 		{
 			"path": "server/people.mjs",
 			"bytes": 12501,
 			"sha256": "b51f161d6ec60e0ac9d1c7543a30b34e1023c5f850b932f8cf040e126baa98b4"
+		},
+		{
+			"path": "server/playback-defaults.mjs",
+			"bytes": 1662,
+			"sha256": "85db9dd7d11afae5608080d408540d911a405f6128f160e24f8984b7e6594c2a"
 		},
 		{
 			"path": "server/playback-profile.mjs",
@@ -509,8 +514,8 @@
 		},
 		{
 			"path": "server/public/app.js",
-			"bytes": 117147,
-			"sha256": "ffa1268c1baaf0bdc022c292b00a0e2df26faee953cc791115abc1ee689a98b6"
+			"bytes": 118486,
+			"sha256": "dc1b4cc11eab5238358e7d78f5cddee13faa1393588d4c629a024497f5604876"
 		},
 		{
 			"path": "server/public/apps.html",
@@ -574,8 +579,8 @@
 		},
 		{
 			"path": "server/public/index.html",
-			"bytes": 12630,
-			"sha256": "b97a1603639fe9a9c5f9de524739428c5dd48590a975c4b3182e563d01b491b8"
+			"bytes": 12765,
+			"sha256": "a288ad9130d85e2100ebc1f96487b98767b2ba15b063dfddb5e81e4afdd92589"
 		},
 		{
 			"path": "server/public/installation-settings.js",
@@ -618,9 +623,14 @@
 			"sha256": "1505801696ecb7b3e9dfd6dab37c03fbc36757ecfd653f24c3d40824ddcbb322"
 		},
 		{
+			"path": "server/public/playback-defaults-settings.js",
+			"bytes": 1763,
+			"sha256": "20726abf473e21a611f53b2a07ffaeb74d8719b085e96df443411a7e5928da1b"
+		},
+		{
 			"path": "server/public/preferences.html",
-			"bytes": 2003,
-			"sha256": "2b2d6c659d128203a1d3146070ba2de39d27e54f2b6c767e8626e6299a6e508a"
+			"bytes": 2897,
+			"sha256": "fba9a590e0cc3eeb62200b9d331b2ddfde3db1e3f6057355abae16f58e459452"
 		},
 		{
 			"path": "server/public/remote-controls.js",
@@ -654,8 +664,8 @@
 		},
 		{
 			"path": "server/public/settings.html",
-			"bytes": 16520,
-			"sha256": "a0d11da795be6757a907cd32a1a320783c0a2734813ccd080b310fc07733c2fe"
+			"bytes": 19000,
+			"sha256": "60c83c7c0d3f2950117dc83e0116ecb683d5f49c124eaf8059e8e7b7d3e1c949"
 		},
 		{
 			"path": "server/public/settings.js",
@@ -679,8 +689,8 @@
 		},
 		{
 			"path": "server/public/style.css",
-			"bytes": 62141,
-			"sha256": "88b0e25d7d49c331d0938e2ecada483c440dc43d3e5aaa62d281c0a36b6e2782"
+			"bytes": 62394,
+			"sha256": "05c2856e08740efb09857a4081ca80ea95b0a6623d3b119e39b6565bc6dca7cc"
 		},
 		{
 			"path": "server/public/subtitle-settings.js",
@@ -714,8 +724,8 @@
 		},
 		{
 			"path": "server/public/viewer-preferences.js",
-			"bytes": 499,
-			"sha256": "204b2ac9d6666b4cbeb87b301649cea4c47c816cd57ca4d6b98a47110baa4e54"
+			"bytes": 2808,
+			"sha256": "0b85c012e2a00673a6e48f26e257af97d1d4bc22e32b1a0f472b3e9111dd48a9"
 		},
 		{
 			"path": "server/public/visitor-ui.js",
@@ -759,8 +769,8 @@
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 78507,
-			"sha256": "5b27fae63336329b3fe099fc296a413de30b507d8b0191b96300e0dacf3a2280"
+			"bytes": 78693,
+			"sha256": "9678be87877825029ed97446da7d2a0d4e29262bd1285fdc7754a66ae2633985"
 		},
 		{
 			"path": "server/session-limits.mjs",
@@ -814,8 +824,8 @@
 		},
 		{
 			"path": "server/test/auth.test.mjs",
-			"bytes": 32109,
-			"sha256": "05f0aa7ce40ffe906b91c417eb66f77eccfa64007da750c9db7b74714bf5f939"
+			"bytes": 32331,
+			"sha256": "5cb3548fbbb6369eaf409af38294b0d76e5ca3c8e21b8225a439fd462ce1fd54"
 		},
 		{
 			"path": "server/test/broadcast-resume.test.mjs",
@@ -1058,9 +1068,14 @@
 			"sha256": "2913cbbafd5664164b3677b618f4b00ba8e2176f398b1c23cf90baf63d4d8459"
 		},
 		{
+			"path": "server/test/playback-defaults.test.mjs",
+			"bytes": 6406,
+			"sha256": "87c0fa1036d43b90fcfba337fbcf6b8d2082e95a6418a66f05343c2b1841ab3a"
+		},
+		{
 			"path": "server/test/preferences-auth.test.mjs",
-			"bytes": 4001,
-			"sha256": "bd76c42a16dc4278584344b98bcf88122c87e8d3beaedd65dfe4d1c1634e41fb"
+			"bytes": 4259,
+			"sha256": "ad75a8386c95f2647bed4233a3645f8579b03e94a7629bb225794df26aa7d6e9"
 		},
 		{
 			"path": "server/test/push-gateway-client.test.mjs",
@@ -1204,8 +1219,8 @@
 		},
 		{
 			"path": "server/test/web-preferences.test.mjs",
-			"bytes": 6920,
-			"sha256": "57f93a0a0110475a17a6ecffb3e3ceb3a2da9259633f9903b07f074f61d61ff7"
+			"bytes": 10782,
+			"sha256": "f0e6903aabc7de4b3ac2131cc708f0c4769668e36c5582617f8d8a3b0526b33e"
 		},
 		{
 			"path": "server/trending.mjs",

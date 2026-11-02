@@ -28,6 +28,7 @@ import {createAccountLimits} from './account-limits.mjs';
 import {createSessionLimits} from './session-limits.mjs';
 import {createRemoteControls} from './remote-controls.mjs';
 import { createUploadLimit } from './upload-limit.mjs';
+import { createPlaybackDefaults } from './playback-defaults.mjs';
 import { primeStream } from './warmup.mjs';
 import { proxyImage } from './image-proxy.mjs';
 import { deviceProfile, textSubtitle, wantsSubtitleLookup, srtToVtt } from './playback-profile.mjs';
@@ -105,6 +106,7 @@ const sessionLimits=createSessionLimits({accountLimits,exists:id=>sessions.has(i
 const remoteControls=createRemoteControls(process.env.AUTH_DIR||path.join(root,'auth-data'));
 const isAdmin=req=>req.jserverApp?.role==='admin';
 const uploadLimit = createUploadLimit(process.env.AUTH_DIR || path.join(root, 'auth-data'));
+const playbackDefaults = createPlaybackDefaults(process.env.AUTH_DIR || path.join(root, 'auth-data'));
 const serverHealth = createServerHealth(process.env.HOST_HEALTH_PATH || path.join(path.dirname(configPath), 'host-health.json'), { bandwidth: () => uploadLimit.status(), streaming: () => activity.snapshot().active.filter(item => item.purpose !== 'download').length });
 const homeAssistant = createHomeAssistantIntegration({
 	directory: process.env.AUTH_DIR || path.join(root, 'auth-data'),
@@ -128,7 +130,7 @@ const homeNetwork = createHomeNetwork(process.env.HOME_IP_ENDPOINT || '', { onCh
 const auth = installAuth(app, {
 	installationCapabilities: {...features,managedInstallation:process.env.HOMELAB==='1',publicOrigin:process.env.PUBLIC_ORIGIN||''},
 	audit: activity,
-	uploadLimit,accountLimits,remoteControls,serverHealth,
+	uploadLimit,playbackDefaults,accountLimits,remoteControls,serverHealth,
 	validShareOwner: shares.validOwner,
 	instanceId,
 	localPlaybackOrigin,

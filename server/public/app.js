@@ -803,16 +803,42 @@ $('#refreshRecordings').onclick=()=>loadRecordings(true);
 $('#recordingFilters').onclick=event=>{const button=event.target.closest('[data-recording-filter]');if(!button)return;recordingFilter=button.dataset.recordingFilter;for(const node of $('#recordingFilters').querySelectorAll('button')){node.classList.toggle('active',node===button);node.setAttribute('aria-pressed',String(node===button));}renderRecordings();};
 setInterval(()=>{if(state.type==='dvr'&&!document.hidden&&!player.open&&!details.open&&!$('#recordingsList').contains(document.activeElement))void loadRecordings(true);},20000);
 $('#onlyFavourites').onclick = event => { const button = event.currentTarget; const on = button.getAttribute('aria-pressed') !== 'true'; button.setAttribute('aria-pressed', String(on)); button.textContent = on ? '★ Favourites' : '☆ All channels'; renderGuide(); };
-const autoplayPreference = document.querySelector('#autoNext');
-autoplayPreference.checked = localStorage.getItem('tellybox-autoplay') === 'true';
-autoplayPreference.onchange = () => { localStorage.setItem('tellybox-autoplay', String(autoplayPreference.checked)); if(autoplayPreference.checked)updateNext();else hideCountdown(); };
-function skipIntrosEnabled() {
-	try { return localStorage.getItem('tellybox-skip-intros') === 'true'; } catch { return false; }
+// PLAYBACK_DEFAULTS_START
+const serverPlaybackDefaults = { englishSubtitles: false, autoNext: false, skipIntros: false };
+function normalisePlaybackDefaults(value) {
+	const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+	return { englishSubtitles: source.englishSubtitles === true, autoNext: source.autoNext === true, skipIntros: source.skipIntros === true };
 }
-window.addEventListener('storage', event => { if (event.key === 'tellybox-skip-intros') updateNext(); });
+function localPlaybackChoice(key) {
+	try {
+		const value = localStorage.getItem(key);
+		return value === 'true' ? true : value === 'false' ? false : undefined;
+	} catch { return undefined; }
+}
+function playbackPreference(key, serverKey) {
+	const local = localPlaybackChoice(key);
+	return local === undefined ? serverPlaybackDefaults[serverKey] === true : local;
+}
+function setPlaybackPreference(key, enabled) {
+	try { localStorage.setItem(key, String(enabled)); } catch { /* Private browsing can block storage. */ }
+}
+// PLAYBACK_DEFAULTS_END
+const autoplayPreference = document.querySelector('#autoNext');
 const subtitlePreference = document.querySelector('#defaultEnglish');
-subtitlePreference.checked = localStorage.getItem('tellybox-english') === 'true';
-subtitlePreference.onchange = () => localStorage.setItem('tellybox-english', String(subtitlePreference.checked));
+function applyPlaybackPreferences() {
+	autoplayPreference.checked = playbackPreference('tellybox-autoplay', 'autoNext');
+	subtitlePreference.checked = playbackPreference('tellybox-english', 'englishSubtitles');
+}
+applyPlaybackPreferences();
+autoplayPreference.onchange = () => { setPlaybackPreference('tellybox-autoplay', autoplayPreference.checked); if(autoplayPreference.checked)updateNext();else hideCountdown(); };
+function skipIntrosEnabled() {
+	return playbackPreference('tellybox-skip-intros', 'skipIntros');
+}
+window.addEventListener('storage', event => {
+	if (['tellybox-english', 'tellybox-autoplay', 'tellybox-skip-intros'].includes(event.key)) applyPlaybackPreferences();
+	if (event.key === 'tellybox-skip-intros') updateNext();
+});
+subtitlePreference.onchange = () => setPlaybackPreference('tellybox-english', subtitlePreference.checked);
 setInterval(() => {
 	if (state.type === 'livetv' && !document.hidden && !details.open && !player.open && !$('#liveGuide').contains(document.activeElement)) void loadGuide();
 }, 60000);
@@ -1454,7 +1480,7 @@ async function startPlayback(item, position = 0, keepSettings = false) {
 	$('#retryPlayer').disabled = true;
 	try {
 		const payload = { textSubtitles: true, id: item.Id, quality: Number($('#quality').value), compatibility: state.compatibility, subtitleIndex: Number($('#subtitleTrack').value) };
-		if (!keepSettings && localStorage.getItem('tellybox-english') === 'true') { delete payload.subtitleIndex; payload.preferEnglishSubtitles = true; }
+		if (!keepSettings && playbackPreference('tellybox-english', 'englishSubtitles')) { delete payload.subtitleIndex; payload.preferEnglishSubtitles = true; }
 		if ($('#audioTrack').value !== '') payload.audioIndex = Number($('#audioTrack').value);
 		const sessionBase = await playbackBase();
 		if (generation !== playGeneration || !player.open) return;
@@ -1668,7 +1694,12 @@ let sharedFavourites=null, favouriteHome=false, serverFavouritesRequired=false, 
 let homeFeedsStarted=false;
 function loadHomeFeeds(){if(homeFeedsStarted)return;homeFeedsStarted=true;void Promise.all([loadReleases(),loadTvReleases(),loadComing()]);}
 async function init() {
-	try { canShare=Boolean((await api('/api/capabilities')).canShare); } catch { canShare=false; }
+	try {
+		const capabilities = await api('/api/capabilities');
+		canShare=Boolean(capabilities.canShare);
+		Object.assign(serverPlaybackDefaults, normalisePlaybackDefaults(capabilities.playbackDefaults));
+	} catch { canShare=false; Object.assign(serverPlaybackDefaults, normalisePlaybackDefaults(null)); }
+	applyPlaybackPreferences();
 	try {
 		const access = await api('/api/auth/status');
 		routing.direct = access.local;

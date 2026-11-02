@@ -66,5 +66,8 @@ test('preferences page is denied signed out, available to approved remote viewer
 	const asset = await request('remote', '/viewer-preferences.js', undefined, cookie);
 	assert.equal(asset.status, 200);
 	assert.match(asset.headers.get('content-type'), /javascript/);
+	const capabilities = await request('remote', '/api/capabilities', undefined, cookie);
+	assert.equal(capabilities.status, 200);
+	assert.deepEqual((await capabilities.json()).playbackDefaults, { englishSubtitles: false, autoNext: false, skipIntros: false });
 	assert.equal((await request('remote', '/settings', undefined, cookie)).status, 403);
 });

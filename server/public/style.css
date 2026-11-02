@@ -426,6 +426,9 @@ button:active { transform: scale(.985); }
 .preference-row { display: flex; align-items: center; gap: 24px; justify-content: space-between; padding-block: 16px; }
 .preference-row small { display: block; color: var(--muted); max-width: 550px; margin-top: 8px; line-height: 1.5; }
 .preference-row input { accent-color: var(--green); width: 24px; height: 24px; flex-shrink: 0; }
+.preference-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: -6px 0 14px; }
+.preference-actions .preference-state { color: var(--muted); }
+.preference-actions .button { min-height: 0; padding: 6px 10px; }
 .episode-list { gap: 12px; }
 .episode-share-row { align-items: center; }
 .episode { display: flex; gap: 20px; align-items: flex-start; padding: 16px; border-radius: 16px; min-width: 0; text-align: left; }

@@ -33,7 +33,7 @@ test('installation features share the existing capability endpoint without overr
 	const directory=mkdtempSync(path.join(tmpdir(),'tellybox-capabilities-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));
 	const {request}=await fixture(t,directory,{installationCapabilities:{library:true,live:false,discover:true,managedInstallation:true,canShare:false}});
 	const response=await request('local','/api/capabilities');assert.equal(response.status,200);
-	assert.deepEqual(await response.json(),{library:true,live:false,discover:true,managedInstallation:true,canShare:true,canDownload:true});
+	assert.deepEqual(await response.json(),{library:true,live:false,discover:true,managedInstallation:true,playbackDefaults:{englishSubtitles:false,autoNext:false,skipIntros:false},canShare:true,canDownload:true});
 });
 
 test('remote email input limit counts invalid input and cannot be bypassed with a forged client IP',async t=>{
@@ -278,7 +278,7 @@ test('email guests cannot watch before approval, home stays login-free, linked a
 	assert.equal(verified.status,200);assert.equal((await verified.json()).name,person.email);
 	const cookie=verified.headers.get('set-cookie').split(';')[0];
 	assert.equal((await request('remote','/api/items',undefined,cookie)).status,200);
-	assert.deepEqual(await (await request('remote','/api/capabilities',undefined,cookie)).json(),{canShare:false,canDownload:true});
+	assert.deepEqual(await (await request('remote','/api/capabilities',undefined,cookie)).json(),{playbackDefaults:{englishSubtitles:false,autoNext:false,skipIntros:false},canShare:false,canDownload:true});
 	for(const [route,body] of [['/api/shares/fixture',undefined],['/api/shares',{}],['/api/shares/fixture/revoke',{}]])assert.equal((await request('remote',route,body,cookie)).status,403);
 	const own=(await (await request('remote','/api/favourites',undefined,cookie)).json()).own;
 	assert.equal(own.name,'person@example.test');
@@ -322,7 +322,7 @@ test('sharing is limited to current admins or trusted home access, including all
 	async function permitted(side,expected,headers={},cookie) {
 		const caps=await request(side,'/api/capabilities',undefined,cookie,headers);
 		if(expected===401)assert.equal(caps.status,401);
-		else {assert.equal(caps.status,200);assert.deepEqual(await caps.json(),{canShare:expected===200,canDownload:true});assert.equal(caps.headers.get('cache-control'),'no-store');}
+		else {assert.equal(caps.status,200);assert.deepEqual(await caps.json(),{playbackDefaults:{englishSubtitles:false,autoNext:false,skipIntros:false},canShare:expected===200,canDownload:true});assert.equal(caps.headers.get('cache-control'),'no-store');}
 		for(const [route,body] of routes)assert.equal((await request(side,route,body,cookie,headers)).status,expected,side+' '+route);
 	}
 	await permitted('local',200);

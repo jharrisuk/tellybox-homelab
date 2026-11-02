@@ -18,17 +18,30 @@ function checkbox() {
 
 function preferenceContext(storage) {
 	const english = checkbox(), autoplay = checkbox(), skipIntros = checkbox();
+	const states = {}, resets = {};
+	const node = map => key => map[key] || (map[key] = { textContent: '', hidden: true, onclick: null });
+	const state = node(states), reset = node(resets);
 	const context = vm.createContext({
 		localStorage: {
 			getItem: key => storage.has(key) ? storage.get(key) : null,
-			setItem: (key, value) => storage.set(key, value)
+			setItem: (key, value) => storage.set(key, value),
+			removeItem: key => storage.delete(key)
 		},
 		document: {
-			querySelector: selector => selector === '#englishSubtitles' ? english : selector === '#autoNext' ? autoplay : selector === '#skipIntros' ? skipIntros : null
+			querySelector: selector => {
+				if (selector === '#englishSubtitles') return english;
+				if (selector === '#autoNext') return autoplay;
+				if (selector === '#skipIntros') return skipIntros;
+				const stateKey = /^\[data-preference-state="(.+)"\]$/.exec(selector);
+				if (stateKey) return state(stateKey[1]);
+				const resetKey = /^\[data-preference-reset="(.+)"\]$/.exec(selector);
+				if (resetKey) return reset(resetKey[1]);
+				return null;
+			}
 		}
 	});
 	vm.runInContext(preferencesSource, context);
-	return { context, english, autoplay, skipIntros };
+	return { context, english, autoplay, skipIntros, states, resets };
 }
 
 test('shared viewer preferences persist all three keys and restore on refresh', () => {
@@ -49,37 +62,78 @@ test('shared viewer preferences persist all three keys and restore on refresh', 
 	assert.equal(refreshed.skipIntros.checked, true, 'a refresh restores intro skipping');
 });
 
-test('the player reads the stored intro preference without a player checkbox', () => {
-	const start = appSource.indexOf('function skipIntrosEnabled()');
-	const end = appSource.indexOf("window.addEventListener('storage'", start);
-	assert.ok(start >= 0 && end > start, 'missing skipIntrosEnabled helper');
+test('viewer preferences inherit server defaults until a local choice is saved or reset', () => {
+	const storage = new Map();
+	const first = preferenceContext(storage);
+	first.context.TellyboxViewerPreferences.apply({ englishSubtitles: true, autoNext: true, skipIntros: false });
+	assert.equal(first.english.checked, true, 'missing override inherits a true server default');
+	assert.equal(first.autoplay.checked, true, 'missing override inherits autoplay');
+	assert.equal(first.skipIntros.checked, false, 'missing override inherits a false server default');
+	storage.set('tellybox-english', 'false');
+	first.context.TellyboxViewerPreferences.render();
+	assert.equal(first.english.checked, false, 'an explicit false choice overrides a true server default');
+	assert.equal(first.states.englishSubtitles.textContent, 'Saved for this browser.');
+	assert.equal(first.resets.englishSubtitles.hidden, false);
+	first.resets.englishSubtitles.onclick();
+	assert.equal(first.english.checked, true, 'the reset control resumes inheritance');
+	assert.equal(storage.has('tellybox-english'), false, 'reset does not seed a local value');
+	assert.equal(first.states.englishSubtitles.textContent, 'Using the server default (on).');
+	storage.set('tellybox-english', 'not-a-choice');
+	first.context.TellyboxViewerPreferences.render();
+	assert.equal(first.english.checked, true, 'an invalid local value is not treated as an override');
+	first.context.TellyboxViewerPreferences.apply(undefined);
+	assert.equal(first.autoplay.checked, false, 'missing server defaults fail safely to off');
+});
+
+test('the player resolves all three saved choices through the server defaults helper', () => {
+	const start = appSource.indexOf('// PLAYBACK_DEFAULTS_START');
+	const end = appSource.indexOf('// PLAYBACK_DEFAULTS_END', start);
+	const skipStart = appSource.indexOf('function skipIntrosEnabled()');
+	const skipEnd = appSource.indexOf("window.addEventListener('storage'", skipStart);
+	assert.ok(start >= 0 && end > start, 'missing playback defaults helper');
+	assert.ok(skipStart >= 0 && skipEnd > skipStart, 'missing skipIntrosEnabled helper');
 	const storage = new Map();
 	const context = vm.createContext({
 		localStorage: {
-			getItem: key => storage.has(key) ? storage.get(key) : null
+			getItem: key => storage.has(key) ? storage.get(key) : null,
+			setItem: (key, value) => storage.set(key, value)
 		}
 	});
-	vm.runInContext(appSource.slice(start, end), context);
+	vm.runInContext(appSource.slice(start, end) + '\n' + appSource.slice(skipStart, skipEnd), context);
 	assert.equal(context.skipIntrosEnabled(), false);
-	storage.set('tellybox-skip-intros', 'true');
-	assert.equal(context.skipIntrosEnabled(), true);
+	vm.runInContext('serverPlaybackDefaults.skipIntros = true', context);
+	assert.equal(context.skipIntrosEnabled(), true, 'a missing override inherits the server default');
+	storage.set('tellybox-skip-intros', 'false');
+	assert.equal(context.skipIntrosEnabled(), false, 'an explicit false choice overrides the server default');
+	storage.delete('tellybox-skip-intros');
+	assert.equal(context.skipIntrosEnabled(), true, 'resetting resumes inheritance');
+	vm.runInContext('serverPlaybackDefaults.skipIntros = "yes"', context);
+	assert.equal(context.skipIntrosEnabled(), false, 'an invalid server value fails safely to off');
 	assert.equal(appSource.includes("querySelector('#skipIntros')"), false);
+	assert.ok(appSource.includes("normalisePlaybackDefaults(capabilities.playbackDefaults)"));
+	assert.ok(appSource.includes("playbackPreference('tellybox-english', 'englishSubtitles')"));
 });
 
 test('the dedicated preferences page has only viewer controls and no admin scripts', () => {
 	for (const id of ['englishSubtitles', 'autoNext', 'skipIntros']) assert.ok(preferencesHtml.includes(`id="${id}"`), id);
 	assert.ok(preferencesHtml.includes('/viewer-preferences.js'));
 	assert.ok(preferencesHtml.includes('Watching settings'));
-	for (const admin of ['settings.js', 'installation-settings.js', 'dispatcharr-settings.js', 'people.js', 'apps.js', 'admin-downloads.js', 'server-health.js', 'auth.js']) {
+	assert.ok(preferencesHtml.includes('data-preference-reset="englishSubtitles"'), 'viewer reset control is present');
+	assert.ok(preferencesHtml.includes('Use server defaults'));
+	for (const admin of ['settings.js', 'installation-settings.js', 'dispatcharr-settings.js', 'people.js', 'apps.js', 'admin-downloads.js', 'server-health.js', 'auth.js', 'playback-defaults-settings.js']) {
 		assert.equal(preferencesHtml.includes(admin), false, 'preferences page must not load ' + admin);
 	}
 	assert.equal(indexHtml.includes('id="skipIntros"'), false, 'the player must not contain the intro toggle');
 	assert.ok(settingsHtml.includes('id="skipIntros"'), 'local Settings > Watching keeps the control');
 	assert.ok(settingsHtml.includes('id="englishSubtitles"'), 'local Settings > Watching keeps English subtitles');
+	assert.ok(settingsHtml.includes('id="autoNext"'), 'local Settings > Watching keeps autoplay');
+	for (const id of ['serverDefaultEnglish', 'serverDefaultAutoNext', 'serverDefaultSkipIntros']) assert.ok(settingsHtml.includes(`id="${id}"`), id);
+	assert.ok(settingsHtml.includes('/playback-defaults-settings.js'), 'admin-only defaults control uses its own script');
 	for (const page of [indexHtml, discoverHtml, searchHtml]) {
 		assert.ok(page.includes('/navigation.js'), 'shared topbar navigation is loaded');
 		assert.ok(page.includes('account-actions'), 'the viewer link has a topbar account slot');
 	}
+	assert.ok(appSource.includes("state.playing?.Type==='Episode' && !state.live"), 'intro skipping still excludes live and 24/7');
 });
 
 function fakeNode(properties = {}) {

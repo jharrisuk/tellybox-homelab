@@ -9,12 +9,15 @@
 <body class="settings-page">
 	<header class="settings-header"><a class="brand" href="/"><img class="brand-logo" src="/tellybox-logo.png" alt="Tellybox"></a><a class="button quiet" href="/">Back to watching</a></header>
 	<main class="settings-shell">
-		<p class="eyebrow">MAKE YOURSELF AT HOME</p><h1>Watching settings</h1><p class="settings-intro">These preferences belong to this browser. They do not change server administration.</p>
+		<p class="eyebrow">MAKE YOURSELF AT HOME</p><h1>Watching settings</h1><p class="settings-intro">These preferences belong to this browser. Leave a choice alone to follow the server default; change it to save your own choice. They do not change server administration.</p>
 		<section class="settings-box" aria-labelledby="browserPreferences">
-			<div class="settings-heading"><div><h2 id="browserPreferences">Playback preferences</h2><p>Saved on this device and shared with the player in this browser.</p></div></div>
+			<div class="settings-heading"><div><h2 id="browserPreferences">Playback preferences</h2><p>Shared with the player in this browser. Reset any choice to follow the server again.</p></div></div>
 			<label class="preference-row"><span><strong>English subtitles</strong><small>Choose the first available English track when a title starts. You can still change it in the player.</small></span><input id="englishSubtitles" type="checkbox"></label>
+			<div class="preference-actions"><small class="preference-state" data-preference-state="englishSubtitles">Checking the server default...</small><button class="button quiet" type="button" data-preference-reset="englishSubtitles" hidden>Use server defaults</button></div>
 			<label class="preference-row"><span><strong>Play the next episode</strong><small>Show a cancelable 10-second countdown when an episode is ending.</small></span><input id="autoNext" type="checkbox"></label>
+			<div class="preference-actions"><small class="preference-state" data-preference-state="autoNext">Checking the server default...</small><button class="button quiet" type="button" data-preference-reset="autoNext" hidden>Use server defaults</button></div>
 			<label class="preference-row"><span><strong>Always skip intros</strong><small>Only confirmed episode intros. Recaps, credits and the manual Skip button are unchanged.</small></span><input id="skipIntros" type="checkbox"></label>
+			<div class="preference-actions"><small class="preference-state" data-preference-state="skipIntros">Checking the server default...</small><button class="button quiet" type="button" data-preference-reset="skipIntros" hidden>Use server defaults</button></div>
 		</section>
 		<p class="auth-note">You can change these choices again from this page. Server access and installation settings stay with the administrator.</p>
 	</main>

@@ -158,6 +158,18 @@ export function installAuth(app, options) {
 			res.json(result);
 		});
 	}
+	if (options.playbackDefaults) {
+		app.get('/api/auth/playback-defaults', apps.requireAdmin, (req, res) => res.json(options.playbackDefaults.status()));
+		app.post('/api/auth/playback-defaults', csrf, apps.writeCheck, apps.requireAdmin, (req, res) => {
+			try {
+				const result = options.playbackDefaults.set(req.body || {});
+				audit?.record('playback_defaults_changed', identity(req), result);
+				res.json(result);
+			} catch (error) {
+				res.status(error.status || 500).json({ error: error.status ? error.message : 'Playback defaults could not be saved.' });
+			}
+		});
+	}
 	app.get('/api/auth/status', (req, res) => {
 		const atHome = home(req);
 		if ((req.jserverLocal || atHome) && !apps.present(req)) {
@@ -359,7 +371,8 @@ export function installAuth(app, options) {
 	const canShare = req => Boolean(req.jserverApp?.role === 'admin' || local(req) || home(req));
 	app.get('/api/capabilities', (req, res) => {
 		res.setHeader('Cache-Control', 'no-store');
-		res.json({ ...options.installationCapabilities, canShare:canShare(req),canDownload:(options.remoteControls?.allowed(req.jserverViewer)??true)&&(options.accountLimits?.allowed(req.jserverViewer,true)??true) });
+		const playbackDefaults = options.playbackDefaults?.status() || { englishSubtitles:false, autoNext:false, skipIntros:false };
+		res.json({ ...options.installationCapabilities, playbackDefaults, canShare:canShare(req),canDownload:(options.remoteControls?.allowed(req.jserverViewer)??true)&&(options.accountLimits?.allowed(req.jserverViewer,true)??true) });
 	});
 	app.use('/api/shares', (req, res, next) => {
 		if (!canShare(req)) return res.status(403).json({ error: 'Sharing is available to administrators or at home.' });

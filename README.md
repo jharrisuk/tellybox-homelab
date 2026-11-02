@@ -2,7 +2,7 @@
 
 Your collection, live TV, 24/7 channels and streamed titles in one place, with a web player and companion apps for Android phone and TV.
 
-**Server 0.26.6 - early access.** Built for people who enjoy running their own media services. Start with a separate installation, connect the services you use, and try it on your devices before relying on it.
+**Server 0.26.7 - early access.** Built for people who enjoy running their own media services. Start with a separate installation, connect the services you use, and try it on your devices before relying on it.
 
 **[Installation walkthrough](https://homelab.tellyboxapp.com/#start)** · **[Android apps](https://homelab.tellyboxapp.com/#apps)** · **[Report a problem](https://github.com/jharrisuk/tellybox-homelab/issues)**
 

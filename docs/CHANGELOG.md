@@ -2,6 +2,14 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Server 0.26.7 and Android 0.26.10 (build 64) - 2 November 2026
+
+### Playback defaults
+
+- Administrators can set server-wide defaults for **English subtitles**, **Play the next episode** and **Always skip intros** in the local **Settings → Server** panel.
+- A saved on or off choice on a phone, TV or browser overrides the server default. A device or browser with no explicit choice follows the server, and **Use server defaults** in **Watching settings** clears an override so it follows the server again.
+- Fresh installations start with all three defaults off. Existing installations keep their current behaviour until an administrator enables a default.
+
 ## Server 0.26.6 and Android 0.26.9 (build 63) - 2 November 2026
 
 ### Playback

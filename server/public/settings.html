@@ -8,7 +8,7 @@
 		<script src="/subtitle-settings.js?v=1" defer></script>
 	<link rel="icon" href="/icon.svg"><link rel="stylesheet" href="/style.css">
 	<script src="/auth.js" defer></script>
-	<script src="/people-directory.js" defer></script><script src="/people.js" defer></script><script src="/remote-controls.js" defer></script><script src="/login-protection.js" defer></script><script src="/admin-downloads.js" defer></script><script src="/apps.js" defer></script><script src="/viewer-preferences.js" defer></script><script src="/settings.js" defer></script><script src="/server-health.js" defer></script>
+	<script src="/people-directory.js" defer></script><script src="/people.js" defer></script><script src="/remote-controls.js" defer></script><script src="/login-protection.js" defer></script><script src="/admin-downloads.js" defer></script><script src="/apps.js" defer></script><script src="/viewer-preferences.js" defer></script><script src="/playback-defaults-settings.js" defer></script><script src="/settings.js" defer></script><script src="/server-health.js" defer></script>
 	<script src="/connection-status.js" defer></script>
 	<script src="/server-version.js" defer></script>
 </head>
@@ -93,13 +93,29 @@
 			<a class="settings-link" href="/activity">Viewing activity & signed-in browsers <span>→</span></a>
 		</section>
 		<section data-settings="watching" hidden>
-			<div class="settings-box"><h2>Make watching yours</h2><p>These preferences belong to this browser.</p><label class="preference-row"><span><strong>English subtitles</strong><small>Choose the first available English track when a title starts. You can still change it in the player.</small></span><input id="englishSubtitles" type="checkbox"></label><label class="preference-row"><span><strong>Always skip intros</strong><small>Only confirmed episode intros. Recaps, credits and the manual Skip button are unchanged.</small></span><input id="skipIntros" type="checkbox"></label></div>
+			<div class="settings-box"><h2>Make watching yours</h2><p>These preferences belong to this browser. Leave a choice alone to follow the server default; change it to save your own choice here.</p>
+				<label class="preference-row"><span><strong>English subtitles</strong><small>Choose the first available English track when a title starts. You can still change it in the player.</small></span><input id="englishSubtitles" type="checkbox"></label>
+				<div class="preference-actions"><small class="preference-state" data-preference-state="englishSubtitles">Checking the server default...</small><button class="button quiet" type="button" data-preference-reset="englishSubtitles" hidden>Use server defaults</button></div>
+				<label class="preference-row"><span><strong>Play the next episode</strong><small>Show a cancelable 10-second countdown when an episode is ending.</small></span><input id="autoNext" type="checkbox"></label>
+				<div class="preference-actions"><small class="preference-state" data-preference-state="autoNext">Checking the server default...</small><button class="button quiet" type="button" data-preference-reset="autoNext" hidden>Use server defaults</button></div>
+				<label class="preference-row"><span><strong>Always skip intros</strong><small>Only confirmed episode intros. Recaps, credits and the manual Skip button are unchanged.</small></span><input id="skipIntros" type="checkbox"></label>
+				<div class="preference-actions"><small class="preference-state" data-preference-state="skipIntros">Checking the server default...</small><button class="button quiet" type="button" data-preference-reset="skipIntros" hidden>Use server defaults</button></div>
+			</div>
 			<div class="settings-box"><h2>At home, stream directly</h2><p>Choose “Use local streaming” on the home page to send video directly from your home server.</p></div>
 		</section>
 		<section data-settings="server" hidden>
 			<div id="installationSettings" class="settings-box" hidden>
 				<div class="settings-heading"><div><h2>Installation settings</h2><p>Manage services, notifications and your relay.</p></div><a id="installationSettingsLink" class="button secondary" target="_blank" rel="noopener noreferrer">Open installation settings ↗</a></div>
 				<p class="auth-note">Opens on your home network. Your installation administrator password is required.</p>
+			</div>
+			<div class="settings-box" id="playbackDefaultsSettings">
+				<div class="settings-heading"><div><h2>Server playback defaults</h2><p>For every viewer and player unless they have saved their own choice on that device or browser.</p></div></div>
+				<label class="preference-row"><span><strong>English subtitles</strong><small>Choose the first available English track when a title starts. A viewer can still change subtitles in the player.</small></span><input id="serverDefaultEnglish" type="checkbox"></label>
+				<label class="preference-row"><span><strong>Play the next episode</strong><small>Show a cancelable 10-second countdown when an episode is ending.</small></span><input id="serverDefaultAutoNext" type="checkbox"></label>
+				<label class="preference-row"><span><strong>Always skip intros</strong><small>Only confirmed episode intros. Recaps, credits and the manual Skip button are unchanged.</small></span><input id="serverDefaultSkipIntros" type="checkbox"></label>
+				<p class="auth-note">Existing on or off choices saved by viewers are kept. These defaults update when the current browser reloads its watching settings.</p>
+				<p id="playbackDefaultsMessage" role="status"></p>
+				<button id="savePlaybackDefaults" class="button primary" type="button">Save playback defaults</button>
 			</div>
 			<div class="settings-box"><h2>English subtitles</h2><p>Automatically look for missing English subtitles when a film or episode opens. Works with local and streamed titles. Existing English tracks take priority; Live TV and 24/7 are excluded.</p>
 				<p id="subtitleConnectionStatus" role="status">Checking subtitle connection…</p>
