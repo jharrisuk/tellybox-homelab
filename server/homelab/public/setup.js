@@ -106,7 +106,9 @@ async function load() {
 	for (const service of data.infrastructure) { const block = el('section'); block.append(el('h3', service.name), el('p', service.summary), el('p', service.requires), el('p', service.note)); $('#infrastructure').append(block); }
 	void relayStatus(true).catch(e => { $('#relayStatus').textContent = e.message; });
 	void showRelayHealth();
+	void showHomeAssistant().catch(e => { $('#homeAssistantStatus').textContent = e.message; });
 	if (location.hash === '#relayPanel') $('#relayPanel').scrollIntoView({ block: 'start' });
+	if (location.hash === '#homeAssistantPanel') $('#homeAssistantPanel').scrollIntoView({ block: 'start' });
 }
 function collect() {
 	const value = structuredClone(model);
@@ -149,6 +151,57 @@ async function showRelayHealth() {
 	finally { button.disabled = false; }
 }
 $('#relayHealthCheck').onclick = showRelayHealth;
+function showHomeAssistantToken(result) {
+	$('#homeAssistantToken').value = result.token;
+	$('#homeAssistantTokenBox').hidden = false;
+	$('#homeAssistantToken').focus();
+	$('#homeAssistantToken').select();
+}
+async function showHomeAssistant() {
+	const state = await request('home-assistant'), created = state.createdAt ? new Date(state.createdAt).toLocaleString() : '';
+	$('#homeAssistantStatus').textContent = state.configured
+		? `Token created ${created}${state.rotatedAt ? ` · last rotated ${new Date(state.rotatedAt).toLocaleString()}` : ''}.`
+		: 'Not connected. Create a token, then add the Tellybox integration in Home Assistant.';
+	$('#homeAssistantCreate').hidden = state.configured;
+	$('#homeAssistantRotate').hidden = !state.configured;
+	$('#homeAssistantRevoke').hidden = !state.configured;
+	if (!state.configured) $('#homeAssistantTokenBox').hidden = true;
+	return state;
+}
+$('#homeAssistantCreate').onclick = async () => {
+	try {
+		const result = await request('home-assistant', { action: 'create' });
+		showHomeAssistantToken(result);
+		$('#homeAssistantMessage').textContent = 'Token created. Copy it now; it is not shown again.';
+		await showHomeAssistant();
+	} catch (e) { $('#homeAssistantMessage').textContent = e.message; }
+};
+$('#homeAssistantRotate').onclick = async () => {
+	if (!confirm('Rotate the Home Assistant token? The existing token stops working immediately.')) return;
+	try {
+		const result = await request('home-assistant', { action: 'rotate' });
+		showHomeAssistantToken(result);
+		$('#homeAssistantMessage').textContent = 'Token rotated. Update Home Assistant with the new token.';
+		await showHomeAssistant();
+	} catch (e) { $('#homeAssistantMessage').textContent = e.message; }
+};
+$('#homeAssistantRevoke').onclick = async () => {
+	if (!confirm('Revoke the Home Assistant token? The integration stops reading statistics immediately.')) return;
+	try {
+		await request('home-assistant', { action: 'revoke' });
+		$('#homeAssistantTokenBox').hidden = true;
+		$('#homeAssistantMessage').textContent = 'Token revoked.';
+		await showHomeAssistant();
+	} catch (e) { $('#homeAssistantMessage').textContent = e.message; }
+};
+$('#homeAssistantCopy').onclick = async () => {
+	const field = $('#homeAssistantToken');
+	try {
+		if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(field.value);
+		else { field.select(); document.execCommand('copy'); }
+		$('#homeAssistantMessage').textContent = 'Token copied.';
+	} catch { field.select(); $('#homeAssistantMessage').textContent = 'Select the token and copy it manually.'; }
+};
 async function relayStatus(fill = false) {
 	clearTimeout(relayTimer);
 	const state = await request('relay'), c = state.connection, job = state.job;

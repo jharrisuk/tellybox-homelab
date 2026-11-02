@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.5",
+	"serverVersion": "0.26.6",
 	"files": [
 		{
 			"path": ".env.example",
@@ -14,13 +14,13 @@
 		},
 		{
 			"path": ".github/workflows/verify.yml",
-			"bytes": 1133,
-			"sha256": "7ab2d89cd28eb33cd1e83589a2219b99eb01a5df31b6b2480f08cdcd4a44bfee"
+			"bytes": 1292,
+			"sha256": "ee69c3faaf56bd1aeb9cdeac34313b89fd71e4781c588bfcb7cf0ba11d48f42f"
 		},
 		{
 			"path": ".gitignore",
-			"bytes": 244,
-			"sha256": "679eca0aa6217c8bcb8bc966dfb5469ae8752d7f43236bd9caa892700ae0b833"
+			"bytes": 266,
+			"sha256": "c8e215b6ee73772a0964203cfe4e932d485a5a2a47fafff8e2d478d130cd399e"
 		},
 		{
 			"path": "APP-TERMS.md",
@@ -49,8 +49,13 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 18003,
-			"sha256": "f55fcb61ceb7adc3c4a70838446ac13220cf86fff1cca7ea162ae8d1644b7a97"
+			"bytes": 19230,
+			"sha256": "8f666dd034d38a22de57bbe6828432de92e95d62b94bd108d619c178b7a7fcc4"
+		},
+		{
+			"path": "docs/CHANGELOG.md",
+			"bytes": 1741,
+			"sha256": "5abf245b03f045c017f9ae6d1a0062d1d89f39011137393c85a4e2d7e46cd985"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -74,8 +79,8 @@
 		},
 		{
 			"path": "docs/site/guide.css",
-			"bytes": 11451,
-			"sha256": "cb5ba69f550f6138a3fbc8386f68042ccc9cbcb8098a48f7488c0024915a3064"
+			"bytes": 11652,
+			"sha256": "e3640458c58ef7ece4e25f5fa2167b095aae0c0a0d06a0d6b5413f8325765346"
 		},
 		{
 			"path": "docs/site/guide.js",
@@ -94,13 +99,98 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 41090,
-			"sha256": "55283872e5220ea54566ad574ae8a031d133fe2cba86995b13cf6b95e7cee992"
+			"bytes": 42317,
+			"sha256": "e4889004085810d37c9723a5b2874af93dabaf713c1d4963eb0e96d552699240"
 		},
 		{
 			"path": "docs/story.html",
 			"bytes": 922,
 			"sha256": "2129844a9768a04910f55bfff8ffa88b8cd8fc498684b2da2a61ac4664d6229f"
+		},
+		{
+			"path": "integrations/home-assistant/custom_components/tellybox/__init__.py",
+			"bytes": 1187,
+			"sha256": "c21372ae0d8bdf063a1597b522a1c6cae5795c72e21340c32e6028e7aa473004"
+		},
+		{
+			"path": "integrations/home-assistant/custom_components/tellybox/api.py",
+			"bytes": 2677,
+			"sha256": "96949d6f7af7d539daf760edc9ead504e3326ee89ec9397b3473bee0e9e8f10e"
+		},
+		{
+			"path": "integrations/home-assistant/custom_components/tellybox/binary_sensor.py",
+			"bytes": 1313,
+			"sha256": "9488999354a5e326208f2232a7d569dc86ca032dfe61bde6de70799d47a54f62"
+		},
+		{
+			"path": "integrations/home-assistant/custom_components/tellybox/config_flow.py",
+			"bytes": 3436,
+			"sha256": "cb7f4b6c2d49a093f1aaf90364089d8dfb5c441a9c84845d485356d8977b3163"
+		},
+		{
+			"path": "integrations/home-assistant/custom_components/tellybox/const.py",
+			"bytes": 352,
+			"sha256": "d21c07b0ab1af555d2cc5be469de721821854cd0f0ba1e90e7df6e0c8f2a051f"
+		},
+		{
+			"path": "integrations/home-assistant/custom_components/tellybox/coordinator.py",
+			"bytes": 1342,
+			"sha256": "288a90268984bc30d31a0608113825f6317f0b91b93513403cb5d88551355a03"
+		},
+		{
+			"path": "integrations/home-assistant/custom_components/tellybox/entity.py",
+			"bytes": 997,
+			"sha256": "2bd3e061eda74bdecdc1704db29aeaef789028ec903aaa055e09434112dafb59"
+		},
+		{
+			"path": "integrations/home-assistant/custom_components/tellybox/manifest.json",
+			"bytes": 368,
+			"sha256": "d1aeb941bd412c9a6a5c0cfba843920ed3c6cfebdbcb040f4dce03a7b1382805"
+		},
+		{
+			"path": "integrations/home-assistant/custom_components/tellybox/sensor.py",
+			"bytes": 6270,
+			"sha256": "ebfb10328768a22a0874d8df1bad51f2b92aa5cf2a3fe9a540278b174869fa4a"
+		},
+		{
+			"path": "integrations/home-assistant/custom_components/tellybox/stats.py",
+			"bytes": 6264,
+			"sha256": "0e1de0248eae606fb9e43e7d7b42e69a211973da5e352473046687293b33854e"
+		},
+		{
+			"path": "integrations/home-assistant/custom_components/tellybox/strings.json",
+			"bytes": 2443,
+			"sha256": "f9679fb44fab689db1e04818fa8925092a45f2289a2d52bb6845eb5e1b0e25f9"
+		},
+		{
+			"path": "integrations/home-assistant/custom_components/tellybox/translations/en.json",
+			"bytes": 2443,
+			"sha256": "f9679fb44fab689db1e04818fa8925092a45f2289a2d52bb6845eb5e1b0e25f9"
+		},
+		{
+			"path": "integrations/home-assistant/dashboard-example.yaml",
+			"bytes": 934,
+			"sha256": "4d9cdc6ccf78fdf190bf07eb3f478479168a1d8b277daef76858367f6a79d989"
+		},
+		{
+			"path": "integrations/home-assistant/README.md",
+			"bytes": 9693,
+			"sha256": "3439fa06632e71c47ad8f4670cf01e6762527bbeed70a41e76a7f2226a88b275"
+		},
+		{
+			"path": "integrations/home-assistant/tests/test_api.py",
+			"bytes": 4327,
+			"sha256": "93761385308c534b8da88104bb55ab58754cec595f22b8df20d8650fe380499d"
+		},
+		{
+			"path": "integrations/home-assistant/tests/test_entity_mapping.py",
+			"bytes": 2202,
+			"sha256": "f5ee7705cb6397ecc264e7720b98bb7900d9ce4ece49cf85dbe52c3e3dc3eb8e"
+		},
+		{
+			"path": "integrations/home-assistant/tests/test_stats.py",
+			"bytes": 5499,
+			"sha256": "cc23b88af67f2fdee864010e3a2e62fddc0cfe869fe21862d2a6f2339e0dd686"
 		},
 		{
 			"path": "LICENSE",
@@ -124,8 +214,8 @@
 		},
 		{
 			"path": "README.md",
-			"bytes": 5657,
-			"sha256": "5eb2e91f04e75699f41b0abb4625f8f48bb02656558bdfa4880ec220a646e460"
+			"bytes": 6169,
+			"sha256": "60cd61e9f6627ae15c954c13783fe72b4d80c2e771798919acb8c9be431d6631"
 		},
 		{
 			"path": "relay/example.json",
@@ -253,14 +343,19 @@
 			"sha256": "347f2d294711a5d8b8de056abf4036b70c448df08afb357993a07ccdf679aaa5"
 		},
 		{
+			"path": "server/home-assistant.mjs",
+			"bytes": 8201,
+			"sha256": "c942d54f90cef11d2643d2939b07060ab8e104a6ca510cb079b3d7dd468326c7"
+		},
+		{
 			"path": "server/home-network.mjs",
 			"bytes": 1605,
 			"sha256": "ed8ade522aa1046c17603d858025639e93c9755e6a9914ddb22d41b1e3644ffc"
 		},
 		{
 			"path": "server/homelab/admin.mjs",
-			"bytes": 7757,
-			"sha256": "d7243c1bb6a2537b3ab1b71cd1caa086f2a6954d4b0179090b1e565d717999e9"
+			"bytes": 8758,
+			"sha256": "95d0b7c0ba1f6a0cfe97c190bdaa790d77e2123edbbba7e7e9b9832fd8484d6b"
 		},
 		{
 			"path": "server/homelab/apply.mjs",
@@ -289,8 +384,8 @@
 		},
 		{
 			"path": "server/homelab/public/index.html",
-			"bytes": 5930,
-			"sha256": "9d498fbed4a75406502bf97c141c776d031064b4155d2e37d2e3647129d1a356"
+			"bytes": 7014,
+			"sha256": "9acb75f97349df436139c5b66248b9ecbcb8bd4a0e6f2958058807e23ebc7218"
 		},
 		{
 			"path": "server/homelab/public/notification-mode.mjs",
@@ -304,13 +399,13 @@
 		},
 		{
 			"path": "server/homelab/public/setup.css",
-			"bytes": 8472,
-			"sha256": "a510ebd601cc1b17804c4d6b9397c63e465640a7056755dd16d1fd712cac56d0"
+			"bytes": 8673,
+			"sha256": "2a7116ddfa1ace3b121cc7f84b6ddd5680b4b2a73a0af82386a7bd8c753e798a"
 		},
 		{
 			"path": "server/homelab/public/setup.js",
-			"bytes": 17089,
-			"sha256": "ae2b4706e581c7a333e54bb94a2a74e153f442a9892c329fbb4ad8eca73c97eb"
+			"bytes": 19862,
+			"sha256": "3fb4d1aa0ca4f3b64bb2ea603adf3f2bed2384286e19a8b2dec78ddfe07f531d"
 		},
 		{
 			"path": "server/homelab/relay-core.mjs",
@@ -380,12 +475,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 28842,
-			"sha256": "b4c9a1da7bb8dcb4c2ae65db798af9dd58c568541a93d6f707b809771bb1b996"
+			"sha256": "12499d524a561111b372d3983aaa0bb8d3a0d98efded58ca45a2406d857f2f99"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 271,
-			"sha256": "882b2744c0b4fc668bef4e332dee5f19e1e28fa4655afa181a1e297baec219db"
+			"sha256": "9b6595f6da241bc2ea2c97b39a7bfb216f9d2f1729de7d4d211751b77ce71bca"
 		},
 		{
 			"path": "server/people.mjs",
@@ -414,8 +509,8 @@
 		},
 		{
 			"path": "server/public/app.js",
-			"bytes": 112918,
-			"sha256": "6b5416f6964cdca9309f24a1612c1ea268d60005ce47fdd7d0f09e9f77e5a3e7"
+			"bytes": 117147,
+			"sha256": "ffa1268c1baaf0bdc022c292b00a0e2df26faee953cc791115abc1ee689a98b6"
 		},
 		{
 			"path": "server/public/apps.html",
@@ -468,14 +563,19 @@
 			"sha256": "605925714aecbaf91737a25f12e9a55ee3d0ac5af796add4bf89feaf312435ce"
 		},
 		{
+			"path": "server/public/episode-flow.js",
+			"bytes": 6777,
+			"sha256": "71c99e3ec07c972bd971bb78164a60e5be7174b3c90cb3395ddb52a98bd9ee78"
+		},
+		{
 			"path": "server/public/icon.svg",
 			"bytes": 486,
 			"sha256": "17eee5a8e69d18126d85b35b1d23ce11a8989d7b76124635c0288f5767127af5"
 		},
 		{
 			"path": "server/public/index.html",
-			"bytes": 12582,
-			"sha256": "28dd89fe408fe53cc243457d7e112a1a6e4d1bbb12623e1af984a1ae4fe7d866"
+			"bytes": 12630,
+			"sha256": "b97a1603639fe9a9c5f9de524739428c5dd48590a975c4b3182e563d01b491b8"
 		},
 		{
 			"path": "server/public/installation-settings.js",
@@ -504,8 +604,8 @@
 		},
 		{
 			"path": "server/public/navigation.js",
-			"bytes": 2128,
-			"sha256": "c5f325330f3732998f1be211681d7d6b725a09ccb4576b24bd7d0c97b5d561d1"
+			"bytes": 2625,
+			"sha256": "88c700e821b505ea6d181ed8490cb7753d4facb936fe65b7460a52f462dbd4fe"
 		},
 		{
 			"path": "server/public/people-directory.js",
@@ -516,6 +616,11 @@
 			"path": "server/public/people.js",
 			"bytes": 5312,
 			"sha256": "1505801696ecb7b3e9dfd6dab37c03fbc36757ecfd653f24c3d40824ddcbb322"
+		},
+		{
+			"path": "server/public/preferences.html",
+			"bytes": 2003,
+			"sha256": "2b2d6c659d128203a1d3146070ba2de39d27e54f2b6c767e8626e6299a6e508a"
 		},
 		{
 			"path": "server/public/remote-controls.js",
@@ -549,13 +654,13 @@
 		},
 		{
 			"path": "server/public/settings.html",
-			"bytes": 16240,
-			"sha256": "612cf7537d169321e02f4b2f203b6813b6d853a2afa842dc4c9bb2fcb48d4e60"
+			"bytes": 16520,
+			"sha256": "a0d11da795be6757a907cd32a1a320783c0a2734813ccd080b310fc07733c2fe"
 		},
 		{
 			"path": "server/public/settings.js",
-			"bytes": 822,
-			"sha256": "fece6898ddb8f1c5cd3dbbe337febb57fc9b869aeaa191c802d8e31357fb0496"
+			"bytes": 598,
+			"sha256": "4d7dc223965e58714a89b489069f51992e180ccc808828deebbcc0277c7ad542"
 		},
 		{
 			"path": "server/public/share-player.css",
@@ -608,6 +713,11 @@
 			"sha256": "8ba2ac31f354005783fab473602c34c3f4fd207150182061e425d366e4f34596"
 		},
 		{
+			"path": "server/public/viewer-preferences.js",
+			"bytes": 499,
+			"sha256": "204b2ac9d6666b4cbeb87b301649cea4c47c816cd57ca4d6b98a47110baa4e54"
+		},
+		{
 			"path": "server/public/visitor-ui.js",
 			"bytes": 1629,
 			"sha256": "07c0b595dec8a4d12535496c7afa81fea12e7930b795efc4376149dd9f6a39d9"
@@ -644,13 +754,13 @@
 		},
 		{
 			"path": "server/server-health.mjs",
-			"bytes": 1713,
-			"sha256": "300865d93c360f95574e61589e4963cd09663f9a99541f1bbc746f98f268d9ef"
+			"bytes": 2444,
+			"sha256": "bb3583a10fe517ec98eefa870bae7ae8fc366e4ecdf70edf52f0a9f93db02d71"
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 75308,
-			"sha256": "d4b4b2b6fe805b7dcefbcbb124f9307edb3aa3bb2786e79829b8e8a844954730"
+			"bytes": 78507,
+			"sha256": "5b27fae63336329b3fe099fc296a413de30b507d8b0191b96300e0dacf3a2280"
 		},
 		{
 			"path": "server/session-limits.mjs",
@@ -753,6 +863,11 @@
 			"sha256": "1bc6b10d9588ffff1bc2c9d4b2a6afd63d59734368004910c1deadbb4ce349cf"
 		},
 		{
+			"path": "server/test/direct-seek.test.mjs",
+			"bytes": 5281,
+			"sha256": "dbd9e250533d0ac2f3f975f5798c615b605fa5818553f70889198fafba7fdd19"
+		},
+		{
 			"path": "server/test/discovery-feeds.test.mjs",
 			"bytes": 8692,
 			"sha256": "a3e58c2c058b3d3750360364091c7bba262149f5b4c69eb7cbf1286d69b66934"
@@ -793,6 +908,16 @@
 			"sha256": "d1e8227368e157549b1caeef2f5ceb0934106f20b7c5bbedf014b176232644bf"
 		},
 		{
+			"path": "server/test/episode-flow.test.mjs",
+			"bytes": 4866,
+			"sha256": "687c66e3ec1ee8451e64175f8f3cf0fc27422a3606f99d252971554bf0ddc5b1"
+		},
+		{
+			"path": "server/test/episode-next-web.test.mjs",
+			"bytes": 7663,
+			"sha256": "865e3b65c529fedbb6bf6d38614fb175ab236b71cf74c8ffaaa507cc5eb286ca"
+		},
+		{
 			"path": "server/test/episode-order.test.mjs",
 			"bytes": 819,
 			"sha256": "10eca8f39b362f2c65ae48a791344f9e1ecf8d84a9b5e50bf9c3e5069ab66a52"
@@ -811,6 +936,16 @@
 			"path": "server/test/global-search.test.mjs",
 			"bytes": 4300,
 			"sha256": "d87e3d9b27ba43315cac8051dce5264a40413016c9a573b240698670105eedfe"
+		},
+		{
+			"path": "server/test/home-assistant-admin.test.mjs",
+			"bytes": 5390,
+			"sha256": "f491bdd18a80780a586d9606782bdeda705b2a581940b0f827164b549163c8a4"
+		},
+		{
+			"path": "server/test/home-assistant.test.mjs",
+			"bytes": 13569,
+			"sha256": "663814a5f5cba7ac7f0a815cf23fc272aaa791f52a103dae328906bf1c8574be"
 		},
 		{
 			"path": "server/test/home-network.test.mjs",
@@ -923,6 +1058,11 @@
 			"sha256": "2913cbbafd5664164b3677b618f4b00ba8e2176f398b1c23cf90baf63d4d8459"
 		},
 		{
+			"path": "server/test/preferences-auth.test.mjs",
+			"bytes": 4001,
+			"sha256": "bd76c42a16dc4278584344b98bcf88122c87e8d3beaedd65dfe4d1c1634e41fb"
+		},
+		{
 			"path": "server/test/push-gateway-client.test.mjs",
 			"bytes": 7924,
 			"sha256": "e5c8b15fec615786789278f0f6de284764503b5570f3293b3474a100bcfb61fa"
@@ -969,8 +1109,8 @@
 		},
 		{
 			"path": "server/test/server-health.test.mjs",
-			"bytes": 2045,
-			"sha256": "34721c34ad6fb613c098b16144558730b55709ca3e7c8dff0f09358fa8c1f1d7"
+			"bytes": 2635,
+			"sha256": "5e96f0c7563988bef45d01dabd76f687ebeef3d4a674a31c527583248ea32f9a"
 		},
 		{
 			"path": "server/test/session-limits.test.mjs",
@@ -1061,6 +1201,11 @@
 			"path": "server/test/watched-progress.test.mjs",
 			"bytes": 1944,
 			"sha256": "f02e7fae4f7c0b46ab999dd0599173781668cfe34f9706c6b44ba07f0a09ee0f"
+		},
+		{
+			"path": "server/test/web-preferences.test.mjs",
+			"bytes": 6920,
+			"sha256": "57f93a0a0110475a17a6ecffb3e3ceb3a2da9259633f9903b07f074f61d61ff7"
 		},
 		{
 			"path": "server/trending.mjs",

@@ -7,8 +7,5 @@ for (const button of document.querySelectorAll('[data-panel]')) {
 		for (const panel of document.querySelectorAll('[data-settings]')) panel.hidden = panel.dataset.settings !== button.dataset.panel;
 	};
 }
-const english = document.querySelector('#englishSubtitles');
-english.checked = localStorage.getItem('tellybox-english') === 'true';
-english.onchange = () => localStorage.setItem('tellybox-english', String(english.checked));
 
 for (const button of document.querySelectorAll("[data-open-panel]")) button.onclick = () => document.querySelector(`[data-panel="${button.dataset.openPanel}"]`)?.click();

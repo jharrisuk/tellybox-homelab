@@ -5,6 +5,14 @@
 	if (!header || !toggle || !panel) return;
 	const nav=panel.querySelector('nav');
 	if(nav&&!nav.querySelector('[href="/search"]')){const link=document.createElement('a');link.className='nav-item';link.href='/search';link.textContent='⌕ Search';link.setAttribute('aria-label','Search everywhere');if(location.pathname==='/search'){link.classList.add('active');link.setAttribute('aria-current','page');}nav.append(link);}
+	const account=panel.querySelector('.account-actions');
+	if(account&&!account.querySelector('[data-watching-settings]')){
+		const link=document.createElement('a');
+		link.href='/preferences.html';link.textContent='Watching settings';link.setAttribute('data-watching-settings','');
+		if(location.pathname==='/preferences.html')link.setAttribute('aria-current','page');
+		const signOut=account.querySelector('#signOut');
+		if(signOut)account.insertBefore(link,signOut);else account.append(link);
+	}
 	const mobile = matchMedia('(max-width: 850px)');
 	const routing = document.querySelector('#localRouting');
 	const anchor = document.createComment('Streaming connection desktop position');

@@ -22,6 +22,11 @@ test('health response exposes only intended counters and keeps unavailable disks
 	const result = sanitizeHost({ sampledAt: 1000, secret: 'do-not-expose', cpuPercent: -1, memory: { total: 'invalid', available: 8, secret: 'do-not-expose' }, disks: [{ label: 'Media disk', available: false, source: '/private/path' }], load: [1, 2, 3, 4] }, 2000);
 	assert.equal(result.cpuPercent, null); assert.equal(result.memory.total, null);
 	assert.equal(result.disks[0].available, false); assert.equal(result.disks[0].free, null);
+	assert.match(result.disks[0].id, /^[a-f0-9]{16}$/);
+	assert.equal(sanitizeHost({ sampledAt: 1000, disks: [{ label: 'Media disk' }] }, 2000).disks[0].id, sanitizeHost({ sampledAt: 3000, disks: [{ label: 'Media disk' }] }, 4000).disks[0].id);
+	const pathDisk = sanitizeHost({ sampledAt: 1000, disks: [{ label: '/mnt/private/media' }] }, 2000).disks[0];
+	assert.equal(pathDisk.label, 'media'); assert.ok(!JSON.stringify(pathDisk).includes('/mnt/private'));
+	assert.equal(sanitizeHost({ sampledAt: 1000, disks: [{ label: 'https://provider.example/private' }] }, 2000).disks[0].label, 'Disk');
 	assert.deepEqual(result.load, [1, 2, 3]);
 	assert.ok(!JSON.stringify(result).includes('do-not-expose')); assert.ok(!JSON.stringify(result).includes('/private/path'));
 	assert.throws(() => sanitizeHost({ sampledAt: 100000 }, 0));

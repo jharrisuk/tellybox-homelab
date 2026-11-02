@@ -43,6 +43,22 @@
 				<p id="relayStatus" role="status"></p><pre id="relayOutput" hidden></pre>
 				</details>
 			</section>
+			<section class="panel" id="homeAssistantPanel">
+				<p class="eyebrow">MONITORING</p><h2>Home Assistant</h2>
+				<p>Connect a read-only Home Assistant custom integration. It reads aggregate stream, download, upload and server health numbers. It cannot control playback or read titles, accounts or addresses.</p>
+				<div id="homeAssistantStatus" class="relay-health" role="status" aria-live="polite"></div>
+				<div class="relay-actions">
+					<button id="homeAssistantCreate" type="button">Create token</button>
+					<button id="homeAssistantRotate" type="button">Rotate token</button>
+					<button id="homeAssistantRevoke" type="button">Revoke token</button>
+				</div>
+				<div id="homeAssistantTokenBox" hidden>
+					<h3>New token</h3>
+					<p>Copy this now. It is shown only once and cannot be recovered.</p>
+					<div class="token-row"><input id="homeAssistantToken" readonly autocomplete="off" spellcheck="false"><button id="homeAssistantCopy" type="button">Copy</button></div>
+				</div>
+				<p id="homeAssistantMessage" role="status" aria-live="polite"></p>
+			</section>
 			<form id="configuration">
 				<div id="integrations"></div>
 				<section class="panel notifications"><h2>Administrator notifications</h2>

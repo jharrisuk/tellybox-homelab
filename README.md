@@ -2,7 +2,7 @@
 
 Your collection, live TV, 24/7 channels and streamed titles in one place, with a web player and companion apps for Android phone and TV.
 
-**Server 0.26.0 - early access.** Built for people who enjoy running their own media services. Start with a separate installation, connect the services you use, and try it on your devices before relying on it.
+**Server 0.26.6 - early access.** Built for people who enjoy running their own media services. Start with a separate installation, connect the services you use, and try it on your devices before relying on it.
 
 **[Installation walkthrough](https://homelab.tellyboxapp.com/#start)** · **[Android apps](https://homelab.tellyboxapp.com/#apps)** · **[Report a problem](https://github.com/jharrisuk/tellybox-homelab/issues)**
 
@@ -54,6 +54,10 @@ Use **`http://SERVER_IP:8082`** to watch. Setup and local viewing are separate: 
 Download the latest official **Tellybox HomeLab** apps from the [guide](https://homelab.tellyboxapp.com/#apps) and enter your own server address. App and server version numbers are independent.
 
 The apps are proprietary and their source is not in this repository. Their signed updates come from the Tellybox publisher, regardless of which media server you connect to. You do not need to build apps or host APK files. The phone app can also guide you through installing the TV app over your local network on compatible devices.
+
+## Home Assistant
+
+An optional read-only Home Assistant custom integration is in `integrations/home-assistant`. It exposes aggregate stream, download, upload and server health sensors. Copy `custom_components/tellybox` into your Home Assistant configuration and follow the [integration README](integrations/home-assistant/README.md). It is not an official Home Assistant integration and is not listed in HACS. The Tellybox server side stays disabled until you create a dedicated token in installation settings.
 
 ## Remote viewing and notifications
 

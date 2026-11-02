@@ -22,6 +22,9 @@ jobs:
       - name: Server tests
         working-directory: server
         run: npm ci && npm test
+      - name: Home Assistant parser and URL tests
+        working-directory: integrations/home-assistant
+        run: python3 -m unittest discover -s tests -v
       - name: Validate Compose and generated guide
         run: docker compose config --quiet && node docs/build-guide.mjs && git diff --exit-code -- docs/site
       - name: Build and check fresh installation

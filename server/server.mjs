@@ -47,7 +47,8 @@ import { createVodPlayer } from './vod-player.mjs';
 import { createRecordings } from './recordings.mjs';
 import { createRecordingDeletion, installRecordingDeletion } from './recording-deletion.mjs';
 import { loadCapabilities, optionalDispatcharr } from './homelab/runtime.mjs';
-import { installReleaseVersion } from './release-version.mjs';
+import { installReleaseVersion, serverRelease } from './release-version.mjs';
+import { createHomeAssistantIntegration, installHomeAssistantStats } from './home-assistant.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const upstream = new URL(process.env.JELLYFIN_URL || 'http://127.0.0.1:1');
@@ -104,6 +105,14 @@ const sessionLimits=createSessionLimits({accountLimits,exists:id=>sessions.has(i
 const remoteControls=createRemoteControls(process.env.AUTH_DIR||path.join(root,'auth-data'));
 const isAdmin=req=>req.jserverApp?.role==='admin';
 const uploadLimit = createUploadLimit(process.env.AUTH_DIR || path.join(root, 'auth-data'));
+const serverHealth = createServerHealth(process.env.HOST_HEALTH_PATH || path.join(path.dirname(configPath), 'host-health.json'), { bandwidth: () => uploadLimit.status(), streaming: () => activity.snapshot().active.filter(item => item.purpose !== 'download').length });
+const homeAssistant = createHomeAssistantIntegration({
+	directory: process.env.AUTH_DIR || path.join(root, 'auth-data'),
+	activity, serverHealth, uploadLimit, version: serverRelease.version
+});
+// Registered before the viewer-login gate. This route authenticates only the
+// dedicated bearer token; it is never satisfied by a viewer cookie or app token.
+installHomeAssistantStats(app, { integration: homeAssistant });
 const shares = createShares(process.env.AUTH_DIR || path.join(root, 'auth-data'), {
 	onRevoke: owner => { for (const session of sessions.values()) if (session.owner === owner) void stop(session); }
 });
@@ -119,8 +128,7 @@ const homeNetwork = createHomeNetwork(process.env.HOME_IP_ENDPOINT || '', { onCh
 const auth = installAuth(app, {
 	installationCapabilities: {...features,managedInstallation:process.env.HOMELAB==='1',publicOrigin:process.env.PUBLIC_ORIGIN||''},
 	audit: activity,
-	uploadLimit,accountLimits,remoteControls,
-	serverHealth: createServerHealth(process.env.HOST_HEALTH_PATH || path.join(path.dirname(configPath), 'host-health.json'), { bandwidth: () => uploadLimit.status(), streaming: () => activity.snapshot().active.filter(item => item.purpose !== 'download').length }),
+	uploadLimit,accountLimits,remoteControls,serverHealth,
 	validShareOwner: shares.validOwner,
 	instanceId,
 	localPlaybackOrigin,
@@ -738,6 +746,45 @@ async function preparePlaybackContent(req, res, sessionId) {
 	} else {
 		await stop(session);
 		throw new Error('Jellyfin did not offer a browser-compatible stream. Check transcoding on the Jellyfin server.');
+	}
+	// Media3 cannot seek a Matroska file whose Cues are only named by a chained
+	// SeekHead. The app detects that unseekable DirectPlay timeline and asks for
+	// the same file through the ffmpeg HLS player, which can seek anywhere.
+	if (kind === 'video' && req.body.seekFallback === true && !session.download) {
+		if (!auth.validOwner(session.owner)) {
+			await stop(session);
+			return res.status(req.jserverShare ? 410 : 401).json({ error: req.jserverShare ? 'This shared link is no longer available.' : 'Please sign in again.' });
+		}
+		// Keep the original sidecar caption menu (including downloaded/external
+		// Jellyfin captions) instead of guessing ffprobe stream indexes. HLS
+		// can carry those WebVTT tracks alongside the video.
+		const keepSidecars = Boolean(sidecars && captionOptions);
+		const encoded = await vodPlayer.start({ type: 'local', route: url }, { quality, audioIndex: req.body.audioIndex,
+			textSubtitles: keepSidecars ? false : req.body.textSubtitles === true,
+			preferEnglishSubtitles: keepSidecars ? false : req.body.preferEnglishSubtitles === true,
+			subtitleIndex: keepSidecars ? -1 : req.body.subtitleIndex }).catch(error => {
+				// Capacity, not the file, can reject a fallback. Do not turn a
+				// working DirectPlay picture into a failed play request.
+				if (error.status === 503) return null;
+				throw error;
+			});
+		if (encoded) {
+			if (!auth.validOwner(session.owner) || res.destroyed) { await encoded.stop(); return res.sendStatus(req.jserverShare ? 410 : 401); }
+			session.direct = encoded;
+			session.kind = 'hls';
+			session.playMethod = 'Transcode';
+			session.resource = Buffer.from('index.m3u8').toString('base64url');
+			if (!session.captionSources) session.captionSources = encoded.captionSources;
+			for (const track of encoded.subtitles) if (session.captionSources?.has(track.index)) track.url = directStreamLink(session, Buffer.from(`subtitle-${track.index}.vtt`).toString('base64url'));
+			session.viewer = req.jserverViewer;
+			sessions.set(session.id, session);
+			activity.begin(session.id, req.jserverViewer, item, { purpose: 'watch' });
+			activity.update(session.id, { method: 'Transcode', qualityMbps: quality / 1e6, videoCodec: 'h264', audioCodec: 'aac', conversionReason: 'Original file has no usable seek index' });
+			return res.json({ session: session.id, url: directStreamLink(session, session.resource), kind: 'hls', live: false,
+				duration: encoded.duration, subtitleIndex: keepSidecars ? subtitleIndex : encoded.subtitleIndex,
+				subtitles: keepSidecars ? captionOptions : encoded.subtitles, audio: encoded.audio,
+				method: 'Transcode', seekFallback: true });
+		}
 	}
 	if (!auth.validOwner(session.owner)) {
 		await stop(session);

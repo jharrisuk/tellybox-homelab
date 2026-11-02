@@ -1,0 +1,80 @@
+{
+	"config": {
+		"step": {
+			"user": {
+				"title": "Connect to Tellybox",
+				"description": "Enter the address of your Tellybox server and the read-only token from Installation settings, Home Assistant.",
+				"data": {
+					"url": "Server address",
+					"token": "Home Assistant token"
+				},
+				"data_description": {
+					"url": "The address you use to watch Tellybox, for example http://192.168.1.50:8082.",
+					"token": "Create or rotate this token at Tellybox Installation settings, port 8990. It is shown once."
+				}
+			},
+			"reauth_confirm": {
+				"title": "Update the Tellybox token",
+				"description": "The existing token was revoked, rotated or rejected. Enter the current token for this installation.",
+				"data": {
+					"url": "Server address",
+					"token": "Home Assistant token"
+				},
+				"data_description": {
+					"url": "The address you use to watch Tellybox, for example http://192.168.1.50:8082.",
+					"token": "Create or rotate this token at Tellybox Installation settings, port 8990. It is shown once."
+				}
+			}
+		},
+		"error": {
+			"invalid_url": "Enter a complete HTTP or HTTPS server address without a username, query or fragment.",
+			"invalid_token": "Enter the token shown in Tellybox installation settings.",
+			"invalid_auth": "Tellybox rejected this token. Create or rotate one in Installation settings.",
+			"cannot_connect": "Tellybox could not be reached. Check the address, port and network.",
+			"invalid_response": "This Tellybox server did not return compatible read-only statistics. Update the server."
+		},
+		"abort": {
+			"already_configured": "This Tellybox installation is already connected.",
+			"wrong_installation": "This token belongs to a different Tellybox installation."
+		}
+	},
+	"entity": {
+		"sensor": {
+			"active_streams": {
+				"name": "Active streams"
+			},
+			"connected_streams": {
+				"name": "Connected streams"
+			},
+			"local_streams": {
+				"name": "Local streams"
+			},
+			"remote_streams": {
+				"name": "Remote streams"
+			},
+			"active_downloads": {
+				"name": "Active downloads"
+			},
+			"measured_remote_upload": {
+				"name": "Measured remote upload"
+			},
+			"configured_upload_limit": {
+				"name": "Configured upload limit"
+			},
+			"uptime": {
+				"name": "Service uptime"
+			},
+			"cpu_usage": {
+				"name": "CPU usage"
+			},
+			"memory_usage": {
+				"name": "Memory usage"
+			}
+		},
+		"binary_sensor": {
+			"online": {
+				"name": "Online"
+			}
+		}
+	}
+}

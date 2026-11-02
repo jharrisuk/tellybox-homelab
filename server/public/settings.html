@@ -8,7 +8,7 @@
 		<script src="/subtitle-settings.js?v=1" defer></script>
 	<link rel="icon" href="/icon.svg"><link rel="stylesheet" href="/style.css">
 	<script src="/auth.js" defer></script>
-	<script src="/people-directory.js" defer></script><script src="/people.js" defer></script><script src="/remote-controls.js" defer></script><script src="/login-protection.js" defer></script><script src="/admin-downloads.js" defer></script><script src="/apps.js" defer></script><script src="/settings.js" defer></script><script src="/server-health.js" defer></script>
+	<script src="/people-directory.js" defer></script><script src="/people.js" defer></script><script src="/remote-controls.js" defer></script><script src="/login-protection.js" defer></script><script src="/admin-downloads.js" defer></script><script src="/apps.js" defer></script><script src="/viewer-preferences.js" defer></script><script src="/settings.js" defer></script><script src="/server-health.js" defer></script>
 	<script src="/connection-status.js" defer></script>
 	<script src="/server-version.js" defer></script>
 </head>
@@ -93,7 +93,7 @@
 			<a class="settings-link" href="/activity">Viewing activity & signed-in browsers <span>→</span></a>
 		</section>
 		<section data-settings="watching" hidden>
-			<div class="settings-box"><h2>Make watching yours</h2><p>These preferences belong to this browser.</p><label class="preference-row"><span><strong>English subtitles</strong><small>Choose the first available English track when a title starts. You can still change it in the player.</small></span><input id="englishSubtitles" type="checkbox"></label></div>
+			<div class="settings-box"><h2>Make watching yours</h2><p>These preferences belong to this browser.</p><label class="preference-row"><span><strong>English subtitles</strong><small>Choose the first available English track when a title starts. You can still change it in the player.</small></span><input id="englishSubtitles" type="checkbox"></label><label class="preference-row"><span><strong>Always skip intros</strong><small>Only confirmed episode intros. Recaps, credits and the manual Skip button are unchanged.</small></span><input id="skipIntros" type="checkbox"></label></div>
 			<div class="settings-box"><h2>At home, stream directly</h2><p>Choose “Use local streaming” on the home page to send video directly from your home server.</p></div>
 		</section>
 		<section data-settings="server" hidden>

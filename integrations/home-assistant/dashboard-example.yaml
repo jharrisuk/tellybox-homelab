@@ -1,0 +1,26 @@
+# Replace the example entity IDs with those created by your Home Assistant entry.
+type: entities
+title: Tellybox
+entities:
+  - entity: binary_sensor.tellybox_server_online
+    name: Online
+  - entity: sensor.tellybox_server_active_streams
+    name: Active streams
+  - entity: sensor.tellybox_server_connected_streams
+    name: Connected streams
+  - entity: sensor.tellybox_server_local_streams
+    name: Local streams
+  - entity: sensor.tellybox_server_remote_streams
+    name: Remote streams
+  - entity: sensor.tellybox_server_active_downloads
+    name: Active downloads
+  - entity: sensor.tellybox_server_measured_remote_upload
+    name: Measured remote upload
+  - entity: sensor.tellybox_server_configured_upload_limit
+    name: Upload cap
+  - entity: sensor.tellybox_server_uptime
+    name: Service uptime
+  - entity: sensor.tellybox_server_cpu_usage
+    name: CPU
+  - entity: sensor.tellybox_server_memory_usage
+    name: Memory

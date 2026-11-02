@@ -9,6 +9,7 @@ import { relayManager } from './relay-jobs.mjs';
 import { setupHosts, localConnectionSuggestion } from './setup-hosts.mjs';
 import { relayHealth } from './relay-health.mjs';
 import { installReleaseVersion } from '../release-version.mjs';
+import { createHomeAssistantTokens } from '../home-assistant.mjs';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
 const equal = (a, b) => typeof a === 'string' && typeof b === 'string' && timingSafeEqual(Buffer.from(hash(a)), Buffer.from(hash(b)));
@@ -16,6 +17,8 @@ export function createSetup({ directory, apply = async () => {}, status = () => 
 	const hostAllowed=setupHosts(allowedHosts);
 	const app = express(), store = configStore(directory), sessions = new Map(), attempts = new Map(), relay = relayManager(directory);
 	const remoteHealth = relayHealth(directory, { fetcher, clock, localPort: Number(process.env.PORT || 8082) });
+	// The media process receives this same directory as AUTH_DIR.
+	const homeAssistant = createHomeAssistantTokens(path.join(directory, 'access'));
 	const ownerFile = path.join(directory, 'owner.json'), bootstrapFile = path.join(directory, 'bootstrap.json');
 	let owner = existsSync(ownerFile) ? JSON.parse(readFileSync(ownerFile, 'utf8')) : null;
 	if (!owner && !existsSync(bootstrapFile)) atomicJson(bootstrapFile, { token: randomBytes(24).toString('hex') });
@@ -61,6 +64,19 @@ export function createSetup({ directory, apply = async () => {}, status = () => 
 	});
 	app.get('/api/setup/config', (req, res) => res.json({ config: redacted(store.get()), services, infrastructure, presets, runtime: status(), connection:localConnectionSuggestion(req.socket.remoteAddress) }));
 	app.post('/api/setup/config', (req, res) => res.json({ config: store.save(req.body), saved: true, applyRequired: true }));
+	app.get('/api/setup/home-assistant', (req, res) => res.json(homeAssistant.status()));
+	app.post('/api/setup/home-assistant', (req, res) => {
+		const action = req.body?.action;
+		try {
+			if (!['create', 'rotate', 'revoke'].includes(action)) return res.status(400).json({ error: 'Choose create, rotate or revoke.' });
+			if (action === 'revoke') return res.json(homeAssistant.revoke());
+			const result = action === 'create' ? homeAssistant.create() : homeAssistant.rotate();
+			// Returned once. Only its hash is stored, so it cannot be shown again.
+			return res.status(action === 'create' ? 201 : 200).json(result);
+		} catch (error) {
+			return res.status(error.status || 500).json({ error: error.status ? error.message : 'The Home Assistant token could not be changed.' });
+		}
+	});
 	app.post('/api/setup/apply', async (req, res) => {
 		const config=store.get();
 		if (req.body?.revision !== config.revision) return res.status(409).json({error:'Settings changed. Reload and review before applying.'});

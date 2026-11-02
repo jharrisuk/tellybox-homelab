@@ -223,6 +223,7 @@ async function castToTv() {
 		if (sessionId !== state.session || generation !== playGeneration) { target.endSession(true); return; }
 		casting.lastPosition = video.currentTime || 0;
 		casting.active = true;
+		hideNextCard();
 		beginViewing();
 		video.pause();
 		video.onloadedmetadata = null;
@@ -804,7 +805,11 @@ setInterval(()=>{if(state.type==='dvr'&&!document.hidden&&!player.open&&!details
 $('#onlyFavourites').onclick = event => { const button = event.currentTarget; const on = button.getAttribute('aria-pressed') !== 'true'; button.setAttribute('aria-pressed', String(on)); button.textContent = on ? '★ Favourites' : '☆ All channels'; renderGuide(); };
 const autoplayPreference = document.querySelector('#autoNext');
 autoplayPreference.checked = localStorage.getItem('tellybox-autoplay') === 'true';
-autoplayPreference.onchange = () => localStorage.setItem('tellybox-autoplay', String(autoplayPreference.checked));
+autoplayPreference.onchange = () => { localStorage.setItem('tellybox-autoplay', String(autoplayPreference.checked)); if(autoplayPreference.checked)updateNext();else hideCountdown(); };
+function skipIntrosEnabled() {
+	try { return localStorage.getItem('tellybox-skip-intros') === 'true'; } catch { return false; }
+}
+window.addEventListener('storage', event => { if (event.key === 'tellybox-skip-intros') updateNext(); });
 const subtitlePreference = document.querySelector('#defaultEnglish');
 subtitlePreference.checked = localStorage.getItem('tellybox-english') === 'true';
 subtitlePreference.onchange = () => localStorage.setItem('tellybox-english', String(subtitlePreference.checked));
@@ -1165,6 +1170,7 @@ function showViewingBlocked(message, generation = playGeneration) {
 	}
 	if (state.hls) { state.hls.destroy(); state.hls = null; }
 	setLiveMode(false);
+	cancelNext();
 	video.pause();
 	video.removeAttribute('src');
 	video.load();
@@ -1224,76 +1230,145 @@ async function report(action) {
 }
 
 let nextEpisode = null, nextTimer = null, lastChannel = null, previousChannel = null;
-let nextResult = null, nextCancelled = false, nextBusy = false, segments = [], skipSegment = null;
-function cancelNext() { clearInterval(nextTimer); nextTimer = null; }
+let nextResult = null, nextDismissed = false, nextBusy = false, nextAutoBlocked = false, segments = [], skipSegment = null;
+let nextRenderedId = null, nextRenderedResult = null, nextPlayAction = null;
+const introLedger = new TellyboxEpisodeFlow.IntroLedger();
+function clearNextTimer() { if (nextTimer !== null) { clearInterval(nextTimer); nextTimer = null; } }
+function hideCountdown() {
+	clearNextTimer();
+	$('#upNext .next-countdown')?.remove();
+	$('#upNext .next-countdown-bar')?.remove();
+}
+function hideNextCard() { clearNextTimer(); const host=$('#upNext'); if(host){ host.hidden = true; host.classList.remove('episode-ended'); } }
+function cancelNext() { hideNextCard(); }
+function mediaDurationMs() { return Number.isFinite(video.duration) && video.duration > 0 ? video.duration * 1000 : 0; }
+function mediaPositionMs() { return Number.isFinite(video.currentTime) && video.currentTime > 0 ? video.currentTime * 1000 : 0; }
+function currentOutro() { return TellyboxEpisodeFlow.reliableOutro(segments, mediaDurationMs()); }
 async function loadNext(generation) {
 	try {
 		const result = await api(`/api/web/items/${state.playing.Id}/next?series=${encodeURIComponent(state.playing.SeriesId || '')}`);
 		if (generation !== playGeneration) return;
 		nextResult = result; nextEpisode = result.item;
 	} catch { if (generation === playGeneration) nextResult = { status: 'error', message: 'Could not check the next episode.' }; }
-	if (generation === playGeneration && video.ended) showNext();
+	if (generation === playGeneration) updateNext();
 }
-function showNext(ended = video.ended) {
-	if (state.playing?.Type !== 'Episode' || casting.active || !player.open) return;
-	cancelNext();
-	const host = $('#upNext'); host.replaceChildren(); host.hidden = false; host.classList.toggle('episode-ended',Boolean(nextResult && !nextEpisode));
-	if (!nextResult) { host.append(element('strong', '', 'Checking what’s next…')); return; }
-	if (!nextEpisode) {
-		const summary=element('div','episode-end-summary');
-		summary.append(element('span','eyebrow','EPISODE FINISHED'),element('h2','',state.playing.SeriesName||nextResult.seriesName||'Your series'));
-		if(Number.isInteger(state.playing.ParentIndexNumber)&&Number.isInteger(state.playing.IndexNumber))summary.append(element('p','muted',`Season ${state.playing.ParentIndexNumber} · Episode ${state.playing.IndexNumber}`));
-		summary.append(element('p','muted',state.playing.Name));
-		const copy=nextResult.status==='complete'?['Series complete','You’ve reached the final episode of this series.']:nextResult.status==='caught-up'?['You’re up to date','You’ve reached the latest available episode. Check back for more.']:['error','unknown'].includes(nextResult.status)?['Couldn’t check what’s next','We couldn’t confirm the next episode. Try again or browse the series.']:['That’s all for now','The next episode isn’t available to watch here yet.'];
-		summary.append(element('h3','',copy[0]),element('p','muted',copy[1]));
-		const back=element('button','button primary','Back to series');
-		back.onclick=()=>{const series=nextResult.seriesId||state.playing.SeriesId;closePlayer();if(series)void showDetails(series);};summary.append(back);
-		if (nextResult.status === 'error' || nextResult.status === 'unknown') {
-			const retry = element('button', 'button secondary', 'Try again'); retry.onclick = () => { nextResult = null; showNext(); void loadNext(playGeneration); }; summary.append(retry);
-		}
-		host.append(summary);
-		const suggestions=(nextResult.suggestions||[]).slice(0,3);
-		if(suggestions.length){
-			const more=element('section','episode-end-more'),cards=element('div','episode-end-cards');
-			more.append(element('h3','','More to explore'),element('p','muted',nextResult.suggestionGenre?'More in '+nextResult.suggestionGenre:'Choose a show to see its episodes.'));
-			for (const item of suggestions) {
-				const button=element('button','episode-end-card'),image=element('img');image.src=imageUrl(item);image.alt='';image.onerror=()=>{image.style.visibility='hidden';};
-				button.setAttribute('aria-label','View series: '+item.Name);button.append(image,element('span','episode-end-name',item.Name),element('small','','View series'));
-				button.onclick=()=>{closePlayer();void showDetails(item.Id);};cards.append(button);
-			}
-			more.append(cards);host.append(more);
-		}
-		back.focus();return;
+function renderEnd(host) {
+	host.classList.add('episode-ended');
+	const summary=element('div','episode-end-summary');
+	summary.append(element('span','eyebrow','EPISODE FINISHED'),element('h2','',state.playing.SeriesName||nextResult.seriesName||'Your series'));
+	if(Number.isInteger(state.playing.ParentIndexNumber)&&Number.isInteger(state.playing.IndexNumber))summary.append(element('p','muted',`Season ${state.playing.ParentIndexNumber} · Episode ${state.playing.IndexNumber}`));
+	summary.append(element('p','muted',state.playing.Name));
+	const copy=nextResult.status==='complete'?['Series complete','You’ve reached the final episode of this series.']:nextResult.status==='caught-up'?['You’re up to date','You’ve reached the latest available episode. Check back for more.']:['error','unknown'].includes(nextResult.status)?['Couldn’t check what’s next','We couldn’t confirm the next episode. Try again or browse the series.']:['That’s all for now','The next episode isn’t available to watch here yet.'];
+	summary.append(element('h3','',copy[0]),element('p','muted',copy[1]));
+	const back=element('button','button primary','Back to series');
+	back.onclick=()=>{const series=nextResult.seriesId||state.playing.SeriesId;closePlayer();if(series)void showDetails(series);};summary.append(back);
+	if (nextResult.status === 'error' || nextResult.status === 'unknown') {
+		const retry = element('button', 'button secondary', 'Try again'); retry.onclick = () => { nextResult = null; showNext(); void loadNext(playGeneration); }; summary.append(retry);
 	}
+	host.append(summary);
+	const suggestions=(nextResult.status==='error'||nextResult.status==='unknown')?[]:(nextResult.suggestions||[]).slice(0,3);
+	if(suggestions.length){
+		const more=element('section','episode-end-more'),cards=element('div','episode-end-cards');
+		more.append(element('h3','','More to explore'),element('p','muted',nextResult.suggestionGenre?'More in '+nextResult.suggestionGenre:'Choose a show to see its episodes.'));
+		for (const item of suggestions) {
+			const button=element('button','episode-end-card'),image=element('img');image.src=imageUrl(item);image.alt='';image.onerror=()=>{image.style.visibility='hidden';};
+			button.setAttribute('aria-label','View series: '+item.Name);button.append(image,element('span','episode-end-name',item.Name),element('small','','View series'));
+			button.onclick=()=>{closePlayer();void showDetails(item.Id);};cards.append(button);
+		}
+		more.append(cards);host.append(more);
+	}
+	back.focus();
+}
+function renderNextCard(host) {
 	const next = nextEpisode;
 	const preview=element('div','next-preview'),art=element('img');art.src=imageUrl(next);art.alt='';art.onerror=()=>art.hidden=true;
 	const copy=element('div');copy.append(element('small','eyebrow',['UP NEXT',episodeNumber(next)].filter(Boolean).join(' · ')),element('strong','',next.Name));preview.append(art,copy);
 	const play = element('button', 'button primary', 'Play now');
-	play.onclick = async () => {
-		if (nextBusy) return; nextBusy = true; cancelNext(); play.disabled = true;
+	nextPlayAction = async () => {
+		if (nextBusy) return; nextBusy = true; clearNextTimer(); play.disabled = true;
 		try { await startPlayback(next, getProgress(next.Id), true); }
 		finally { nextBusy = false; play.disabled = false; }
 	};
-	const cancel = element('button', 'button secondary', 'Not now');
-	cancel.onclick = () => { nextCancelled = true; cancelNext(); host.hidden = true; };
+	play.onclick = nextPlayAction;
+	const cancel = element('button', 'button secondary', 'Keep watching');
+	cancel.onclick = () => { nextDismissed = true; hideNextCard(); };
 	const actions=element('div','next-actions');actions.append(play,cancel);host.append(preview,actions);
-	if (!ended || nextCancelled || !autoplayPreference.checked || document.hidden) return;
-	let remaining = 10;
-	const countdown=element('span','','Starts in 10 seconds'),progress=document.createElement('progress');progress.max=10;progress.value=10;progress.setAttribute('aria-label','Time until next episode');copy.append(countdown);host.append(progress);
-	nextTimer = setInterval(() => {
-		if (document.hidden || !player.open || !video.ended) { cancel.click(); return; }
-		remaining--; countdown.textContent = `Starts in ${remaining} seconds`;progress.value=remaining;
-		if (remaining <= 0) void play.onclick();
-	}, 1000);
+}
+function showNext() {
+	if (state.playing?.Type !== 'Episode' || state.live || casting.active || !player.open || viewingBlocked || nextDismissed || nextBusy) return;
+	const ended = video.ended;
+	if (!nextEpisode && !ended) return;
+	clearNextTimer();
+	const host = $('#upNext'); host.replaceChildren(); host.hidden = false;
+	nextRenderedId = nextEpisode?.Id || null; nextRenderedResult = nextResult;
+	if (!nextResult) { host.append(element('strong', '', 'Checking what’s next…')); return; }
+	if (!nextEpisode) { renderEnd(host); return; }
+	host.classList.remove('episode-ended');
+	renderNextCard(host);
+	armCountdown();
+}
+function armCountdown() {
+	const host=$('#upNext');
+	if(nextTimer!==null || nextPlayAction===null || nextAutoBlocked || !autoplayPreference.checked || document.hidden || casting.active
+		|| nextDismissed || nextBusy || state.live || !nextEpisode || !player.open || viewingBlocked || host.hidden) return;
+	const ended=video.ended, duration=mediaDurationMs(), position=mediaPositionMs();
+	if(!TellyboxEpisodeFlow.creditsCountdown(position,duration,ended,currentOutro())) return;
+	const copy=host.querySelector('.next-preview > div');
+	if(!copy) return;
+	let text=host.querySelector('.next-countdown'), progress=host.querySelector('.next-countdown-bar');
+	if(!text){ text=element('span','next-countdown','Starts in 10 seconds'); copy.append(text); }
+	if(!progress){ progress=document.createElement('progress'); progress.className='next-countdown-bar'; progress.max=10; progress.setAttribute('aria-label','Time until next episode'); host.append(progress); }
+	let remaining=TellyboxEpisodeFlow.COUNTDOWN_SECONDS;
+	progress.value=remaining; progress.hidden=false; text.hidden=false;
+	nextTimer=setInterval(() => {
+		if(nextDismissed || nextBusy || !player.open || state.live || casting.active || viewingBlocked || host.hidden){ clearNextTimer(); return; }
+		const nowEnded=video.ended, at=mediaPositionMs(), length=mediaDurationMs();
+		if(!TellyboxEpisodeFlow.creditsCountdown(at,length,nowEnded,TellyboxEpisodeFlow.reliableOutro(segments,length))){ hideNextCard(); return; }
+		if(!TellyboxEpisodeFlow.countdownCanAdvance({ended:nowEnded,playing:!video.paused,buffering:video.readyState<3,seeking:video.seeking,
+			hidden:document.hidden,casting:casting.active,stopped:!player.open,live:state.live,blocked:viewingBlocked})) return;
+		remaining--;
+		text.textContent=`Starts in ${remaining} seconds`; progress.value=remaining;
+		if(remaining<=0){ clearNextTimer(); const action=nextPlayAction; if(action) void action(); }
+	},1000);
+}
+function updateNext() {
+	if (state.playing?.Type !== 'Episode' || state.live || casting.active || !player.open || viewingBlocked || nextDismissed || nextBusy) { hideNextCard(); return; }
+	const ended = video.ended;
+	const host = $('#upNext');
+	if (!nextEpisode) {
+		if (ended) {
+			if (host.hidden || nextRenderedId !== null || nextRenderedResult !== nextResult) showNext();
+		} else if (!host.hidden) hideNextCard();
+		return;
+	}
+	const duration=mediaDurationMs(), position=mediaPositionMs(), outro=currentOutro();
+	if (!TellyboxEpisodeFlow.cardDue(position,duration,ended,outro) && !ended) { hideNextCard(); return; }
+	if (host.hidden || nextRenderedId !== nextEpisode.Id || nextRenderedResult !== nextResult) { showNext(); return; }
+	armCountdown();
 }
 video.addEventListener('timeupdate', () => {
 	const position = video.currentTime;
-	skipSegment = segments.find(s => s.type !== 'Outro' && position >= s.start && position < s.end);
-	$('#skipIntro').hidden = !skipSegment || casting.active;
+	skipSegment = TellyboxEpisodeFlow.manualAt(segments, mediaPositionMs(), mediaDurationMs());
+	$('#skipIntro').hidden = !skipSegment || casting.active || state.live;
 	if (skipSegment) $('#skipIntro').textContent = skipSegment.type === 'Recap' ? 'Skip recap' : 'Skip intro';
-	if (!nextCancelled && nextEpisode && !video.paused && Number.isFinite(video.duration) && video.duration - position <= 20 && video.duration - position > 0 && $('#upNext').hidden) showNext(false);
-	if (Number.isFinite(video.duration) && video.duration - position > 25 && !video.ended) { cancelNext(); $('#upNext').hidden = true; }
+	const intro=TellyboxEpisodeFlow.introAt(segments, mediaPositionMs(), mediaDurationMs());
+	if(intro && skipIntrosEnabled() && state.playing?.Type==='Episode' && !state.live && !casting.active && !viewingBlocked
+		&& !document.hidden && !video.paused && !video.seeking && introLedger.shouldSkip(intro,mediaPositionMs(),mediaDurationMs())) {
+		const target=intro.end;
+		if (canSeekTo(target)) {
+			introLedger.mark(intro);
+			$('#skipIntro').hidden = true;
+			video.currentTime=target;
+		}
+	}
+	updateNext();
 });
+function canSeekTo(seconds) {
+	const ranges=video.seekable;
+	if(!ranges || !ranges.length) return false;
+	for(let i=0;i<ranges.length;i++) if(seconds>=ranges.start(i)-0.5 && seconds<=ranges.end(i)+0.5) return true;
+	return false;
+}
 $('#skipIntro').onclick = () => { if (skipSegment) video.currentTime = skipSegment.end; };
 async function seriesContinue(item, content, episodes) {
 	try {
@@ -1309,7 +1384,7 @@ async function seriesContinue(item, content, episodes) {
 	} catch { /* Season browsing remains available when continuation cannot load. */ }
 }
 $('#previousChannel').onclick = () => previousChannel && startPlayback(previousChannel);
-document.addEventListener('visibilitychange', () => { if (document.hidden) { nextCancelled = true; cancelNext(); $('#upNext').hidden = true; } });
+document.addEventListener('visibilitychange', () => { if (document.hidden) clearNextTimer(); else updateNext(); });
 async function detach() {
 	const generation = playGeneration;
 	cancelNext(); $('#upNext').hidden = true;
@@ -1357,9 +1432,9 @@ async function startPlayback(item, position = 0, keepSettings = false) {
 	if(item.Type==='Catchup'&&!keepSettings&&getProgress(item.Id)>0){
 		const choice=await chooseCatchupResume(item,getProgress(item.Id));if(choice===null||generation!==playGeneration)return;position=choice;
 	}
-	try { await detach(); } catch { $('#playerStatus').textContent = 'The previous stream is still closing. Please try Play again.'; if(nextBusy){nextCancelled=true;showNext();} return; }
+	try { await detach(); } catch { $('#playerStatus').textContent = 'The previous stream is still closing. Please try Play again.'; if(nextBusy){nextBusy=false;nextAutoBlocked=true;showNext();} return; }
 	if (generation !== playGeneration) return;
-	state.playing = item; nextEpisode = null; nextResult = null; nextCancelled = false;
+	state.playing = item; nextEpisode = null; nextResult = null; nextDismissed = false; nextAutoBlocked = false; nextRenderedId = null; nextRenderedResult = null; nextPlayAction = null; introLedger.reset(); hideNextCard();
 	if (!keepSettings) {
 		viewingStarted = false;
 		try { if (localStorage.getItem('tellybox-watched-' + item.Id) === 'true') position = 0; } catch {}
@@ -1500,15 +1575,17 @@ video.addEventListener('playing', () => {
 	}
 	beginViewing();
 	updateLiveControls();
+	updateNext();
 	if (!started) { started = true; void report('start'); }
 });
+video.addEventListener('seeked', () => updateNext());
 video.addEventListener('pause', () => {
 	updateLiveControls();
 	if (keepLivePlayback()) return;
 	saveProgress(); void report('progress');
 });
 video.addEventListener('seeking', keepLiveEdge);
-video.addEventListener('ended', () => { if (casting.active) return; saveProgress(); void report('progress'); updateCastControls(); showNext(true); });
+video.addEventListener('ended', () => { if (casting.active) return; saveProgress(); void report('progress'); updateCastControls(); updateNext(); });
 video.addEventListener('error', () => { if (state.session && !casting.active && !viewingBlocked) void playbackFailed('This browser could not play the stream. Try compatibility mode below.'); });
 setInterval(async () => {
 	if (!state.session || reporting) return;
