@@ -296,6 +296,12 @@ function meta(item) {
 	return [item.ProductionYear, item.OfficialRating ? `Age rating: ${item.OfficialRating}` : null, minutes(item.RunTimeTicks)].filter(Boolean).join('  ·  ');
 }
 
+function trailerUrl(trailer) {
+	if (!trailer || String(trailer.Provider || '').toLowerCase() !== 'youtube') return '';
+	const key = String(trailer.Key || '');
+	return /^[A-Za-z0-9_-]{11}$/.test(key) ? 'https://www.youtube.com/watch?v=' + key : '';
+}
+
 function friendlyType(item) {
 	return ({ Movie: 'Film', Series: 'Series', Episode: 'Episode', MusicAlbum: 'Album', Audio: 'Track', TvChannel: 'Live TV' })[item.Type] || item.Type;
 }
@@ -873,8 +879,14 @@ async function showDetails(id) {
 		title.id = 'detailsTitle';
 		content.append(element('p', 'eyebrow', friendlyType(item).toUpperCase()), title, element('p', 'detail-meta', meta(item)));
 		if (['Movie', 'Series'].includes(item.Type)) content.append(jserverUI.ratings(item.Ratings, { links: true }));
-		if (item.Genres?.length) content.append(element('p', 'detail-meta', item.Genres.join(' · ')));
+		if (item.Genres?.length) {
+			const genres=element('div','genre-list');genres.setAttribute('aria-label','Genres');
+			for(const name of [...new Set(item.Genres.map(value=>String(value||'').trim()).filter(Boolean))].slice(0,12))genres.append(element('span','genre-chip',name));
+			content.append(genres);
+		}
 		content.append(element('p', 'overview', item.Overview || item.CurrentProgram?.Overview || 'Ready when you are.'));
+		const trailer=trailerUrl(item.Trailer);
+		if(trailer){const link=element('a','button secondary trailer-link','Watch trailer');link.href=trailer;link.target='_blank';link.rel='noopener noreferrer';link.setAttribute('aria-label','Watch trailer for '+item.Name);content.append(link);}
 		if (item.Source === 'streamed') content.append(element('p', 'source-note', 'Streamed · ' + (item.Provider || 'Dispatcharr')));
 		if (['Movie', 'Series', 'Episode'].includes(item.Type)) { content.append(TellyboxTaste.controls(item));const favouriteItem=favouriteTitle(item);const favourite=element('button','button secondary');const update=()=>{const saved=Boolean(readFavourites()[favouriteItem.Id]);favourite.textContent=saved?'★ In favourites':'☆ Add to favourites';favourite.setAttribute('aria-pressed',String(saved));};update();favourite.onclick=async()=>{favourite.disabled=true;try{await changeFavourite(favouriteItem,!readFavourites()[favouriteItem.Id]);update();}catch(error){favourite.textContent=error.message;}finally{favourite.disabled=false;}};content.append(favourite); }
 		$('#detailsBody').replaceChildren(art, content);

@@ -43,6 +43,7 @@ import {createCatchupPlayer} from './catchup-player.mjs';
 import { createDirectPlayer, mediaFile } from './dispatcharr-player.mjs';
 import { createVodLibrary } from './vod-library.mjs';
 import { createVodMetadata } from './vod-metadata.mjs';
+import { trailerView } from './trailers.mjs';
 import { createNonstopMetadata } from './nonstop-metadata.mjs';
 import { createVodPlayer } from './vod-player.mjs';
 import { createRecordings } from './recordings.mjs';
@@ -275,6 +276,8 @@ function itemView(item) {
 	}
 	if (item.CurrentProgram) result.CurrentProgram = { Name: item.CurrentProgram.Name, Overview: item.CurrentProgram.Overview };
 	if (['Movie', 'Series'].includes(item.Type)) result.Ratings = [score('Viewer score', item.CommunityRating), score('Critics', item.CriticRating, 100)].filter(Boolean);
+	const trailer = trailerView({ remoteTrailers: item.RemoteTrailers });
+	if (trailer) result.Trailer = trailer;
 	return result;
 }
 
@@ -302,7 +305,7 @@ const vodLibrary=createVodLibrary({dispatcharr,metadata:vodMetadata,file:path.jo
 		}
 		return libraryItems(items);
 	},
-	localItem:async id=>(await libraryItems([await jelly(`/Users/${connection().userId}/Items/${itemId(id)}`)]))[0],
+	localItem:async id=>(await libraryItems([await jelly(`/Users/${connection().userId}/Items/${itemId(id)}?Fields=RemoteTrailers`)]))[0],
 	localEpisodes:async id=>(await seriesEpisodes(itemId(id))).map(itemView)
 });
 app.get('/api/web/items',async(req,res)=>res.json(await vodLibrary.list(req.query)));
@@ -382,6 +385,8 @@ const catchup=createCatchup(dispatcharr,dispatcharrGuide);
 const broadcastResume=createBroadcastResume({library:vodLibrary,catchup:{list:(...args)=>features.catchup?catchup.list(...args):Promise.resolve({channels:[]})}});
 app.post('/api/continue-watching',async(req,res)=>{
 	remoteControls.guard(req.jserverViewer);accountLimits.guard(req.jserverViewer,false);
+	// Retained for older app clients. The default shelf contract is now empty because
+	// live, 24/7 and catch-up programmes are no longer resolved into home resume cards.
 	res.set('Cache-Control','no-store');res.json(await broadcastResume(req.body,{allowed:item=>remoteControls.allowed(req.jserverViewer,{itemId:item.Id,nonstop:item.Nonstop===true})}));
 });
 const catchupPlayer=createCatchupPlayer({openArchive:(...args)=>dispatcharr.catchupSession(...args)});
@@ -485,7 +490,7 @@ async function metadata(key, load) {
 	try { return await value; } catch (error) { if (metadataCache.get(key) === entry) metadataCache.delete(key); throw error; }
 }
 app.get('/api/items/:id', async (req, res) => {
-	const data = await metadata(`item:${itemId(req.params.id)}`, () => jelly(`/Users/${connection().userId}/Items/${itemId(req.params.id)}`));
+	const data = await metadata(`item:${itemId(req.params.id)}`, () => jelly(`/Users/${connection().userId}/Items/${itemId(req.params.id)}?Fields=RemoteTrailers`));
 	res.json((await libraryItems([data]))[0]);
 });
 

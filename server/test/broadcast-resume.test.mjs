@@ -10,10 +10,16 @@ const series={Id:'series',Name:saved.Name,Type:'Series',ProductionYear:2020};
 const episode={Id:'episode',Type:'Episode',Name:'The missing diamond',ParentIndexNumber:2,IndexNumber:3,Source:'local'};
 function setup({current=[],matches=[series],episodes=[episode],item=value=>value==='episode'?episode:null}={}) {
 	const calls={catchup:0,search:0,episodes:0};
-	const resolve=createBroadcastResume({catchup:{async list(channel,includeCurrent){calls.catchup++;assert.equal(channel,'');assert.equal(includeCurrent,true);return {channels:[{programmes:current}]};}},
+	const service=createBroadcastResume({catchup:{async list(channel,includeCurrent){calls.catchup++;assert.equal(channel,'');assert.equal(includeCurrent,true);return {channels:[{programmes:current}]};}},
 		library:{async searchMatches(){calls.search++;return matches;},async episodes(){calls.episodes++;return {items:episodes};},async item(id){return item(id);}}});
-	return {resolve,calls};
+	const resolve=(body,options={})=>service(body,{resolveBroadcasts:true,...options});
+	return {resolve,calls,service};
 }
+test('the home shelf request never resolves broadcasts unless a caller explicitly opts in',async()=>{
+	const resolve=createBroadcastResume({catchup:{list:async()=>{throw Error('must not read the guide');}},library:{searchMatches:async()=>{throw Error('must not search');}}});
+	assert.deepEqual(await resolve({items:[saved]}),{items:[]});
+	assert.deepEqual(await resolve({items:[saved,{...saved,Type:'Program'}]}),{items:[]});
+});
 test('plain live channels and malformed programme identities never become resume cards or open integrations',async()=>{
 	const {resolve,calls}=setup();
 	assert.deepEqual(await resolve({items:[{...saved,Type:'TvChannel'},{...saved,StartDate:new Date(start+1).toISOString()},{...saved,ChannelId:'dispatch-live-elsewhere'}]}),{items:[]});
@@ -85,13 +91,14 @@ test('per-viewer restrictions remove blocked sources and may still offer an allo
 test('catalogue resolution runs at most two workers and preserves saved order and target deduplication',async()=>{
 	let active=0,peak=0;
 	const film=index=>({Id:'film-'+index,Name:'Film '+index,Type:'Movie',ProductionYear:2020});
-	const resolve=createBroadcastResume({catchup:{list:async()=>({channels:[]})},library:{
+	const service=createBroadcastResume({catchup:{list:async()=>({channels:[]})},library:{
 		async searchMatches(title){
 			active++;peak=Math.max(peak,active);
 			await new Promise(done=>setTimeout(done,title==='Film 0'?25:2));
 			active--;return [film(Number(title.slice(5)))];
 		},item:async id=>film(Number(id.slice(5)))
 	}});
+	const resolve=(body,options={})=>service(body,{resolveBroadcasts:true,...options});
 	const candidates=[0,1,2,3,0].map((index,offset)=>({...saved,IsMovie:true,Name:'Film '+index,ProductionYear:2020,
 		Id:`catchup-${channel}-${start+offset*3600000}`,StartDate:new Date(start+offset*3600000).toISOString(),EndDate:new Date(start+(offset+1)*3600000).toISOString()}));
 	const result=await resolve({items:candidates});
@@ -102,10 +109,11 @@ test('catalogue resolution runs at most two workers and preserves saved order an
 
 test('short match cache reuses positive and negative identities but refreshes catchup, policy and item availability',async()=>{
 	let clock=0,searches=0,guideCalls=0,itemCalls=0,listed=true,exists=true,current=[saved];
-	const resolve=createBroadcastResume({now:()=>clock,catchup:{async list(){guideCalls++;return {channels:[{programmes:current}]};}},library:{
+	const service=createBroadcastResume({now:()=>clock,catchup:{async list(){guideCalls++;return {channels:[{programmes:current}]};}},library:{
 		async searchMatches(){searches++;return listed?[series]:[];},episodes:async()=>({items:[episode]}),
 		async item(){itemCalls++;return exists?episode:null;}
 	}});
+	const resolve=(body,options={})=>service(body,{resolveBroadcasts:true,...options});
 	assert.equal((await resolve({items:[saved]})).items[0].Id,episode.Id);
 	assert.equal((await resolve({items:[saved]},{allowed:item=>item.Type==='Catchup'})).items[0].Id,saved.Id);
 	assert.equal(searches,1);assert.equal(itemCalls,1);
@@ -123,7 +131,8 @@ test('short match cache reuses positive and negative identities but refreshes ca
 
 test('catalogue cache retains at most one hundred identities',async()=>{
 	let searches=0;
-	const resolve=createBroadcastResume({now:()=>0,catchup:{list:async()=>({channels:[]})},library:{searchMatches:async()=>{searches++;return [];}}});
+	const service=createBroadcastResume({now:()=>0,catchup:{list:async()=>({channels:[]})},library:{searchMatches:async()=>{searches++;return [];}}});
+	const resolve=(body,options={})=>service(body,{resolveBroadcasts:true,...options});
 	const candidate=index=>({...saved,Name:'Unmatched programme '+index});
 	for(let offset=0;offset<100;offset+=20)await resolve({items:Array.from({length:20},(_,index)=>candidate(offset+index))});
 	assert.equal(searches,100);

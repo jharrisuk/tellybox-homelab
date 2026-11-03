@@ -59,8 +59,11 @@ export function createBroadcastResume({library,catchup,now=Date.now}) {
 		while(matchesCache.size>=100)matchesCache.delete(matchesCache.keys().next().value);
 		matchesCache.set(key,{target,until:now()+30000});
 	};
-	return async (body,{allowed=()=>true}={})=>{
+	return async (body,{allowed=()=>true,resolveBroadcasts=false}={})=>{
 		if(!Array.isArray(body?.items)||body.items.length>20)throw Object.assign(Error('Choose up to 20 programmes.'),{status:400});
+		// Home Continue watching is on-demand only. Broadcast-to-catalogue matching
+		// is retained solely behind an explicit internal opt-in for direct callers.
+		if(!resolveBroadcasts)return {items:[]};
 		const candidates=body.items.map(savedProgramme).filter(Boolean);
 		if(!candidates.length)return {items:[]};
 		// A capability check and current archive window, not a saved "available" flag.

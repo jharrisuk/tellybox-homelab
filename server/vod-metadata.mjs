@@ -1,7 +1,11 @@
 import {readFile,writeFile,rename} from 'node:fs/promises';
 import {score} from './insights.mjs';
+import {trailerView} from './trailers.mjs';
 
 const day=86400000;
+// Increment when a cached presentation field is added or corrected. Older
+// persisted entries must be refreshed once instead of waiting a full TTL.
+const CACHE_SCHEMA=2;
 const text=value=>typeof value==='string'?value.trim():'';
 export const artworkPath=value=>/^\/[a-zA-Z0-9_-]+\.(jpg|png|webp)$/.test(value||'')?value:null;
 const date=value=>/^\d{4}-\d{2}-\d{2}$/.test(value||'')&&Number.isFinite(Date.parse(value))?value:undefined;
@@ -14,6 +18,7 @@ export function metadataView(data,type,id) {
 		PremiereDate:release,ProductionYear:release?Number(release.slice(0,4)):undefined,
 		RunTimeTicks:Number(data.runtime)>0?Number(data.runtime)*60*1e7:undefined,
 		CommunityRating:rating?.value,Ratings:rating?[rating]:[],
+		Trailer:trailerView(data)||undefined,
 		poster:artworkPath(data.posterPath),backdrop:artworkPath(data.backdropPath),MetadataSource:'TMDB'
 	};
 }
@@ -24,7 +29,7 @@ export function createVodMetadata({lookup,file,clock=Date.now,ttl=7*day,concurre
 	const cache=new Map(),pending=new Map(),queue=[];
 	let active=0,timer,writing=Promise.resolve();
 	const ready=file?readFile(file,'utf8').then(raw=>{
-		for(const [key,value] of JSON.parse(raw))if(/^(movie|tv)\/\d+$/.test(key)&&value?.data)cache.set(key,value);
+		for(const [key,value] of JSON.parse(raw))if(/^(movie|tv)\/\d+$/.test(key)&&value?.data&&value.schema===CACHE_SCHEMA)cache.set(key,value);
 	}).catch(()=>{}):Promise.resolve();
 	function save() {
 		if(!file||timer)return;
@@ -47,6 +52,7 @@ export function createVodMetadata({lookup,file,clock=Date.now,ttl=7*day,concurre
 		const fields=item.Source==='local'?['PremiereDate','ProductionYear','MetadataSource']:['Overview','Genres','PremiereDate','ProductionYear','CommunityRating','Ratings','MetadataSource'];
 		for(const field of fields)if(data[field]!==undefined&&data[field]!==''&&(!Array.isArray(data[field])||data[field].length))result[field]=data[field];
 		if(!result.RunTimeTicks&&data.RunTimeTicks)result.RunTimeTicks=data.RunTimeTicks;
+		if(!result.Trailer&&data.Trailer)result.Trailer=data.Trailer;
 		if(data.poster)result.Artwork=`/api/web/tmdb-art/${key(item)}/poster`;
 		if(data.backdrop)result.BackdropArtwork=`/api/web/tmdb-art/${key(item)}/backdrop`;
 		return result;
@@ -56,8 +62,8 @@ export function createVodMetadata({lookup,file,clock=Date.now,ttl=7*day,concurre
 			const {id,resolve}=queue.shift();active++;
 			const [type,number]=id.split('/');
 			Promise.resolve().then(()=>lookup(type,Number(number))).then(raw=>{
-				cache.set(id,{time:clock(),retry:clock()+ttl,data:metadataView(raw,type,number)});save();
-			}).catch(()=>{cache.set(id,{...cache.get(id),retry:clock()+5*60000});}).finally(()=>{
+				cache.set(id,{schema:CACHE_SCHEMA,time:clock(),retry:clock()+ttl,data:metadataView(raw,type,number)});save();
+			}).catch(()=>{cache.set(id,{schema:CACHE_SCHEMA,...cache.get(id),retry:clock()+5*60000});}).finally(()=>{
 				active--;pending.delete(id);resolve();pump();
 			});
 		}

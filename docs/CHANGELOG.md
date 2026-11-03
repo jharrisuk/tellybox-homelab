@@ -2,6 +2,22 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Server 0.26.8 and Android 0.26.11 (build 65) - 3 November 2026
+
+### Continue watching
+
+- Home **Continue watching** now shows on-demand films, episodes, local video and recordings only. Live channels, 24/7 and catch-up or restart programmes no longer appear there, even when older metadata points at a local or streamed copy.
+- On TV, hold OK on a Continue watching card and choose **Remove from Continue watching**. On a phone, use the card's overflow action or long press. Removal hides that title from this installation and linked profile only. Resume position, watch history and favourites stay intact.
+- A removed title returns only after playback starts successfully again. A progress heartbeat does not bring it back. An **Undo remove from Continue watching** action is available after removal.
+- Directly opening a catch-up programme still resumes at its saved position, and its history entry is kept.
+
+### Title details
+
+- Film and series details on TV now show the complete synopsis in a readable, scrollable section instead of cutting it to two lines. Real genre metadata appears as chips alongside the existing year, rating and runtime.
+- A **Watch trailer** action appears only when existing Jellyfin or TMDB metadata supplies a validated YouTube trailer. It opens the trailer externally and never autoplays. If no trailer or no YouTube/browser app is available, the action is omitted or explained with a short message.
+- Phone details gain the same real genre chips and trailer action. Browser details gain genre chips, a clearer synopsis style and the same validated trailer link.
+- Cached streamed-title metadata is refreshed once after this update, so trailer, genre and description data appear immediately instead of waiting for the old seven-day cache to expire. A title with no valid trailer still shows no trailer action.
+
 ## Server 0.26.7 and Android 0.26.10 (build 64) - 2 November 2026
 
 ### Playback defaults
