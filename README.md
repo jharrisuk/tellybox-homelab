@@ -65,6 +65,12 @@ Home-only use needs no public hostname. For remote viewing, follow the [optional
 
 Administrator notifications are optional. The **Standard Tellybox HomeLab** setting uses the shared notification gateway and Google Firebase Cloud Messaging to wake an opted-in administrator's app. Notification details are fetched from your own server after authentication. See [Privacy and data flow](docs/PRIVACY.md).
 
+## Home Assistant
+
+Monitor Tellybox in Home Assistant with the read-only [Tellybox Home Assistant integration](https://github.com/jharrisuk/tellybox-home-assistant). Its repository includes HACS installation instructions, a native dashboard and compact card, plus an optional dark/lime button-card panel with setup instructions. The integration repository links back here for server installation.
+
+Use `http://tellybox.local` when it resolves from Home Assistant, or `http://SERVER_IP:8082` as the direct fallback. Create a dedicated read-only token in Tellybox installation settings. The optional custom panel requires the HACS **button-card** frontend card; the native alternatives do not.
+
 ## Updates and backups
 
 Back up the configuration volume, `.env` and source revision first. The configuration contains credentials, so encrypt backups and keep them private. Choose a time when a brief playback interruption is acceptable, then run in the original project folder:
