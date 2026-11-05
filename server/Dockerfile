@@ -5,6 +5,7 @@ RUN apk add --no-cache ffmpeg font-dejavu openssh-client
 ENV XDG_CACHE_HOME=/tmp/tellybox-cache
 RUN npm ci --omit=dev
 COPY *.mjs ./
+COPY relay-media ./relay-media
 COPY public ./public
 COPY homelab ./homelab
 RUN mkdir /config && chown node:node /config

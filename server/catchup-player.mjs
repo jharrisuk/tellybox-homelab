@@ -1,4 +1,4 @@
-import {spawn} from 'node:child_process';
+import {spawn, spawnSync} from 'node:child_process';
 import {mkdtemp,readFile,readdir,rm,stat} from 'node:fs/promises';
 import {Readable} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
@@ -7,6 +7,13 @@ import os from 'node:os';
 
 const fail=(message,status=502)=>Object.assign(Error(message),{status});
 const segmentSeconds=4;
+// FFmpeg 5.1 (the Debian worker image) does not support this newer pacing
+// option. Detect it once; fall back to ordinary paced input rather than
+// failing every catch-up programme on an otherwise usable worker.
+const initialBurstSupported=(()=>{
+	try{return spawnSync('ffmpeg',['-hide_banner','-loglevel','error','-readrate_initial_burst','1','-version'],{stdio:'ignore'}).status===0;}catch{return false;}
+})();
+export const catchupFfmpegCapabilities=()=>({readrateInitialBurst:initialBurstSupported});
 export function catchupTimeline(item,now=Date.now()){
 	const start=Date.parse(item.StartDate),end=Date.parse(item.EndDate),duration=(end-start)/1000;
 	if(!Number.isFinite(duration)||duration<=0||duration>28800||start>=now)throw fail('Invalid catch-up programme.',400);
@@ -71,7 +78,7 @@ export function createCatchupPlayer({openArchive,maxSessions=3,clock=Date.now,pa
 					// Do not reset each stream independently, or disable correction with copyts.
 					// Pacing bounds read-ahead while the initial burst makes starts and seeks quick.
 					const args=['-hide_banner','-loglevel','error','-fflags','+genpts+discardcorrupt','-probesize','2000000','-analyzeduration','2000000',
-						...(paceInput?['-readrate','1','-readrate_initial_burst',String(skip+20)]:[]),'-protocol_whitelist','pipe','-i','pipe:0',
+						...(paceInput?['-readrate','1',...(initialBurstSupported?['-readrate_initial_burst',String(skip+20)]:[])]:[]),'-protocol_whitelist','pipe','-i','pipe:0',
 						'-map','0:v:0','-map','0:a:0?','-sn','-dn','-c:v','libx264','-preset','veryfast','-threads','2','-crf','23','-maxrate','8000000','-bufsize','16000000',
 						'-vf',`trim=start=${skip}:duration=${length},scale=w='min(1920,iw)':h=-2,format=yuv420p,fps=25:start_time=${skip},setpts=PTS+${base}/TB`,
 						'-af',`atrim=start=${skip}:duration=${length},asetpts=PTS+${base}/TB`,

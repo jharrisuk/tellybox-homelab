@@ -65,6 +65,8 @@ select:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
 
 html { scroll-behavior: smooth; }
 main > section { margin: 64px 0; scroll-margin-top: 25px; }
+img, figure, svg, table { max-width: 100%; }
+h1, h2, h3, p, li, summary { overflow-wrap: break-word; }
 .story { max-width: 850px; }
 .story p { font-size: 17px; line-height: 1.85; }
 .signature { color: var(--accent); font-weight: 600; }
@@ -88,6 +90,10 @@ pre.with-copy { padding-top: 55px; }
 .app-downloads a { display: inline-block; padding: 13px 18px; border: 1px solid #405238; border-radius: 12px; background: #293524; color: #ecf3e6; font-weight: 600; text-decoration: none; }
 .app-downloads a:hover { border-color: var(--accent); }
 .example-note { border-left: 3px solid var(--accent); padding: 16px 22px; background: #1a2417; border-radius: 0 10px 10px 0; color: var(--muted); line-height: 1.7; }
+.guide-note { margin: 20px 0; padding: 16px 20px; background: #182216; border: 1px solid #405238; border-left: 3px solid var(--accent); border-radius: 10px; }
+.guide-note p { margin: 0; color: #dce8d4; font-size: 14px; line-height: 1.7; }
+.guide-note strong { color: #f5f6ee; }
+.guide-note a { overflow-wrap: anywhere; }
 .install-step { padding: 28px 0; border-bottom: 1px solid var(--line); }
 .install-step h3 { font-size: 27px; margin: 8px 0 18px; }
 .step-label { color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: .11em; }
@@ -110,3 +116,50 @@ td { color: var(--muted); }
 	th, td { padding: 12px 8px; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* Home Assistant showcase */
+.ha-showcase {
+	display: grid;
+	grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+	gap: 30px;
+	align-items: center;
+	padding: 32px;
+	background:
+		radial-gradient(circle at 15% 0%, rgba(158, 201, 92, .16), transparent 38%),
+		linear-gradient(145deg, #182216, #10160f 70%);
+	border: 1px solid #405238;
+	border-radius: 24px;
+	box-shadow: 0 24px 70px rgba(0, 0, 0, .22);
+}
+.ha-copy h2 { margin: 8px 0 14px; font-size: clamp(34px, 5vw, 58px); line-height: 1.02; letter-spacing: -.03em; }
+.ha-lede { max-width: 620px; font-size: 17px; line-height: 1.75; color: #dce8d4; }
+.ha-benefits { display: grid; grid-template-columns: 1fr 1fr; gap: 9px 18px; margin: 22px 0 24px; padding: 0; list-style: none; }
+.ha-benefits li { position: relative; margin: 0; padding-left: 24px; color: #dce8d4; font-size: 14px; line-height: 1.5; }
+.ha-benefits li::before { content: '✓'; position: absolute; left: 0; top: 0; color: var(--accent); font-weight: 700; }
+.ha-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ha-actions a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 16px; border-radius: 11px; font-weight: 650; text-decoration: none; }
+.ha-primary { background: var(--accent); color: #131a0d; border: 1px solid var(--accent); }
+.ha-primary:hover { filter: brightness(1.08); }
+.ha-secondary { background: #233020; color: #e9f3df; border: 1px solid #405238; }
+.ha-secondary:hover { border-color: var(--accent); }
+.ha-meta { margin: 16px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.ha-shot { margin: 0; }
+.ha-shot a { display: block; }
+.ha-shot img { display: block; width: 100%; height: auto; border: 1px solid #405238; border-radius: 18px; background: #090d09; box-shadow: 0 26px 70px rgba(0, 0, 0, .38); }
+.ha-shot figcaption { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.ha-setup { margin-top: 20px; padding: 20px 24px; background: #151d13; border: 1px solid var(--line); border-radius: 16px; }
+.ha-setup > summary { color: #eef6e7; font-size: 16px; font-weight: 650; }
+.ha-setup h3 { margin-top: 22px; }
+.ha-setup > p, .ha-setup li { max-width: 900px; }
+.ha-setup code { overflow-wrap: anywhere; }
+@media (max-width: 850px) {
+	.ha-showcase { grid-template-columns: 1fr; padding: 24px; }
+	.ha-shot { order: -1; }
+	.ha-copy h2 { font-size: clamp(32px, 8vw, 48px); }
+}
+@media (max-width: 560px) {
+	.ha-showcase { padding: 18px; border-radius: 18px; }
+	.ha-benefits { grid-template-columns: 1fr; }
+	.ha-actions a { width: 100%; }
+	.ha-setup { padding: 16px 18px; }
+}

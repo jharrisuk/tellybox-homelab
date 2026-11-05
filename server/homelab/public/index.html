@@ -38,10 +38,17 @@
 					</div><label>Verified known-hosts entry<textarea name="knownHosts" rows="3" spellcheck="false" placeholder="server-address ssh-ed25519 AAAA…"></textarea><small>Verify the host fingerprint through the provider’s console first. Never accept an unverified key. Leave empty to keep the saved entry.</small></label>
 					<button type="submit">Save relay connection</button><span id="relaySaved" class="test-result"></span>
 					</form>
-				<div class="relay-actions"><button id="relayCheck" type="button">Check connection</button><button id="relayPlan" type="button">Review setup</button></div>
+				<div class="relay-actions"><button id="relayCheck" type="button">Check connection</button><button id="relayPrepareWorker" type="button">Prepare private worker connectivity</button><button id="relayPlan" type="button">Review setup</button></div>
 				<div id="relayReview" hidden><h3>Review the changes</h3><div id="relayPlanText"></div><label>Confirm the public hostname<input id="relayConfirm" autocomplete="off" spellcheck="false"></label><button class="primary" id="relayInstall" type="button">Set up this relay</button></div>
 				<p id="relayStatus" role="status"></p><pre id="relayOutput" hidden></pre>
 				</details>
+			</section>
+			<section class="panel" id="relayMediaPanel">
+				<p class="eyebrow">RELAY MEDIA (OPTIONAL)</p><h2>Relay media worker</h2>
+				<div id="relayMediaStatus" class="relay-health" role="status" aria-live="polite"></div>
+				<p>Dispatcharr media can play directly from the relay. Main keeps accounts, catalogue, limits and revocation. Existing Caddy-only relays are unchanged until you register and approve a worker.</p>
+				<div class="relay-actions"><button id="relayMediaEnrol" type="button">Create one-time enrolment</button><button id="relayMediaApprove" type="button">Approve worker</button><button id="relayMediaRevoke" class="quiet" type="button">Revoke worker</button><button id="relayMediaDeploy" class="quiet" type="button">Show isolated deployment scripts</button></div>
+				<p id="relayMediaMessage" role="status"></p><pre id="relayMediaToken" hidden></pre>
 			</section>
 			<section class="panel" id="homeAssistantPanel">
 				<p class="eyebrow">MONITORING</p><h2>Home Assistant</h2>

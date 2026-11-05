@@ -70,6 +70,38 @@ export function validateConfig(input, previous = defaultConfig()) {
 			if (f.type === 'url' && value) value = serviceUrl(value, { originOnly: true });
 			output[f.key] = value;
 		}
+		if (spec.id === 'dispatcharr') {
+			// The physical address and the media execution are separate. Exactly
+			// three user choices are accepted; only On relay selects execution relay.
+			let location = candidate.location;
+			if (location !== undefined && !['onThisServer', 'relay', 'anotherServer'].includes(location)) throw fail('Choose On this server, On relay or Another server.');
+			if (location === undefined) location = candidate.onThisServer === true ? 'onThisServer' : candidate.onThisServer === false ? 'anotherServer' : old.location || (candidate.url ? 'anotherServer' : 'onThisServer');
+			const manual = candidate.manualUrl ?? old.manualUrl ?? (!old.onThisServer ? old.url : '');
+			if (location === 'onThisServer') {
+				output.onThisServer = true;
+				output.url = candidate.url || old.location === 'onThisServer' && old.url || spec.sameServerUrl;
+				output.manualUrl = serviceUrl(manual || '', { optional: true, originOnly: true });
+				output.execution = 'main';
+			} else if (location === 'relay') {
+				output.onThisServer = false;
+				output.execution = 'relay';
+				output.relayMetadataUrl = serviceUrl(candidate.relayMetadataUrl || output.relayMetadataUrl || '', { optional: true, originOnly: true });
+				output.relayUrl = serviceUrl(candidate.relayUrl || old.relayUrl || 'http://host.containers.internal:9191', { originOnly: true });
+				output.url = output.relayMetadataUrl;
+				output.manualUrl = serviceUrl(manual || '', { optional: true, originOnly: true });
+				if (output.enabled && !output.relayMetadataUrl) throw fail('On relay needs the checked relay metadata address. Register and check the relay first.');
+				if (output.enabled && !result.network.publicOrigin) throw fail('On relay needs your public HTTPS address so viewers can reach the relay media prefix.');
+			} else {
+				output.onThisServer = false;
+				output.execution = 'main';
+				output.url = serviceUrl(candidate.url || '', { optional: true, originOnly: true });
+				output.manualUrl = output.url;
+				if (output.enabled && !output.url) throw fail('Another server needs its server address.');
+			}
+			output.location = location;
+			if (output.enabled && !['live', 'vod', 'recordings', 'catchup'].some(key => output[key] === true)) throw fail('Choose at least one Dispatcharr feature.');
+			if (output.location !== 'relay' && output.execution !== 'main') throw fail('Only On relay can use relay media execution.');
+		}
 		result.services[spec.id] = output;
 	}
 	const s = result.services;
@@ -109,6 +141,7 @@ export function capabilities(config) {
 		live: s.dispatcharr.enabled && s.dispatcharr.live, nonstop: s.dispatcharr.enabled && s.dispatcharr.live,
 		vod: s.dispatcharr.enabled && s.dispatcharr.vod, recordings: s.dispatcharr.enabled && s.dispatcharr.recordings,
 		catchup: s.dispatcharr.enabled && s.dispatcharr.catchup, discover: s.seerr.enabled,
+		relayMedia: s.dispatcharr.enabled && s.dispatcharr.location === 'relay',
 		comingSoon: s.sonarr.enabled || s.radarr.enabled, subtitles: s.opensubtitles.enabled, introdb: s.introdb.enabled };
 }
 export function atomicJson(file, value) {
@@ -140,6 +173,9 @@ export function materialize(config, directory) {
 	write(data, 'seerr.json', s.seerr.enabled ? { url: s.seerr.url, key: s.seerr.key, specials:s.seerr.specials===true, ...requests } : {});
 	write(data, 'insights.json', Object.fromEntries(['sonarr', 'radarr'].filter(id => s[id].enabled).map(id => [id, { url: s[id].url, key: s[id].key }])));
 	write(auth, 'dispatcharr.json', s.dispatcharr.enabled ? { key: s.dispatcharr.key || '' } : {});
+	write(auth, 'relay-media.json', s.dispatcharr.enabled && s.dispatcharr.location === 'relay'
+		? { enabled: true, workerUpstreamUrl: s.dispatcharr.relayUrl || '', workerKey: s.dispatcharr.relayKey || '', metadataUrl: s.dispatcharr.relayMetadataUrl || '' }
+		: { enabled: false });
 	write(auth, 'opensubtitles.json', { ...(s.opensubtitles.enabled ? s.opensubtitles : {}), enabled: s.opensubtitles.enabled });
 	write(auth, 'email.json', { ...(s.resend.enabled ? s.resend : {}), enabled: s.resend.enabled });
 	write(auth, 'firebase-client.json', s.firebase.enabled ? { projectId: s.firebase.projectId, applicationId: s.firebase.applicationId, ...(s.firebase.publicApplicationId?{publicApplicationId:s.firebase.publicApplicationId}:{}), senderId: s.firebase.senderId, apiKey: s.firebase.apiKey } : {});
@@ -148,6 +184,7 @@ export function materialize(config, directory) {
 	write(data, 'capabilities.json', capabilities(config));
 	const n = config.network;
 	return { HOMELAB: '1', TELLYBOX_APP_EDITION: config.apps?.edition || 'public', TELLYBOX_APP_PACKAGE: config.apps?.edition==='personal'?config.apps.packageName||'':'', DATA_DIR: data, AUTH_DIR: auth, CATALOGUE_CACHE_DIR: cache, TRENDING_CACHE_PATH: path.join(cache, 'trending-cache.json'), JELLYFIN_URL: s.jellyfin.enabled ? s.jellyfin.url : 'http://127.0.0.1:1',
+		RELAY_STATE_DIR: directory, RELAY_MEDIA_ENABLED: s.dispatcharr.enabled && s.dispatcharr.location === 'relay' ? '1' : '0',
 		DISPATCHARR_URL: s.dispatcharr.enabled ? s.dispatcharr.url : 'http://127.0.0.1:1', PUBLIC_ORIGIN: n.publicOrigin,
 		LOCAL_PLAYBACK_ORIGIN: n.localOrigin || 'http://127.0.0.1:8082', LOCAL_NETWORKS: n.localNetworks.join(','), LOCAL_HOSTS: n.localHosts.join(','),
 		TRUSTED_PROXIES: n.trustedProxies.join(','), HOME_TRUSTED_PROXY: n.homeTrustedProxy, HOME_IP_ENDPOINT: n.homeIpEndpoint,

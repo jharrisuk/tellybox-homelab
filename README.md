@@ -2,7 +2,7 @@
 
 Your collection, live TV, 24/7 channels and streamed titles in one place, with a web player and companion apps for Android phone and TV.
 
-**Server 0.26.8 - early access.** Built for people who enjoy running their own media services. Start with a separate installation, connect the services you use, and try it on your devices before relying on it.
+**Server 0.26.10 - early access.** Built for people who enjoy running their own media services. Start with a separate installation, connect the services you use, and try it on your devices before relying on it.
 
 **[Installation walkthrough](https://homelab.tellyboxapp.com/#start)** · **[Android apps](https://homelab.tellyboxapp.com/#apps)** · **[Report a problem](https://github.com/jharrisuk/tellybox-homelab/issues)**
 
@@ -64,12 +64,6 @@ An optional read-only Home Assistant custom integration is in `integrations/home
 Home-only use needs no public hostname. For remote viewing, follow the [optional HTTPS relay guide](https://homelab.tellyboxapp.com/#remote). A relay connects to the server's authenticated **8083** entry; do not expose the login-free local viewing port instead.
 
 Administrator notifications are optional. The **Standard Tellybox HomeLab** setting uses the shared notification gateway and Google Firebase Cloud Messaging to wake an opted-in administrator's app. Notification details are fetched from your own server after authentication. See [Privacy and data flow](docs/PRIVACY.md).
-
-## Home Assistant
-
-Monitor Tellybox in Home Assistant with the read-only [Tellybox Home Assistant integration](https://github.com/jharrisuk/tellybox-home-assistant). Its repository includes HACS installation instructions, a native dashboard and compact card, plus an optional dark/lime button-card panel with setup instructions. The integration repository links back here for server installation.
-
-Use `http://tellybox.local` when it resolves from Home Assistant, or `http://SERVER_IP:8082` as the direct fallback. Create a dedicated read-only token in Tellybox installation settings. The optional custom panel requires the HACS **button-card** frontend card; the native alternatives do not.
 
 ## Updates and backups
 

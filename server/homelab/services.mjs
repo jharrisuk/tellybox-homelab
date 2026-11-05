@@ -15,6 +15,7 @@ export const services = [
 	},
 	{
 		id: 'dispatcharr', name: 'Dispatcharr', group: 'Your media', icon: 'tv',
+		locations: ['onThisServer', 'relay', 'anotherServer'],
 		sameServerUrl: 'http://host.docker.internal:9191',
 		summary: 'Bring live TV, a programme guide and your streamed catalogue together.',
 		description: 'Dispatcharr manages your IPTV sources. Tellybox connects directly for live channels, a separate 24/7 area, on-demand films and series, and supported recording and catch-up features.',
@@ -23,7 +24,10 @@ export const services = [
 		without: 'Your Jellyfin collection continues to work normally.',
 		note: 'Tellybox does not supply channels. Catch-up needs provider archive support. Recording controls need DVR management permission in Dispatcharr. 24/7 grouping comes from your channel groups and names.',
 		docs: 'https://dispatcharr.github.io/Dispatcharr-Docs/',
-		fields: [field('url', 'Server address', 'url', true, 'For example http://dispatcharr:9191'), field('key', 'Personal API key', 'secret'), field('live', 'Live TV and 24/7', 'boolean'), field('vod', 'On-demand catalogue', 'boolean'), field('recordings', 'Recordings', 'boolean'), field('catchup', 'Catch-up', 'boolean')]
+		fields: [field('url', 'Server address', 'url', false, 'Required for Another server. On this server and On relay are discovered automatically.'), field('key', 'Personal API key', 'secret'), field('live', 'Live TV and 24/7', 'boolean'), field('vod', 'On-demand catalogue', 'boolean'), field('recordings', 'Recordings', 'boolean'), field('catchup', 'Catch-up', 'boolean'),
+			field('relayMetadataUrl', 'Relay metadata address', 'url', false, 'Advanced only: discovered from the checked relay. Used by main for catalogue, guide and control.'),
+			field('relayUrl', 'Worker Dispatcharr address', 'url', false, 'Advanced only: loopback address the worker uses for media.'),
+			field('relayKey', 'Worker Dispatcharr API key', 'secret', false, 'Worker-only key. Never sent to viewers or returned by status.')]
 	},
 	{
 		id: 'seerr', name: 'Seerr', group: 'Discovery & requests', icon: 'search',

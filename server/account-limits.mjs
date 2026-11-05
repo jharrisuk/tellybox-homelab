@@ -85,5 +85,11 @@ export function createAccountLimits(directory,{clock=Date.now,resolveViewer=view
 		if(dirty&&now-saved>=5000){store.save();saved=now;}
 	}
 	function end(id){tick();active.delete(id);store.save();}
-	return {status,set,allowed,guard,reason,key,media,heartbeat,tick,end,maxSessions,viewing};
+	// Conservative reconciliation for a relay grant whose worker could not be
+	// acknowledged. Only the caller-computed unreconciled part is added, once.
+	function charge(id,seconds){
+		if(!/^(person|device):[a-f0-9]{32}$/.test(id)||!Number.isFinite(seconds)||seconds<=0)return null;
+		tick();const e=entry(id);e.seconds+=seconds;e.dailySeconds+=seconds;store.save();return status(id);
+	}
+	return {status,set,allowed,guard,reason,key,media,heartbeat,tick,end,charge,maxSessions,viewing};
 }

@@ -1,6 +1,17 @@
 const $ = selector => document.querySelector(selector);
-const state = { libraries: [], library: null, type: 'all', items: [], total: 0, generation: 0, playing: null, session: null, hls: null, compatibility: false, loading: false, live: false };
+const state = { libraries: [], library: null, type: 'all', items: [], total: 0, generation: 0, playing: null, session: null, hls: null, compatibility: false, loading: false, live: false, relayMedia: false };
 const video = $('#video');
+const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement || null;
+const requestFullscreenOn = element => {
+	const request = element.requestFullscreen || element.webkitRequestFullscreen || element.webkitRequestFullScreen || element.msRequestFullscreen;
+	if (request) return request.call(element);
+	if (video.webkitEnterFullscreen) return video.webkitEnterFullscreen();
+	return Promise.reject(new Error('Fullscreen is unavailable.'));
+};
+const exitFullscreen = () => {
+	const exit = document.exitFullscreen || document.webkitExitFullscreen || document.webkitCancelFullScreen || document.msExitFullscreen;
+	return exit ? exit.call(document) : Promise.resolve();
+};
 const details = $('#details');
 const player = $('#player');
 let searchTimer;
@@ -102,7 +113,7 @@ function updateLiveControls() {
 		$('#livePlay').hidden = !video.paused || !video.currentSrc;
 		$('#liveMute').textContent = video.muted ? 'Unmute' : 'Mute';
 		$('#liveMute').setAttribute('aria-pressed', String(video.muted));
-		$('#liveFullscreen').textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen';
+		$('#liveFullscreen').textContent = (document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement) ? 'Exit fullscreen' : 'Fullscreen';
 	}
 }
 
@@ -275,10 +286,11 @@ async function api(url, body, base = '', timeoutOverride) {
 $('#livePlay').onclick = () => { video.play().catch(() => { $('#playerStatus').textContent = 'Tap the video to start live playback.'; }); };
 $('#liveMute').onclick = () => { video.muted = !video.muted; updateLiveControls(); };
 $('#liveFullscreen').onclick = async () => {
-	try { if (document.fullscreenElement) await document.exitFullscreen(); else await $('.video-stage').requestFullscreen(); }
+	try { if (fullscreenElement()) await exitFullscreen(); else await requestFullscreenOn($('.video-stage')); }
 	catch { /* Fullscreen can be unavailable in some embedded browsers. */ }
 };
 document.addEventListener('fullscreenchange', updateLiveControls);
+document.addEventListener('webkitfullscreenchange', updateLiveControls);
 
 function imageUrl(item, backdrop = false, width = 400) {
 	if (backdrop && item.BackdropArtwork) return item.BackdropArtwork;
@@ -1442,7 +1454,7 @@ async function detach() {
 	if (session) await api('/api/sessions/' + session, { action: 'stop', position, paused: true }, sessionBase);
 	// A newer play may have started while the stop request was in flight.
 	if (generation !== playGeneration) return;
-	if (state.session === session) { state.session = null; state.sessionBase = ''; }
+	if (state.session === session) { state.session = null; state.sessionBase = ''; state.relayMedia = false; }
 	if (state.hls) { state.hls.destroy(); state.hls = null; }
 	video.pause();
 	video.removeAttribute('src');
@@ -1465,12 +1477,13 @@ async function startPlayback(item, position = 0, keepSettings = false) {
 	// Track indexes belong to one file. Choose English afresh for the next episode.
 	keepSettings = keepSettings && state.playing?.Id === item.Id;
 	const generation = ++playGeneration;
+	const relayReplacement = keepSettings && state.relayMedia === true && Boolean(state.session) && state.playing?.Id === item.Id;
 	resetViewingState();
 	saveProgress();
 	if(item.Type==='Catchup'&&!keepSettings&&getProgress(item.Id)>0){
 		const choice=await chooseCatchupResume(item,getProgress(item.Id));if(choice===null||generation!==playGeneration)return;position=choice;
 	}
-	try { await detach(); } catch { $('#playerStatus').textContent = 'The previous stream is still closing. Please try Play again.'; if(nextBusy){nextBusy=false;nextAutoBlocked=true;showNext();} return; }
+	try { if (!relayReplacement) await detach(); } catch { $('#playerStatus').textContent = 'The previous stream is still closing. Please try Play again.'; if(nextBusy){nextBusy=false;nextAutoBlocked=true;showNext();} return; }
 	if (generation !== playGeneration) return;
 	state.playing = item; nextEpisode = null; nextResult = null; nextDismissed = false; nextAutoBlocked = false; nextRenderedId = null; nextRenderedResult = null; nextPlayAction = null; introLedger.reset(); hideNextCard();
 	if (!keepSettings) {
@@ -1491,7 +1504,8 @@ async function startPlayback(item, position = 0, keepSettings = false) {
 	$('#playerStatus').textContent = '';playerLoading(true);
 	$('#retryPlayer').disabled = true;
 	try {
-		const payload = { textSubtitles: true, id: item.Id, quality: Number($('#quality').value), compatibility: state.compatibility, subtitleIndex: Number($('#subtitleTrack').value) };
+		const payload = { textSubtitles: true, id: item.Id, quality: Number($('#quality').value), compatibility: state.compatibility, subtitleIndex: Number($('#subtitleTrack').value), relayMedia: true, position: Number(position) || 0 };
+		if (relayReplacement) payload.replaceSession = state.session;
 		if (!keepSettings && playbackPreference('tellybox-english', 'englishSubtitles')) { delete payload.subtitleIndex; payload.preferEnglishSubtitles = true; }
 		if ($('#audioTrack').value !== '') payload.audioIndex = Number($('#audioTrack').value);
 		const sessionBase = await playbackBase();
@@ -1501,6 +1515,8 @@ async function startPlayback(item, position = 0, keepSettings = false) {
 		state.session = playback.session;
 		state.sessionBase = sessionBase;
 		state.playbackKind = playback.kind;
+		state.relayMedia = playback.mediaRoute === 'relay';
+		if (relayReplacement && state.hls) { state.hls.destroy(); state.hls = null; }
 		setLiveMode(playback.live === true);
 		const audioValue = $('#audioTrack').value;
 		$('#audioTrack').replaceChildren(new Option('Default', ''), ...playback.audio.map(track => new Option(track.label, String(track.index))));

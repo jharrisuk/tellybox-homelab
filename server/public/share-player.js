@@ -1,6 +1,17 @@
 const $ = id => document.getElementById(id);
 const base = location.pathname.replace(/\/$/, '');
 const video = $('video');
+const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement || null;
+const requestFullscreenOn = element => {
+	const request = element.requestFullscreen || element.webkitRequestFullscreen || element.webkitRequestFullScreen || element.msRequestFullscreen;
+	if (request) return request.call(element);
+	if (video.webkitEnterFullscreen) return video.webkitEnterFullscreen();
+	return Promise.reject(new Error('Fullscreen is unavailable.'));
+};
+const exitFullscreen = () => {
+	const exit = document.exitFullscreen || document.webkitExitFullscreen || document.webkitCancelFullScreen || document.msExitFullscreen;
+	return exit ? exit.call(document) : Promise.resolve();
+};
 let session = null;
 let hls = null;
 let busy = false;
@@ -31,7 +42,7 @@ function updateLiveControls() {
 		$('livePlay').hidden = !video.paused || !video.currentSrc;
 		$('liveMute').textContent = video.muted ? 'Unmute' : 'Mute';
 		$('liveMute').setAttribute('aria-pressed', String(video.muted));
-		$('liveFullscreen').textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen';
+		$('liveFullscreen').textContent = (document.fullscreenElement || document.webkitFullscreenElement || document.webkitCurrentFullScreenElement) ? 'Exit fullscreen' : 'Fullscreen';
 	}
 }
 function setLive(value) {
@@ -100,7 +111,7 @@ async function play(restart = false) {
 	video.removeAttribute('src'); video.load();
 	try {
 		if (previous) await api('/session/' + previous, { action: 'stop', position }).catch(() => {});
-		const data = await api('/play', { id: selectedEpisode, quality: Number($('quality').value), compatibility: !live, subtitleIndex,
+		const data = await api('/play', { id: selectedEpisode, quality: Number($('quality').value), compatibility: !live, subtitleIndex, relayMedia: true, position: Number(position) || 0,
 			...(restart && Number.isInteger(audioIndex) ? { audioIndex } : {}) });
 		session = data.session;
 		setLive(data.live === true);
@@ -111,6 +122,7 @@ async function play(restart = false) {
 			video.play().catch(() => { $('status').textContent = 'Press play on the video to start.'; updateLiveControls(); });
 			updateLiveControls();
 		};
+		const mediaUrl = new URL(data.url, location.origin).href;
 		if (data.kind === 'hls' && Hls.isSupported()) {
 			hls = new Hls();
 			hls.on(Hls.Events.ERROR, (event, error) => {
@@ -121,8 +133,8 @@ async function play(restart = false) {
 				$('play').textContent = 'Retry playback';
 				$('play').onclick = () => play(true);
 			});
-			hls.loadSource(data.url); hls.attachMedia(video);
-		} else if (data.kind !== 'hls' || video.canPlayType('application/vnd.apple.mpegurl')) video.src = data.url;
+			hls.loadSource(mediaUrl); hls.attachMedia(video);
+		} else if (data.kind !== 'hls' || video.canPlayType('application/vnd.apple.mpegurl')) video.src = mediaUrl;
 		else throw new Error('Please open this link in an up-to-date Chrome, Edge, Firefox or Safari browser.');
 		await api('/session/' + session, { action: 'start', position, paused: false });
 		$('status').textContent = 'Ready to watch';
@@ -144,10 +156,11 @@ for (const id of ['subtitles', 'audio', 'quality']) $(id).onchange = () => play(
 $('livePlay').onclick = () => { video.play().catch(() => { $('status').textContent = 'Press play on the video to watch live.'; }); };
 $('liveMute').onclick = () => { video.muted = !video.muted; updateLiveControls(); };
 $('liveFullscreen').onclick = async () => {
-	try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.querySelector('.screen').requestFullscreen(); }
+	try { if (fullscreenElement()) await exitFullscreen(); else await requestFullscreenOn(document.querySelector('.screen')); }
 	catch { /* Fullscreen can be unavailable in some embedded browsers. */ }
 };
 document.addEventListener('fullscreenchange', updateLiveControls);
+document.addEventListener('webkitfullscreenchange', updateLiveControls);
 video.addEventListener('pause', () => {
 	updateLiveControls();
 	if (keepLivePlayback()) return;

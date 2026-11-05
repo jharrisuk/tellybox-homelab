@@ -8,6 +8,7 @@ export function validateRelay(input) {
 	c.sshPort = Number(c.sshPort || 22); if (!Number.isInteger(c.sshPort) || c.sshPort < 1 || c.sshPort > 65535) throw Error('Invalid SSH port.');
 	const ip = String(c.homeTailscaleIp || '').split('.').map(Number);
 	if (!/^100\.\d+\.\d+\.\d+$/.test(c.homeTailscaleIp || '') || ip[1] < 64 || ip[1] > 127 || ip.some(n => !Number.isInteger(n) || n < 0 || n > 255)) throw Error('Use the home server’s Tailscale IPv4 address.');
+	if (c.relayTailscaleIp !== undefined && c.relayTailscaleIp !== '' && !/^100\.\d+\.\d+\.\d+$/.test(c.relayTailscaleIp)) throw Error('Use the relay Tailscale IPv4 address.');
 	for (const name of ['keyFile', 'knownHostsFile']) if (typeof c[name] !== 'string' || !path.isAbsolute(c[name]) || /[\r\n]/.test(c[name])) throw Error(name + ' must be an absolute local file path.');
 	return c;
 }

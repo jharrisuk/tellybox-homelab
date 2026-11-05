@@ -5,7 +5,8 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 import { validateRelay, caddySite, installScript, sshArgs } from '../server/homelab/relay-core.mjs';
-export { validateRelay, caddySite, installScript, sshArgs };
+import { relayMediaCaddyBlock, relayMediaCaddySite, scopedCaddyScript, workerDeployment, mainWorkerControlScript, workerActivationScript } from '../server/homelab/relay-worker.mjs';
+export { validateRelay, caddySite, installScript, sshArgs, relayMediaCaddyBlock, relayMediaCaddySite, scopedCaddyScript, workerDeployment, mainWorkerControlScript, workerActivationScript };
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
 	try {
 		const [command, filename, confirmation] = process.argv.slice(2);

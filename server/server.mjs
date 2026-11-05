@@ -51,6 +51,7 @@ import { createRecordingDeletion, installRecordingDeletion } from './recording-d
 import { loadCapabilities, optionalDispatcharr } from './homelab/runtime.mjs';
 import { installReleaseVersion, serverRelease } from './release-version.mjs';
 import { createHomeAssistantIntegration, installHomeAssistantStats } from './home-assistant.mjs';
+import { createRelayMediaService } from './relay-media/install.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const upstream = new URL(process.env.JELLYFIN_URL || 'http://127.0.0.1:1');
@@ -108,6 +109,11 @@ const remoteControls=createRemoteControls(process.env.AUTH_DIR||path.join(root,'
 const isAdmin=req=>req.jserverApp?.role==='admin';
 const uploadLimit = createUploadLimit(process.env.AUTH_DIR || path.join(root, 'auth-data'));
 const playbackDefaults = createPlaybackDefaults(process.env.AUTH_DIR || path.join(root, 'auth-data'));
+// Private main-worker control is registered before the viewer gate. Caddy blocks
+// /internal/* publicly; the handler also verifies worker signatures and peers.
+const relayMediaService = createRelayMediaService({ directory: process.env.RELAY_STATE_DIR || path.dirname(configPath), accountLimits, publicOrigin: process.env.PUBLIC_ORIGIN || '', maxSessions: 3,
+	enabled: process.env.RELAY_MEDIA_ENABLED === '1' || features.relayMedia === true });
+relayMediaService.install(app);
 const serverHealth = createServerHealth(process.env.HOST_HEALTH_PATH || path.join(path.dirname(configPath), 'host-health.json'), { bandwidth: () => uploadLimit.status(), streaming: () => activity.snapshot().active.filter(item => item.purpose !== 'download').length });
 const homeAssistant = createHomeAssistantIntegration({
 	directory: process.env.AUTH_DIR || path.join(root, 'auth-data'),
@@ -117,7 +123,7 @@ const homeAssistant = createHomeAssistantIntegration({
 // dedicated bearer token; it is never satisfied by a viewer cookie or app token.
 installHomeAssistantStats(app, { integration: homeAssistant });
 const shares = createShares(process.env.AUTH_DIR || path.join(root, 'auth-data'), {
-	onRevoke: owner => { for (const session of sessions.values()) if (session.owner === owner) void stop(session); }
+	onRevoke: owner => { for (const session of sessions.values()) if (session.owner === owner) void stop(session,{relayRevoke:Boolean(session.relayLeaseId)}); }
 });
 installPublicShares(app, {
 	shares, publicDirectory: path.join(root, 'public'), hlsFile: path.join(root, 'node_modules/hls.js/dist/hls.min.js'),
@@ -141,7 +147,7 @@ const auth = installAuth(app, {
 	trustedProxies: (process.env.TRUSTED_PROXIES || '').split(',').filter(Boolean),
 	clientIpHeader: process.env.CLIENT_IP_HEADER || 'cf-connecting-ip',
 	onRevoke: owner => {
-		for (const session of sessions.values()) if (session.owner !== 'local' && (owner === null || session.owner === owner)) void stop(session);
+		for (const session of sessions.values()) if (session.owner !== 'local' && (owner === null || session.owner === owner)) void stop(session,{relayRevoke:Boolean(session.relayLeaseId)});
 	},
 	directory: process.env.AUTH_DIR || path.join(root, 'auth-data'),
 	publicDirectory: path.join(root, 'public'), localPort: Number(process.env.PORT || 8082),
@@ -632,9 +638,14 @@ async function lookupEnglish(item,{release='',fingerprint='',duration=0}={}) {
 	}
 	return subtitleLookup.lookup({item,series,release,fingerprint,duration});
 }
+function relayClientUnsupported(req){return req.body?.relayMedia!==true;}
 async function preparePlayback(req, res) {
 	remoteControls.guard(req.jserverViewer,{itemId:req.body.id});
 	accountLimits.guard(req.jserverViewer,req.body.download===true);
+	if(!req.body.download&&req.body.replaceSession){
+		const existing=sessions.get(String(req.body.replaceSession));
+		if(existing&&existing.owner===req.jserverOwner&&existing.relayLeaseId&&!existing.stopping&&String(existing.itemId)===String(req.body.id))return replaceRelayPlayback(req,res,existing);
+	}
 	const sessionId=randomUUID(),download=req.body.download===true;
 	// Reserve before any asynchronous preparation. The check and insert are one
 	// synchronous step, so simultaneous requests cannot both take the last screen.
@@ -660,6 +671,20 @@ async function preparePlayback(req, res) {
 		sessionLimits.release(sessionId);
 		throw error;
 	}
+}
+async function replaceRelayPlayback(req,res,existing){
+	if(String(req.body.id||'')!==String(existing.itemId))return null;
+	const mode=existing.relayMode;
+	if(!['live','nonstop','vod','recording','catchup'].includes(mode))return res.status(409).json({error:'This relay session cannot be replaced.',code:'RELAY_REPLACE_UNSUPPORTED'});
+	const result=await relayMediaService.replace(existing.relayLeaseId,{quality:req.body.quality??existing.relayQuality,audioIndex:req.body.audioIndex,
+		subtitleIndex:req.body.subtitleIndex,position:Number(req.body.position)||0});
+	existing.updated=Date.now();existing.relayQuality=req.body.quality??existing.relayQuality;existing.playMethod=result.method||existing.playMethod;
+	existing.relaySessionUrl=result.url;existing.position=Number(result.position)||existing.position;
+	relayMediaService.clientHeartbeat(existing.relayLeaseId);
+	activity.update(existing.id,{method:existing.playMethod,mediaRoute:'relay',routeSource:'lease',workerId:result.workerId,replaced:true});
+	return res.json({session:existing.id,url:result.url,kind:'hls',live:['live','nonstop'].includes(existing.relayMode),duration:result.duration||0,
+		subtitleIndex:Number.isInteger(result.subtitleIndex)?result.subtitleIndex:(req.body.subtitleIndex??-1),subtitles:result.subtitles||[],audio:result.audio||[],
+		method:result.method||existing.playMethod,mediaRoute:'relay',routeSource:'lease',workerId:result.workerId,replaced:true,position:result.position||0});
 }
 async function preparePlaybackContent(req, res, sessionId) {
 	if(String(req.body.id||'').startsWith('catchup-'))return prepareCatchup(req,res,sessionId);
@@ -820,9 +845,22 @@ async function preparePlaybackContent(req, res, sessionId) {
 
 async function prepareCatchup(req,res,sessionId){
 	if(!features.catchup)return res.status(404).json({error:'Catch-up is not enabled on this server.'});
-	if(req.jserverShare||req.body.download)return res.sendStatus(403);
+	if(req.body.download)return res.sendStatus(403);
+	if(req.jserverShare&&!features.relayMedia)return res.sendStatus(403);
 	const item=await catchup.resolve(req.body.id),channel=(await dispatcharr.channels()).find(c=>'dispatch-live-'+c.id===item.ChannelId);
 	if(!channel)return res.sendStatus(404);
+	if(features.relayMedia){
+		if(relayClientUnsupported(req))throw Object.assign(Error('This app version cannot use relay media. Update the app; main media was not used as a fallback.'),{status:409,code:'RELAY_CLIENT_UNSUPPORTED'});
+		const relay=await relayMediaService.prepare({session:{id:sessionId},viewer:req.jserverViewer,itemId:item.Id,mode:'catchup',
+			params:{channelId:channel.id,item},position:Math.max(0,Number(req.body.position)||0),local:auth.isLocal(req),share:Boolean(req.jserverShare),onRelease:(id,detail)=>{sessionLimits.release(id);}});
+		if(!auth.validOwner(req.jserverOwner)||res.destroyed){await relayMediaService.stop(relay.leaseId,{acknowledged:false,reason:'owner_race'});return res.sendStatus(req.jserverShare?410:401);}
+		const session={id:sessionId,admin:isAdmin(req),itemId:item.Id,owner:req.jserverOwner,updated:Date.now(),position:0,kind:'hls',playMethod:relay.method||'Relay',
+			relayLeaseId:relay.leaseId,relayWorkerId:relay.workerId,mediaRoute:'relay',routeSource:'lease',resource:'',relaySessionUrl:relay.url,relayMode:'catchup',relayParams:{channelId:channel.id,item}};
+		if(req.jserverShare){session.shareToken=req.jserverShareToken;session.shareExpires=req.jserverShare.expires;}
+		session.viewer=req.jserverViewer;sessions.set(session.id,session);activity.begin(session.id,req.jserverViewer,item,{purpose:'watch'});
+		activity.update(session.id,{method:'Relay',mediaRoute:'relay',routeSource:'lease',workerId:relay.workerId});
+		return res.json({session:session.id,url:relay.url,kind:'hls',live:false,duration:relay.duration||0,subtitleIndex:Number.isInteger(relay.subtitleIndex)?relay.subtitleIndex:-1,subtitles:relay.subtitles||[],audio:relay.audio||[],method:relay.method||'Relay',mediaRoute:'relay',routeSource:'lease',workerId:relay.workerId,position:relay.position||0});
+	}
 	const direct=await catchupPlayer.start(channel,item);
 	if(!auth.validOwner(req.jserverOwner)||res.destroyed){await direct.stop();return res.sendStatus(401);}
 	const session={id:sessionId,admin:isAdmin(req),itemId:item.Id,owner:req.jserverOwner,updated:Date.now(),position:0,kind:'hls',playMethod:direct.method,direct,resource:Buffer.from('index.m3u8').toString('base64url')};
@@ -836,6 +874,21 @@ async function prepareDirectChannel(req,res,sessionId) {
 	if(!channel)return res.status(404).json({error:'This channel is no longer in Dispatcharr.'});
 	remoteControls.guard(req.jserverViewer,{nonstop:channel.nonstop});
 	const quality=[2000000,4000000,8000000,20000000,80000000].includes(req.body.quality)?req.body.quality:20000000;
+	if(features.relayMedia){
+		if(relayClientUnsupported(req))throw Object.assign(Error('This app version cannot use relay media. Update the app; main media was not used as a fallback.'),{status:409,code:'RELAY_CLIENT_UNSUPPORTED'});
+		const relay=await relayMediaService.prepare({session:{id:sessionId},viewer:req.jserverViewer,itemId:req.body.id,mode:channel.nonstop?'nonstop':'live',
+			params:{channelId:channel.id,compatibility:Boolean(req.body.compatibility)},quality,audioIndex:req.body.audioIndex,position:Math.max(0,Number(req.body.position)||0),local:auth.isLocal(req),share:Boolean(req.jserverShare),
+			onRelease:(id,detail)=>{sessionLimits.release(id);}});
+		if(!auth.validOwner(req.jserverOwner)||res.destroyed){await relayMediaService.stop(relay.leaseId,{acknowledged:false,reason:'owner_race'});return res.sendStatus(req.jserverShare?410:401);}
+		const session={nonstop:Boolean(channel.nonstop),id:sessionId,admin:isAdmin(req),itemId:req.body.id,owner:req.jserverOwner,updated:Date.now(),position:0,kind:'hls',playMethod:relay.method||'Relay',
+			resource:'',relayLeaseId:relay.leaseId,relayWorkerId:relay.workerId,mediaRoute:'relay',routeSource:'lease',relaySessionUrl:relay.url,
+			relayMode:channel.nonstop?'nonstop':'live',relayParams:{channelId:channel.id,compatibility:Boolean(req.body.compatibility)},relayQuality:quality};
+		if(req.jserverShare){session.shareToken=req.jserverShareToken;session.shareExpires=req.jserverShare.expires;}
+		session.viewer=req.jserverViewer;sessions.set(session.id,session);
+		activity.begin(session.id,req.jserverViewer,channelView(channel),{purpose:'watch'});
+		activity.update(session.id,{method:relay.method||'Relay',qualityMbps:quality/1e6,mediaRoute:'relay',routeSource:'lease',workerId:relay.workerId});
+		return res.json({session:session.id,url:relay.url,kind:'hls',live:true,duration:0,subtitleIndex:-1,subtitles:[],audio:relay.audio||[],method:relay.method||'Relay',mediaRoute:'relay',routeSource:'lease',workerId:relay.workerId,position:relay.position||0});
+	}
 	const direct=await directPlayer.start(channel,{quality,compatibility:Boolean(req.body.compatibility),audioIndex:req.body.audioIndex});
 	if(!auth.validOwner(req.jserverOwner)||res.destroyed){await direct.stop();return res.sendStatus(401);}
 	const session={nonstop:Boolean(channel.nonstop),id:sessionId,admin:isAdmin(req),itemId:req.body.id,owner:req.jserverOwner,updated:Date.now(),position:0,kind:'hls',playMethod:direct.method,direct,
@@ -849,12 +902,42 @@ async function prepareDirectChannel(req,res,sessionId) {
 }
 
 async function prepareVod(req,res,sessionId) {
-	if(req.jserverShare||req.body.download)return res.sendStatus(403);
+	if(req.body.download)return res.sendStatus(403);
+	if(req.jserverShare&&!features.relayMedia)return res.sendStatus(403);
 	const recorded=String(req.body.id).startsWith('dispatch-recording-');
 	const item=recorded?await recordings.item(req.body.id):await vodLibrary.item(req.body.id);
 	if(recorded&&!item?.Playable)return res.status(409).json({error:'This recording is not ready to play yet. It will appear as ready when Dispatcharr finishes saving it.'});
 	const source=recorded?{type:'recording',id:item.RecordingId,provider:'Dispatcharr recording'}:await vodSource(req.body.id);
 	const lookupAvailable=!recorded&&(await subtitleLookup.status()).enabled;
+	if(features.relayMedia){
+		if(relayClientUnsupported(req))throw Object.assign(Error('This app version cannot use relay media. Update the app; main media was not used as a fallback.'),{status:409,code:'RELAY_CLIENT_UNSUPPORTED'});
+		const position=Math.max(0,Number(req.body.position)||0);
+		let relay=await relayMediaService.prepare({session:{id:sessionId},viewer:req.jserverViewer,itemId:req.body.id,mode:recorded?'recording':'vod',
+			params:recorded?{recordingId:item.RecordingId}:{type:source.type,uuid:source.uuid,account:source.account,streamId:source.streamId,provider:source.provider,
+				textSubtitles:req.body.textSubtitles===true,preferEnglishSubtitles:req.body.preferEnglishSubtitles===true,compatibility:Boolean(req.body.compatibility)},
+			quality:req.body.quality,audioIndex:req.body.audioIndex,subtitleIndex:req.body.subtitleIndex,position,local:auth.isLocal(req),share:Boolean(req.jserverShare),
+			onRelease:(id,detail)=>{sessionLimits.release(id);}});
+		if(!auth.validOwner(req.jserverOwner)||res.destroyed){await relayMediaService.stop(relay.leaseId,{acknowledged:false,reason:'owner_race'});return res.sendStatus(req.jserverShare?410:401);}
+		// Only look up an external subtitle when the worker's own probe found no
+		// embedded English track. Explicit external selection always wins.
+		const embeddedEnglish=(relay.subtitles||[]).some(track=>/^en(g)?$/i.test(track.language||'')||/english/i.test(track.label||''));
+		const wantsExternal=lookupAvailable&&(req.body.subtitleIndex===downloadedSubtitleIndex||(!embeddedEnglish&&(req.body.textSubtitles===true||req.body.preferEnglishSubtitles===true)));
+		if(wantsExternal){
+			const found=await lookupEnglish(item,{fingerprint:source.uuid,duration:(item.RunTimeTicks||0)/1e7}).catch(()=>null);
+			if(found){
+				try{relay=await relayMediaService.replace(relay.leaseId,{externalSubtitle:srtToVtt(await readFile(found.file,'utf8')),subtitleIndex:1000001,position});}
+				catch{/* Keep the embedded/no-subtitle session rather than fail video. */}
+			}
+		}
+		const session={id:sessionId,admin:isAdmin(req),itemId:item.Id,owner:req.jserverOwner,updated:Date.now(),position,kind:'hls',playMethod:relay.method||'Relay',relayLeaseId:relay.leaseId,relayWorkerId:relay.workerId,vod:true,mediaRoute:'relay',routeSource:'lease',resource:'',
+			relaySessionUrl:relay.url,relayMode:recorded?'recording':'vod',relayParams:recorded?{recordingId:item.RecordingId}:{type:source.type,uuid:source.uuid,account:source.account,streamId:source.streamId,provider:source.provider},relayQuality:req.body.quality};
+		if(req.jserverShare){session.shareToken=req.jserverShareToken;session.shareExpires=req.jserverShare.expires;}
+		session.viewer=req.jserverViewer;sessions.set(session.id,session);activity.begin(session.id,req.jserverViewer,item,{purpose:'watch'});
+		activity.update(session.id,{method:relay.method||'Relay',mediaRoute:'relay',routeSource:'lease',workerId:relay.workerId});
+		return res.json({session:session.id,url:relay.url,kind:'hls',live:false,duration:relay.duration||(item.RunTimeTicks||0)/1e7,
+			subtitleIndex:Number.isInteger(relay.subtitleIndex)?relay.subtitleIndex:-1,subtitles:relay.subtitles||[],audio:relay.audio||[],method:relay.method||'Relay',
+			provider:source.provider,mediaRoute:'relay',routeSource:'lease',workerId:relay.workerId,position});
+	}
 	const direct=await vodPlayer.start(source,{textSubtitles:req.body.textSubtitles===true,quality:req.body.quality,audioIndex:req.body.audioIndex,subtitleIndex:req.body.subtitleIndex,preferEnglishSubtitles:req.body.preferEnglishSubtitles,
 		...(lookupAvailable?{lookupSubtitles:duration=>lookupEnglish(item,{fingerprint:source.uuid,duration})}:{})});
 	if(!auth.validOwner(req.jserverOwner)||res.destroyed){await direct.stop();return res.sendStatus(401);}
@@ -895,6 +978,14 @@ app.post('/api/sessions/:id/cast', (req, res) => {
 	if ((req.get('origin') !== req.jserverOrigin && !(req.jserverLocal && req.get('origin') === process.env.PUBLIC_ORIGIN)) || !req.is('application/json')) return res.sendStatus(403);
 	const origin = process.env.PUBLIC_ORIGIN || '';
 	if (!origin.startsWith('https://')) return res.status(409).json({ error: 'The secure public address must be configured before casting.' });
+	if (session.relayLeaseId) {
+		if (!session.relaySessionUrl) return res.status(409).json({ error: 'This relay session has no cast address.', code: 'RELAY_CAST_UNAVAILABLE' });
+		session.updated = Date.now();
+		const url = new URL(session.relaySessionUrl, origin).href;
+		const lease = relayMediaService.leases.get(session.relayLeaseId);
+		const expires = Math.min(lease?.hardEndsAt || Date.now() + 6 * 60 * 60 * 1000, Date.now() + 6 * 60 * 60 * 1000);
+		return res.json({ url, localUrl: url, contentType: 'application/x-mpegURL', relay: true, leaseId: session.relayLeaseId, expires });
+	}
 	const ticket = issueCastTicket(session, origin);
 	session.updated = Date.now();
 	// Only a sender that reached the LAN entry receives the local receiver address.
@@ -906,6 +997,7 @@ app.get('/stream/:session/:resource', serveStream);
 async function serveStream(req, res) {
 	const session = sessions.get(req.params.session);
 	if (!session) return res.status(410).send('Playback expired. Please press play again.');
+	if (session.relayLeaseId) return res.status(410).send('This relay session plays from the relay media prefix, not from this server.');
 	if (session.owner !== req.jserverOwner) return res.sendStatus(403);
 	if (!auth.validOwner(session.owner)) return res.sendStatus(410);
 	return proxyStream(req, res, session);
@@ -1038,7 +1130,7 @@ async function sendMedia(body, req, res, signal, onBytes) {
 }
 
 async function report(session, action, values = {}) {
-	if(session.direct)return;
+	if(session.direct || session.relayLeaseId || session.mediaRoute === 'relay') return;
 	return jelly(`/Sessions/Playing${action === 'start' ? '' : '/' + (action === 'stop' ? 'Stopped' : 'Progress')}`, {
 		method: 'POST', device: session.device,
 		body: { ItemId: session.itemId, MediaSourceId: session.mediaSourceId, PlaySessionId: session.playSessionId,
@@ -1046,15 +1138,20 @@ async function report(session, action, values = {}) {
 	});
 }
 
-async function stop(session) {
+async function stop(session, { relayRevoke = false } = {}) {
 	if (session.stopping) return session.stopping;
-	// Free the remote screen as soon as stopping begins; Jellyfin cleanup can
-	// outlive the player, and a failed cleanup must not keep a slot forever.
-	sessionLimits.release(session.id);
+	// A relay revoke keeps the screen slot as a tombstone until the worker
+	// acknowledges the stop or the tombstone expires. Every other stop releases now.
+	if (!relayRevoke) sessionLimits.release(session.id);
 	session.stopping = (async () => {
 	clearTimeout(session.warmTimer);
 	for (const controller of session.controllers || []) controller.abort();
 	activity.update(session.id, { state: 'ended', position: session.position });
+	if(session.relayLeaseId){
+		if(relayRevoke){session.relayRevoked=true;await relayMediaService.revoke(session.relayLeaseId,'owner_revoked');}
+		else await relayMediaService.stop(session.relayLeaseId,{acknowledged:true,reason:'client_stop'});
+		accountLimits.end(session.id);sessions.delete(session.id);return;
+	}
 	if(session.direct){await session.direct.stop();return;}
 	await Promise.allSettled([
 		report(session, 'stop'),
@@ -1082,6 +1179,13 @@ async function updateSession(req, res) {
 		return res.sendStatus(204);
 	}
 	session.direct?.touch?.(Boolean(req.body.paused));
+	if(session.relayLeaseId){
+		relayMediaService.clientHeartbeat(session.relayLeaseId);
+		// Relay media never passes through sendMedia, so start the existing
+		// wall-clock account/viewing interval from authenticated client progress.
+		accountLimits.media(session.id,req.jserverViewer||session.viewer);
+		if(!session.download)sessionLimits.media(session.id,req.jserverViewer||session.viewer,{admin:session.admin||isAdmin(req)});
+	}
 	if(!session.download)sessionLimits.touch(session.id,req.jserverViewer||session.viewer,{admin:session.admin||isAdmin(req),heartbeat:true});
 	accountLimits.heartbeat(session.id,!req.body.paused&&!req.body.buffering);
 	const fallback = ['disabled', 'away', 'unreachable', 'playback-failed'].includes(req.body.localFallback) ? req.body.localFallback : undefined;
@@ -1090,7 +1194,7 @@ async function updateSession(req, res) {
 	res.sendStatus(204);
 }
 
-setInterval(()=>{accountLimits.tick();for(const session of sessions.values())if(!remoteControls.allowed(session.viewer,session)||!accountLimits.allowed(session.viewer,Boolean(session.download)))void stop(session).catch(()=>{});},1000).unref();
+setInterval(()=>{accountLimits.tick();relayMediaService.tick();for(const session of sessions.values())if(!remoteControls.allowed(session.viewer,session)||!accountLimits.allowed(session.viewer,Boolean(session.download)))void stop(session,{relayRevoke:Boolean(session.relayLeaseId)}).catch(()=>{});},1000).unref();
 
 setInterval(() => {
 	for (const session of sessions.values()) {

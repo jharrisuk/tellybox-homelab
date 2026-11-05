@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.8",
+	"serverVersion": "0.26.10",
 	"files": [
 		{
 			"path": ".env.example",
@@ -11,6 +11,11 @@
 			"path": ".gitattributes",
 			"bytes": 168,
 			"sha256": "2e9b1e0869acbf4cd6fb9d3823bd0a5f29b2939c82de76bd047d6d2d9aa6abc1"
+		},
+		{
+			"path": ".github/workflows/release.yml",
+			"bytes": 1543,
+			"sha256": "99cb9ecf3ff010674cb9cd86ad95e1ebf75e961cf00c427d1464063fe0f70e63"
 		},
 		{
 			"path": ".github/workflows/verify.yml",
@@ -49,18 +54,18 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 18851,
-			"sha256": "25aba8a074ff10774bb9a2d757bec7efb2ed213b6e77db88862ae487cc58ebf5"
+			"bytes": 25201,
+			"sha256": "6a8793cc0a48d94c682972f384cbe0c35ffef5c6aad3b8b33d4bb0da03fce7d6"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 4251,
-			"sha256": "c243c2f004c3a074ee3f50395135458b9f9365a22f46cd42f2327c3c6be08f94"
+			"bytes": 9053,
+			"sha256": "af61cb5175df26373114111248f44392ba82081ea834094997557c035e70704c"
 		},
 		{
 			"path": "docs/guide-extra.css",
-			"bytes": 2978,
-			"sha256": "fe60186f77810ed67dbf9cfad60819c07b1407987cf7395b11327f69d2f938c5"
+			"bytes": 6030,
+			"sha256": "26ea110e58161cc01cfb0b281d00346d6cbfe409775878c0197813b12bbe692b"
 		},
 		{
 			"path": "docs/guide.js",
@@ -79,13 +84,18 @@
 		},
 		{
 			"path": "docs/site/guide.css",
-			"bytes": 11652,
-			"sha256": "e3640458c58ef7ece4e25f5fa2167b095aae0c0a0d06a0d6b5413f8325765346"
+			"bytes": 14704,
+			"sha256": "d4dcb6d8f2bec3b1ee4923fb1b36f30451e2348a27e8cb03fc220890ab0c4b19"
 		},
 		{
 			"path": "docs/site/guide.js",
 			"bytes": 971,
 			"sha256": "672b6dcdced3efb5bd80157da15506c29d445a3774e2b0c53c9e524d0779cadc"
+		},
+		{
+			"path": "docs/site/images/home-assistant-dashboard.png",
+			"bytes": 104763,
+			"sha256": "aa3b38eb8e0b9b42c38dfb4d42dd8b1ca2c7638542035c80fa2539628904ae55"
 		},
 		{
 			"path": "docs/site/images/setup-relay-status.png",
@@ -99,8 +109,8 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 41938,
-			"sha256": "8065697388b141ee757ee760b9bb37b7139f5518945e37c47d4bb2a5e4c55eeb"
+			"bytes": 48248,
+			"sha256": "87cad810e9bc0a310f3a80a2d51b468e7b215bca80f6c5d544b3dba86daa2a6a"
 		},
 		{
 			"path": "docs/story.html",
@@ -214,8 +224,8 @@
 		},
 		{
 			"path": "README.md",
-			"bytes": 6169,
-			"sha256": "f6625367353c7698a59d7f3f87edf015d74e99a97f245c05bdb11cd2a9466bf2"
+			"bytes": 6170,
+			"sha256": "38655921530de7eeb8ce787025604bdc93ce3fd73b3846a439d47f8dafdf81f5"
 		},
 		{
 			"path": "relay/example.json",
@@ -224,8 +234,43 @@
 		},
 		{
 			"path": "relay/setup.mjs",
-			"bytes": 2043,
-			"sha256": "f1535891c0958533dc9e08e9c7e59167ee0c1e1d1376b301bc99b1d8a843c4a0"
+			"bytes": 2354,
+			"sha256": "cbedead72e72e69b079d3cec749f9d94ae32feea9c8929fedbb97e7e66dc4317"
+		},
+		{
+			"path": "relay/worker/Dockerfile",
+			"bytes": 645,
+			"sha256": "aa6eecd1e22998a33361db87dd1b3218e03f75ceb368a03c75d175c4ddb13161"
+		},
+		{
+			"path": "relay/worker/enroll.mjs",
+			"bytes": 2366,
+			"sha256": "c6602e28c3f2be5c31acd396f8b6a18fac792ec350483b67ec3ad299758355e1"
+		},
+		{
+			"path": "relay/worker/index.mjs",
+			"bytes": 2879,
+			"sha256": "48814a74d7fd8a55051c98651e9636f4376f447b29b38c5cd9535e78c0d1b23e"
+		},
+		{
+			"path": "relay/worker/package.json",
+			"bytes": 289,
+			"sha256": "376dfd931eba4df07b940c4dab009423dfed80d8629b07d502c2258fad039984"
+		},
+		{
+			"path": "relay/worker/players.mjs",
+			"bytes": 6904,
+			"sha256": "2bb4b08606f5ac3ac90d5c859cc1428877b64860596a4c90d9ecc580ca8d1225"
+		},
+		{
+			"path": "relay/worker/upstream.mjs",
+			"bytes": 4670,
+			"sha256": "86b55f5426e3cbc373237dc22f3837837e92a1043b91bc028dd84e65520dbbf5"
+		},
+		{
+			"path": "relay/worker/worker.mjs",
+			"bytes": 24587,
+			"sha256": "586f8c9fd7e1e723a1baa27cfcc8ba100062e3a781c40bd8cc07e2a8a9ca20f5"
 		},
 		{
 			"path": "SECURITY.md",
@@ -239,8 +284,8 @@
 		},
 		{
 			"path": "server/account-limits.mjs",
-			"bytes": 6520,
-			"sha256": "331abcb2fd22554b05796a7ae062ef7602e163e3a7f39e286b93d09c099abfa4"
+			"bytes": 6915,
+			"sha256": "2d8dc522004d73933cd394e0250bc76210326e6670cef0d67e4ab63938ef4d80"
 		},
 		{
 			"path": "server/activity.mjs",
@@ -279,8 +324,8 @@
 		},
 		{
 			"path": "server/catchup-player.mjs",
-			"bytes": 7896,
-			"sha256": "329072ab695860b6fb99b7a73a2313050dc79719bc0601f095650c81838a55fd"
+			"bytes": 8446,
+			"sha256": "03b34ccbc61fa2e23012f1512e23faf7360401f2cd1d71f99345644087970452"
 		},
 		{
 			"path": "server/catchup.mjs",
@@ -309,8 +354,8 @@
 		},
 		{
 			"path": "server/Dockerfile",
-			"bytes": 561,
-			"sha256": "78af1248eeb8c21804f97ac4eae5328270fee4c2fce9b0d8aa07d0aafa8772af"
+			"bytes": 592,
+			"sha256": "fcd25d2c0e660cb42516b85d64d3ab5ca6ec110be28b69fe7ab60ef0a3296655"
 		},
 		{
 			"path": "server/download-limit.mjs",
@@ -354,8 +399,8 @@
 		},
 		{
 			"path": "server/homelab/admin.mjs",
-			"bytes": 8758,
-			"sha256": "95d0b7c0ba1f6a0cfe97c190bdaa790d77e2123edbbba7e7e9b9832fd8484d6b"
+			"bytes": 13262,
+			"sha256": "a5bf925f7ecd38a36515a3c91efce2742287b86da21b666f0b48754de9787ab2"
 		},
 		{
 			"path": "server/homelab/apply.mjs",
@@ -364,8 +409,8 @@
 		},
 		{
 			"path": "server/homelab/config.mjs",
-			"bytes": 13307,
-			"sha256": "737a9a0fc335fc46ee7febaa366001415e8eecb85eb1179e60d7d5a04b453a70"
+			"bytes": 16207,
+			"sha256": "b9a69ff901753a49a324f0c643c7be658b6b776aca8bf064df1d0169496a2d98"
 		},
 		{
 			"path": "server/homelab/import-apps.mjs",
@@ -384,8 +429,8 @@
 		},
 		{
 			"path": "server/homelab/public/index.html",
-			"bytes": 7014,
-			"sha256": "9acb75f97349df436139c5b66248b9ecbcb8bd4a0e6f2958058807e23ebc7218"
+			"bytes": 7985,
+			"sha256": "f4aa2cb5bee4b32dee86de0cf5e63e9be3921a5045763f976c31e7738cdc9f76"
 		},
 		{
 			"path": "server/homelab/public/notification-mode.mjs",
@@ -404,13 +449,13 @@
 		},
 		{
 			"path": "server/homelab/public/setup.js",
-			"bytes": 19862,
-			"sha256": "3fb4d1aa0ca4f3b64bb2ea603adf3f2bed2384286e19a8b2dec78ddfe07f531d"
+			"bytes": 29371,
+			"sha256": "3c9526de96349f805e287de0fb095de1911aedf0819df614e43af44338472190"
 		},
 		{
 			"path": "server/homelab/relay-core.mjs",
-			"bytes": 4432,
-			"sha256": "fb404317af1c0e484bf1dec45909e93a47bd4758da9c51bf6e140f67e7835cb4"
+			"bytes": 4606,
+			"sha256": "6b6a2b0d612d6ade18d4a7f869c7aa049ad59f7a13928a628b7e60652011e176"
 		},
 		{
 			"path": "server/homelab/relay-health.mjs",
@@ -419,8 +464,13 @@
 		},
 		{
 			"path": "server/homelab/relay-jobs.mjs",
-			"bytes": 5875,
-			"sha256": "cb6a63a15f2cba0c606f6ed044a0f080607355cd0d4d5816100ba449de39adfd"
+			"bytes": 7662,
+			"sha256": "3e39bf146d8340e9de38c8f04e3fc795916d10a8e58b29756fcfa97e92130e8f"
+		},
+		{
+			"path": "server/homelab/relay-worker.mjs",
+			"bytes": 13057,
+			"sha256": "bd609059a2beda6837099be3b0c9667df5743c4c6d93f077522ebd1cb0e6e9c0"
 		},
 		{
 			"path": "server/homelab/runtime.mjs",
@@ -429,8 +479,8 @@
 		},
 		{
 			"path": "server/homelab/services.mjs",
-			"bytes": 12134,
-			"sha256": "5a596793e27a147f45f45818d0c3e1b3ee013eba56bc89ece1b29a23e4cdbaa3"
+			"bytes": 12675,
+			"sha256": "627943fb3ca49a94299dd307aae8c31006b50474181953a8e424a09d86d21b49"
 		},
 		{
 			"path": "server/homelab/setup-hosts.mjs",
@@ -474,13 +524,13 @@
 		},
 		{
 			"path": "server/package-lock.json",
-			"bytes": 28842,
-			"sha256": "e0a933b8e4e877809affbf64c1d5527b8d0fb3f52e35e2a3685f3045b9961ab6"
+			"bytes": 28844,
+			"sha256": "2a857af885f10e307681b25598cfa849d080c78a4a015b019ec49073f497e0dc"
 		},
 		{
 			"path": "server/package.json",
-			"bytes": 271,
-			"sha256": "3df6b407cf803e99ad1c75599e5b8fb10bb50c0e1c3dbecf7eccf86c0f0b311e"
+			"bytes": 272,
+			"sha256": "c090900389a4ddefb0c08a5f36c64b42d4e54c2f6f272ff324e08f145356d963"
 		},
 		{
 			"path": "server/people.mjs",
@@ -514,8 +564,8 @@
 		},
 		{
 			"path": "server/public/app.js",
-			"bytes": 119233,
-			"sha256": "781e92d3cd8040dc1333a8441721b7c7807fce556770dc761c6140c7b532a2b6"
+			"bytes": 120560,
+			"sha256": "8a7d92248cda654c9f13bafc22a8291c15310b418db00a3c6bec4696a484b587"
 		},
 		{
 			"path": "server/public/apps.html",
@@ -674,8 +724,8 @@
 		},
 		{
 			"path": "server/public/share-player.css",
-			"bytes": 2584,
-			"sha256": "498158250bfecda9025daa111fb6b003a8948871152cf9327a21a525c8081356"
+			"bytes": 3490,
+			"sha256": "cb99ec90cdcbfcf156135b4e37104f3f58c1bf973c37d5d63a21e87ad972bc34"
 		},
 		{
 			"path": "server/public/share-player.html",
@@ -684,13 +734,13 @@
 		},
 		{
 			"path": "server/public/share-player.js",
-			"bytes": 9903,
-			"sha256": "e43d67c148db7d1af624ab15722b89e7d83fecea25004630976c980a0cf379fd"
+			"bytes": 10896,
+			"sha256": "b8fc6124ec048e7fd6f8b4fe70f7ccb55e3091687d8bfa90b13aff1059615508"
 		},
 		{
 			"path": "server/public/style.css",
-			"bytes": 62739,
-			"sha256": "9e25eef4ea149c19eb8a0224eae2a75d18586ea9b596da1eb93af3c1f876f7a5"
+			"bytes": 63642,
+			"sha256": "74116a0b8220e52104e7e8ddef42abb374e87793c291645f876d7c8d3c65b56e"
 		},
 		{
 			"path": "server/public/subtitle-settings.js",
@@ -748,6 +798,41 @@
 			"sha256": "dd2fb1c6d9f82ece7c76282666142d0b0e8a2108d903f5313f39a8da0ef3c799"
 		},
 		{
+			"path": "server/relay-media/control-client.mjs",
+			"bytes": 2748,
+			"sha256": "e2be29211765903e8b42cd5371aa5fa1712257c130e16d12f440f97edd3559d7"
+		},
+		{
+			"path": "server/relay-media/install.mjs",
+			"bytes": 8007,
+			"sha256": "d823e0c0ffa5ac6d67362e47e2fe6cbe095df788aea2d5bc397176013d862c7d"
+		},
+		{
+			"path": "server/relay-media/keys.mjs",
+			"bytes": 2372,
+			"sha256": "603ba15a1fdd6703c3f87f7459028e45505df646e35900b52fbe35e1ed31b5cb"
+		},
+		{
+			"path": "server/relay-media/ledger.mjs",
+			"bytes": 6926,
+			"sha256": "c37f92844cd822f38ac08c49ac7e352a040b8e90fe3bae6a890914e81e355ad9"
+		},
+		{
+			"path": "server/relay-media/manager.mjs",
+			"bytes": 16335,
+			"sha256": "74eeebf3830ea4e0249ecf21424ad292b1eaad1018b06386dd6e56fb8865bac3"
+		},
+		{
+			"path": "server/relay-media/protocol.mjs",
+			"bytes": 5955,
+			"sha256": "d251abc7f802789a3253844978ba6999a595c8e842fd2aaaa06e973a4d205806"
+		},
+		{
+			"path": "server/relay-media/registry.mjs",
+			"bytes": 9040,
+			"sha256": "2e0a9f7719359950b43f84409225726dbe229c550ce0882de2a290853313e4a1"
+		},
+		{
 			"path": "server/release-version.mjs",
 			"bytes": 549,
 			"sha256": "1ce52d7f4d00fb7e2740ffd28a6e1ed94c46c0386c00962cd592ba176d7db88a"
@@ -769,8 +854,8 @@
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 79064,
-			"sha256": "18664da4e18bcdb9f2f65c155df5548ebceadc79feec74838a92330d26a4a156"
+			"bytes": 90466,
+			"sha256": "0a9b0831a3965abc6a11ee783b203ef26ce2d61e6b86dbb041b0e8f0a759e51c"
 		},
 		{
 			"path": "server/session-limits.mjs",
@@ -998,6 +1083,11 @@
 			"sha256": "9b40a453449db37fb1bdc8e539ca900d2239f93571a9972ea01aaa66c20f215e"
 		},
 		{
+			"path": "server/test/homelab-relay-media-config.test.mjs",
+			"bytes": 4389,
+			"sha256": "dae5d0cfcad70678f8e0642ec444161485e61f5b7acee40402f7ea615dfe28bd"
+		},
+		{
 			"path": "server/test/homelab-relay.test.mjs",
 			"bytes": 1618,
 			"sha256": "9fb406812064488c9484b04cefc6729b95aac7b8b63af698046246d3ca4db44a"
@@ -1091,6 +1181,66 @@
 			"path": "server/test/recordings.test.mjs",
 			"bytes": 5879,
 			"sha256": "a7a0c6082c686b324e007167645d49cebba229fa39acf26445748b1f357580d1"
+		},
+		{
+			"path": "server/test/relay-caddy.test.mjs",
+			"bytes": 4794,
+			"sha256": "bccc1d61458e8bc5f45a6d278db0dd1a636de0e01abafc9d1a9e2006e1145982"
+		},
+		{
+			"path": "server/test/relay-canonical-state.test.mjs",
+			"bytes": 6336,
+			"sha256": "22c0a2523b8cf30f064683531dfd4fb53938c61d52bff43d4b443b3b424d1bcf"
+		},
+		{
+			"path": "server/test/relay-ffmpeg.test.mjs",
+			"bytes": 2017,
+			"sha256": "5d7552d736288fb0be296a2583e6c58b90bd7f43c659b6ecc9b2e55daf09328a"
+		},
+		{
+			"path": "server/test/relay-heartbeat.test.mjs",
+			"bytes": 2173,
+			"sha256": "2dba528758c6f34f1e9085dac46f27b43c0f5b45d4032bd172f71b62084c505a"
+		},
+		{
+			"path": "server/test/relay-ledger.test.mjs",
+			"bytes": 3745,
+			"sha256": "589c6e49dfc0eebc9a45cad451c2ca406412446b5c2d61c634c41f8c4bc0bd9a"
+		},
+		{
+			"path": "server/test/relay-main-worker.test.mjs",
+			"bytes": 5428,
+			"sha256": "44513684fd8c7d13474958e26162191d38735963ebf0c9ba2c886c73b5022c83"
+		},
+		{
+			"path": "server/test/relay-peer.test.mjs",
+			"bytes": 1201,
+			"sha256": "59e96635bafd5680e069a387c2dc8df2803ed19a238699c72cf77ff3b11c0f55"
+		},
+		{
+			"path": "server/test/relay-protocol.test.mjs",
+			"bytes": 3599,
+			"sha256": "24d139ea48d30088607b8dd411b87599209d4690f7d6b6e15764e1234aaf45ff"
+		},
+		{
+			"path": "server/test/relay-registry.test.mjs",
+			"bytes": 4207,
+			"sha256": "4b1307ee56af98b7cb2ebb2bcbe5437ce1fcff5b17b9c74a6a6c0280d8b6358b"
+		},
+		{
+			"path": "server/test/relay-routes.test.mjs",
+			"bytes": 5025,
+			"sha256": "9a64a085b7b473e0f9cc26f7e68b19ba379f71b1a72f3a08b71704ae2cbac2a6"
+		},
+		{
+			"path": "server/test/relay-ui.test.mjs",
+			"bytes": 1392,
+			"sha256": "31838e3f2cf43bb4bb70ad5adc1afebb19db40e97784963ada39b1a8c925cd7d"
+		},
+		{
+			"path": "server/test/relay-worker.test.mjs",
+			"bytes": 7826,
+			"sha256": "28b2175309b561038d565a6430276949a94c5b33f13d7de2778c2e9f28afa2cc"
 		},
 		{
 			"path": "server/test/release-version.test.mjs",
@@ -1221,6 +1371,16 @@
 			"path": "server/test/watched-progress.test.mjs",
 			"bytes": 1944,
 			"sha256": "f02e7fae4f7c0b46ab999dd0599173781668cfe34f9706c6b44ba07f0a09ee0f"
+		},
+		{
+			"path": "server/test/web-fullscreen-browser.mjs",
+			"bytes": 12164,
+			"sha256": "45e7781cd7ad87eaed25118627539c4354d07d36555db33c2659ea3a814175d9"
+		},
+		{
+			"path": "server/test/web-fullscreen.test.mjs",
+			"bytes": 2753,
+			"sha256": "88c27d61cd5f95d1797393bf3f7bf25049ef077bffd954eb4e3278b710653d89"
 		},
 		{
 			"path": "server/test/web-preferences.test.mjs",

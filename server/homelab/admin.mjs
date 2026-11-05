@@ -3,9 +3,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFileSync, existsSync } from 'node:fs';
 import { randomBytes, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
-import { atomicJson, configStore, redacted } from './config.mjs';
+import { atomicJson, configStore, redacted, validateConfig } from './config.mjs';
 import { services, infrastructure, presets } from './services.mjs';
 import { relayManager } from './relay-jobs.mjs';
+import { loadOrCreateMainKeys } from '../relay-media/keys.mjs';
+import { createWorkerRegistry } from '../relay-media/registry.mjs';
+import { workerDeployment, relayMediaCaddyBlock, scopedCaddyScript, mainWorkerControlScript, workerActivationScript } from './relay-worker.mjs';
 import { setupHosts, localConnectionSuggestion } from './setup-hosts.mjs';
 import { relayHealth } from './relay-health.mjs';
 import { installReleaseVersion } from '../release-version.mjs';
@@ -16,6 +19,19 @@ const equal = (a, b) => typeof a === 'string' && typeof b === 'string' && timing
 export function createSetup({ directory, apply = async () => {}, status = () => ({}), fetcher = fetch, clock = Date.now, allowedHosts = '' }) {
 	const hostAllowed=setupHosts(allowedHosts);
 	const app = express(), store = configStore(directory), sessions = new Map(), attempts = new Map(), relay = relayManager(directory);
+	let relayKeys = null, relayWorkers = null;
+	const relayState = () => {
+		if (!relayKeys) { relayKeys = loadOrCreateMainKeys(directory); relayWorkers = createWorkerRegistry(directory, { mainControlKey: relayKeys.control }); }
+		return { keys: relayKeys, workers: relayWorkers };
+	};
+	const relayKeyExists = () => existsSync(path.join(directory, 'relay', 'main-control-key.json'));
+	function assertRelayReady() {
+		if (!relayKeyExists()) throw Object.assign(Error('Relay media needs an approved relay worker. Create an enrolment and approve the worker first.'), { status: 409 });
+		const state = relayState().workers.status(), worker = state.worker;
+		if (!state.approved || !worker || worker.state !== 'approved') throw Object.assign(Error('Relay media needs an approved relay worker. Create an enrolment and approve the worker first.'), { status: 409 });
+		if (!worker.selfTest?.ok) throw Object.assign(Error('The relay worker has not passed its self-test. Run the worker check again.'), { status: 409 });
+		if (!worker.lastSeen || clock() - worker.lastSeen > 15000) throw Object.assign(Error('The relay worker has not reported for 15 seconds. Start it and refresh before applying On relay.'), { status: 409 });
+	}
 	const remoteHealth = relayHealth(directory, { fetcher, clock, localPort: Number(process.env.PORT || 8082) });
 	// The media process receives this same directory as AUTH_DIR.
 	const homeAssistant = createHomeAssistantTokens(path.join(directory, 'access'));
@@ -63,7 +79,11 @@ export function createSetup({ directory, apply = async () => {}, status = () => 
 		next();
 	});
 	app.get('/api/setup/config', (req, res) => res.json({ config: redacted(store.get()), services, infrastructure, presets, runtime: status(), connection:localConnectionSuggestion(req.socket.remoteAddress) }));
-	app.post('/api/setup/config', (req, res) => res.json({ config: store.save(req.body), saved: true, applyRequired: true }));
+	app.post('/api/setup/config', (req, res) => {
+		const next = validateConfig(req.body, store.get());
+		if (next.services.dispatcharr?.enabled && next.services.dispatcharr.location === 'relay') assertRelayReady();
+		res.json({ config: store.save(req.body), saved: true, applyRequired: true });
+	});
 	app.get('/api/setup/home-assistant', (req, res) => res.json(homeAssistant.status()));
 	app.post('/api/setup/home-assistant', (req, res) => {
 		const action = req.body?.action;
@@ -80,6 +100,9 @@ export function createSetup({ directory, apply = async () => {}, status = () => 
 	app.post('/api/setup/apply', async (req, res) => {
 		const config=store.get();
 		if (req.body?.revision !== config.revision) return res.status(409).json({error:'Settings changed. Reload and review before applying.'});
+		if (config.services.dispatcharr?.enabled && config.services.dispatcharr.location === 'relay') {
+			try { assertRelayReady(); } catch (error) { return res.status(error.status || 409).json({ error: error.message }); }
+		}
 		await apply(config); res.json({ ok: true, runtime: status() });
 	});
 	app.post('/api/setup/logout', (req, res) => {
@@ -87,6 +110,47 @@ export function createSetup({ directory, apply = async () => {}, status = () => 
 		res.clearCookie('tellybox_setup', { path: '/' }); res.json({ ok: true });
 	});
 	app.get('/api/setup/relay', (req, res) => res.json(relay.status()));
+	app.get('/api/setup/relay-media', (req, res) => {
+		if (!relayKeyExists()) return res.json({ configured: false, approved: false, worker: null, enrolment: null });
+		const { keys, workers } = relayState();
+		return res.json({ configured: true, ...workers.status(), controlKeyId: keys.control.fingerprint, mediaKeyId: keys.media.fingerprint,
+			mainControlPublicKey: keys.control.publicPem, mainMediaPublicKey: keys.media.publicPem });
+	});
+	app.post('/api/setup/relay-media/enrolment', (req, res) => {
+		try { return res.status(201).json(relayState().workers.createEnrolment(req.body?.lifetimeSeconds)); }
+		catch (error) { return res.status(error.status || 500).json({ error: error.message }); }
+	});
+	app.post('/api/setup/relay-media/approve', (req, res) => {
+		try { return res.json(relayState().workers.approve(String(req.body?.workerId || ''))); }
+		catch (error) { return res.status(error.status || 500).json({ error: error.message }); }
+	});
+	app.post('/api/setup/relay-media/revoke', (req, res) => {
+		try { return res.json(relayState().workers.revoke(String(req.body?.workerId || ''))); }
+		catch (error) { return res.status(error.status || 500).json({ error: error.message }); }
+	});
+	app.post('/api/setup/relay-media/rotate', (req, res) => {
+		try { return res.json(relayState().workers.rotate(String(req.body?.workerId || ''))); }
+		catch (error) { return res.status(error.status || 500).json({ error: error.message }); }
+	});
+	app.post('/api/setup/relay-media/deployment', (req, res) => {
+		try {
+			const body = req.body || {}, config = store.get(), { keys } = relayState();
+			const localOrigins = [];
+			try {
+				const local = new URL(config.network.localOrigin);
+				for (const host of config.network.localHosts || []) {
+					try { localOrigins.push(new URL(local.protocol + '//' + host + (local.port ? ':' + local.port : '')).origin); } catch {}
+				}
+			} catch {}
+			const block = relayMediaCaddyBlock({ mediaPort: body.mediaPort || 18086, localOrigin: config.network.localOrigin, localOrigins });
+			return res.json({ caddy: block,
+				caddyScript: scopedCaddyScript({ mediaPort: body.mediaPort || 18086, block }),
+				mainControlScript: mainWorkerControlScript({ mainPort: 8083 }),
+				controlActivationScript: workerActivationScript({ controlPort: body.controlPort || 18087 }),
+				...workerDeployment({ worker: { ...body, mainControlKeyFile: '/data/main-control-public.pem' },
+					mainControlPublicKey: keys.control.publicPem, mainMediaPublicKey: keys.media.publicPem }) });
+		} catch (error) { return res.status(error.status || 500).json({ error: error.message }); }
+	});
 	app.get('/api/setup/relay/health', async (req, res) => res.json(await remoteHealth()));
 	app.post('/api/setup/relay', (req, res) => res.json(relay.save(req.body || {})));
 	app.get('/api/setup/relay/plan', (req, res) => res.json(relay.plan()));
