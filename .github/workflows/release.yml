@@ -1,6 +1,12 @@
 name: Release source
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to verify and publish
+        required: true
+        type: string
   push:
     tags:
       - 'v*'
@@ -10,18 +16,21 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          ref: ${{ inputs.tag || github.ref_name }}
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
       - name: Verify the tag matches the server version
         run: |
-          node -e "const p=require('./server/package.json'); const tag=process.env.GITHUB_REF_NAME.replace(/^v/,''); if(p.version!==tag){console.error('Tag',tag,'does not match server',p.version); process.exit(1)}"
+          node -e "const p=require('./server/package.json'); const tag=process.env.RELEASE_TAG.replace(/^v/,''); if(p.version!==tag){console.error('Tag',tag,'does not match server',p.version); process.exit(1)}"
       - name: Install media test dependency
         run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
       - name: Server tests
@@ -31,17 +40,18 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          tar --sort=name --mtime='UTC 2026-01-01' --owner=0 --group=0 \
-            --numeric-owner --exclude=.git --exclude=dist \
-            -czf "dist/tellybox-homelab-${GITHUB_REF_NAME#v}.tar.gz" .
+          git archive --format=tar.gz \
+            --prefix="tellybox-homelab-${RELEASE_TAG#v}/" \
+            -o "dist/tellybox-homelab-${RELEASE_TAG#v}.tar.gz" \
+            "$RELEASE_TAG"
           cp packaging/public-manifest.json dist/public-manifest.json
           (cd dist && sha256sum * > SHA256SUMS)
       - name: Publish the source release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" \
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1 || gh release create "$RELEASE_TAG" \
             --verify-tag \
-            --title "Tellybox HomeLab $GITHUB_REF_NAME" \
+            --title "Tellybox HomeLab $RELEASE_TAG" \
             --notes-file docs/CHANGELOG.md
-          gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+          gh release upload "$RELEASE_TAG" dist/* --clobber
