@@ -1,21 +1,69 @@
-# Tellybox HomeLab
+<p align="center">
+	<img src="server/public/tellybox-logo.png" alt="Tellybox" width="620">
+</p>
 
-Your collection, live TV, 24/7 channels and streamed titles in one place, with a web player and companion apps for Android phone and TV.
+<h1 align="center">Your sources. One place to watch.</h1>
 
-**Server 0.26.10 - early access.** Built for people who enjoy running their own media services. Start with a separate installation, connect the services you use, and try it on your devices before relying on it.
+<p align="center">
+	<strong>Merge your local collection, live TV, 24/7 channels and streamed catalogue into one self-hosted viewing experience.</strong>
+</p>
 
-**[Installation walkthrough](https://homelab.tellyboxapp.com/#start)** · **[Android apps](https://homelab.tellyboxapp.com/#apps)** · **[Report a problem](https://github.com/jharrisuk/tellybox-homelab/issues)**
+<p align="center">
+	<a href="https://homelab.tellyboxapp.com/#start">Get started</a> ·
+	<a href="https://homelab.tellyboxapp.com/#apps">Get the Android apps</a> ·
+	<a href="docs/CHANGELOG.md">What's new</a> ·
+	<a href="https://github.com/jharrisuk/tellybox-homelab/issues">Feedback</a>
+</p>
 
-## What it connects to
+**Tellybox HomeLab brings the media services you already run together.** Browse films and series from Jellyfin and Dispatcharr, switch to the TV guide, settle into a 24/7 channel, or discover something new and request it for your collection. Use a web browser, Android phone or Android TV.
 
-- **Jellyfin:** your local films, series and recordings.
-- **Dispatcharr:** live TV, a programme guide, 24/7 channels, on-demand titles and supported recording/catch-up features.
-- **Seerr:** discovery and requests for local copies.
-- **Sonarr and Radarr:** upcoming releases from your monitored collection.
-- **OpenSubtitles and IntroDB:** optional English subtitle lookup and supported intro markers.
-- **Resend and notifications:** optional remote email access and administrator alerts.
+**Start small. Enable only what you want.** Every integration is optional and starts switched off. Use just Jellyfin, just Dispatcharr, or bring both together. Add discovery, requests, subtitles, upcoming releases, remote access and home automation when they suit your setup.
 
-Every integration starts switched off. Use Jellyfin, Dispatcharr, both, or add more later. Tellybox does not install these services, supply media or include an IPTV subscription. Connect only sources you are entitled to use.
+![Jellyfin and Dispatcharr feed one Tellybox viewing experience, with optional integrations and web, Android phone and Android TV clients.](docs/images/tellybox-sources.svg)
+
+## Why Tellybox?
+
+| What you want | What Tellybox brings together |
+| --- | --- |
+| **One place to choose what to watch** | Local films and series alongside streamed titles, live TV and 24/7 channels. Less switching between service interfaces. |
+| **A setup that fits your home** | Optional connections, enabled individually. No requirement to run the whole stack. |
+| **The sofa, your phone or a browser** | A web player and official Android phone and TV companion apps connecting to your own server. |
+| **Live television and your collection together** | A programme guide, favourites and supported catch-up/recording features through Dispatcharr. |
+| **Discovery that leads somewhere** | Browse and search, set your genre preferences, like or dislike titles, and request local copies through Seerr. |
+| **A more comfortable episode session** | Resume supported playback, optional next-episode autoplay, subtitle lookup and intro markers. Availability depends on the source and device. |
+| **A view of what's coming** | Upcoming monitored episodes and films through Sonarr and Radarr. |
+| **Home-only or away from home** | LAN viewing without a public hostname, with an optional authenticated HTTPS relay for remote access. |
+| **Useful administration** | Activity information, optional administrator notifications and read-only Home Assistant statistics. |
+
+Tellybox merges the **browsing and viewing experience**; your media stays in its source services. It does not install those services, supply films or channels, or include an IPTV subscription. Connect sources you are entitled to use.
+
+## Connect as much or as little as you like
+
+| Optional connection | What it adds |
+| --- | --- |
+| **Jellyfin** | Your local films, series and recordings. |
+| **Dispatcharr** | Live TV, electronic programme guide (EPG), 24/7 channels, on-demand films and series, and supported recording/catch-up playback. |
+| **Seerr** | Discovery and requests for your local collection. |
+| **Sonarr / Radarr** | Upcoming releases from the collection you monitor. |
+| **OpenSubtitles / IntroDB** | English subtitle lookup and supported intro markers. |
+| **Resend / notifications** | Remote email access and optional administrator alerts. |
+| **Home Assistant** | Aggregate viewing, transfer and server-health sensors through an optional read-only integration. |
+| **HTTPS relay** | An optional authenticated route for watching away from home. |
+
+<details>
+<summary><strong>See the optional integration settings</strong></summary>
+
+![Tellybox settings showing Jellyfin enabled and Dispatcharr and Seerr switched off.](docs/site/images/setup-service-rows.png)
+
+A real setup screen: each service has its own controls. All integrations start off on a fresh installation.
+
+</details>
+
+## Actively developed, shaped by real use
+
+Tellybox is an **early-access project under active development**, with ongoing fixes, interface improvements and integration work. Follow the [changelog](docs/CHANGELOG.md), [releases](https://github.com/jharrisuk/tellybox-homelab/releases) and [development activity](https://github.com/jharrisuk/tellybox-homelab/commits/main/) to see what has shipped. Server and app versions are independent.
+
+Feedback helps decide what gets improved next. Found a rough edge or have an idea? [Open an issue](https://github.com/jharrisuk/tellybox-homelab/issues). If Tellybox is useful in your homelab, a star or a link helps other people find it.
 
 ## Get started
 
