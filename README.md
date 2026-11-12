@@ -59,7 +59,7 @@ A real setup screen: each service has its own controls. All integrations start o
 
 </details>
 
-## Actively developed, shaped by real use
+## Actively developed
 
 Tellybox is an **early-access project under active development**, with ongoing fixes, interface improvements and integration work. Follow the [changelog](docs/CHANGELOG.md), [releases](https://github.com/jharrisuk/tellybox-homelab/releases) and [development activity](https://github.com/jharrisuk/tellybox-homelab/commits/main/) to see what has shipped. Server and app versions are independent.
 
