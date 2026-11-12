@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="440" viewBox="0 0 1200 440" role="img" aria-labelledby="title desc">
+	<title id="title">Your media sources, together in Tellybox</title>
+	<desc id="desc">Jellyfin and Dispatcharr connect to Tellybox. Optional discovery, requests, subtitles and home automation extend it. Watch through the web, Android phone or Android TV.</desc>
+	<rect width="1200" height="440" rx="24" fill="#101510"/>
+	<g font-family="Arial,Helvetica,sans-serif">
+		<text x="54" y="57" fill="#c5ed84" font-size="14" font-weight="700" letter-spacing="3">YOUR SOURCES. YOUR CHOICE.</text>
+		<text x="54" y="103" fill="#f5f4e8" font-size="32" font-weight="700">One familiar place to watch.</text>
+		<path d="M340 190H440M340 292H440M760 240H850" fill="none" stroke="#718658" stroke-width="3"/>
+		<path d="M440 190V292M440 240H490" fill="none" stroke="#718658" stroke-width="3"/>
+		<rect x="54" y="150" width="286" height="80" rx="14" fill="#202b1b" stroke="#4c6040"/>
+		<text x="77" y="184" fill="#f5f4e8" font-size="23" font-weight="700">Jellyfin</text>
+		<text x="77" y="210" fill="#b8c3ad" font-size="16">Your local collection</text>
+		<rect x="54" y="252" width="286" height="80" rx="14" fill="#202b1b" stroke="#4c6040"/>
+		<text x="77" y="286" fill="#f5f4e8" font-size="23" font-weight="700">Dispatcharr</text>
+		<text x="77" y="312" fill="#b8c3ad" font-size="16">Live TV · 24/7 · On demand</text>
+		<rect x="490" y="172" width="270" height="136" rx="20" fill="#c5ed84"/>
+		<text x="625" y="229" text-anchor="middle" fill="#172013" font-size="36" font-weight="700">Tellybox</text>
+		<text x="625" y="263" text-anchor="middle" fill="#293b1c" font-size="17">Bring it all together</text>
+		<rect x="850" y="150" width="296" height="182" rx="14" fill="#202b1b" stroke="#4c6040"/>
+		<text x="876" y="190" fill="#f5f4e8" font-size="22" font-weight="700">Watch your way</text>
+		<text x="876" y="228" fill="#c5ed84" font-size="19">Web browser</text>
+		<text x="876" y="263" fill="#c5ed84" font-size="19">Android phone</text>
+		<text x="876" y="298" fill="#c5ed84" font-size="19">Android TV</text>
+		<text x="54" y="384" fill="#b8c3ad" font-size="16">Optional discovery, requests, subtitles, upcoming releases, remote access and home automation.</text>
+		<text x="54" y="411" fill="#c5ed84" font-size="16" font-weight="700">Start with one source. Enable more when you want them.</text>
+	</g>
+</svg>
