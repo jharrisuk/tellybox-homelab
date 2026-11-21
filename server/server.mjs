@@ -347,7 +347,13 @@ app.post('/api/maintenance', (req, res) => {
 	if (state.enabled) {
 		for (const session of [...sessions.values()]) {
 			const applies = state.scope === 'both' ? true : state.scope === 'remote' ? !atHome(session) : atHome(session);
-			if (applies) void stop(session, { relayRevoke: Boolean(session.relayLeaseId) });
+			if (applies) {
+				// A maintenance stop must never take the server down with it. stop()
+				// can reject when a relay worker is already unreachable, which is
+				// exactly the situation maintenance exists for. The session is still
+				// refused by the maintenance gate on its next request.
+				stop(session, { relayRevoke: Boolean(session.relayLeaseId) }).catch(() => {});
+			}
 		}
 	}
 	res.json({ ...state, message: MAINTENANCE_MESSAGE });

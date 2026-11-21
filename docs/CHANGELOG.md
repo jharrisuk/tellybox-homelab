@@ -2,6 +2,24 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Server 0.26.63 - 21 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Maintenance
+
+- Turning maintenance on no longer risks taking the server down when stopping a
+  session fails - for example when a relay worker is already unreachable, which
+  is exactly the situation maintenance is for. The failed stop is ignored and the
+  viewer is still refused by the maintenance gate.
+
+### Coming soon
+
+- Only the episode a card actually represents keeps its library link. Earlier
+  episodes in the same card no longer open the chosen one.
+- `?title=` deep links now match numeric ids, so a shared link opens the right
+  title instead of silently doing nothing.
 ## Server 0.26.62 - 21 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

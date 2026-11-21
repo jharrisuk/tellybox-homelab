@@ -195,7 +195,7 @@ async function load() {
 		render();
 		const requested = query.get('title');
 		if (requested) {
-			const item = [...state.tv, ...state.movies].find(entry => entry.id === requested);
+			const item = [...state.tv, ...state.movies].find(entry => String(entry.id) === String(requested));
 			if (item) openDetails(item, false);
 		}
 	} catch (error) {
@@ -215,7 +215,7 @@ $('#comingDetails').addEventListener('cancel', event => { event.preventDefault()
 window.addEventListener('popstate', () => {
 	const query = new URLSearchParams(location.search), type = query.get('type');
 	if (['tv', 'movie'].includes(type) && type !== state.type) setType(type, false);
-	const title = query.get('title'), item = title ? [...state.tv, ...state.movies].find(entry => entry.id === title) : null;
+	const title = query.get('title'), item = title ? [...state.tv, ...state.movies].find(entry => String(entry.id) === String(title)) : null;
 	const dialog = $('#comingDetails');
 	if (item) { if (!dialog.open) openDetails(item, false); }
 	else if (dialog.open) dialog.close();

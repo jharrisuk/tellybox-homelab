@@ -9,9 +9,16 @@ window.jserverCalendar = {
 			return { key: dayKey, date, past: offset < 0, today: dayKey === todayKey, items: [] };
 		});
 		for (const item of [...schedule.tv, ...schedule.movies]) {
-			const entries = item.type === 'tv' && item.episodes?.length ? item.episodes.map(episode => ({
-				...item, date: episode.date, episodeTitle: episode.title, episode: `S${episode.season} · E${episode.number}`
-			})) : [item];
+			// Only the episode the card actually represents may keep the library
+			// link. Spreading the item onto every row sent every aired episode to
+			// the same id, which is the wrong-episode bug again by another road.
+			const chosen = episode => Number(episode?.season) === Number(item.seasonNumber)
+				&& Number(episode?.number) === Number(item.episodeNumber);
+			const entries = item.type === 'tv' && item.episodes?.length ? item.episodes.map(episode => {
+				const { library, ...base } = item;
+				return { ...base, ...(chosen(episode) && library ? { library } : {}),
+					date: episode.date, episodeTitle: episode.title, episode: `S${episode.season} · E${episode.number}` };
+			}) : [item];
 			for (const entry of entries) {
 				if (!entry.date) continue;
 				const date = new Date(entry.date);

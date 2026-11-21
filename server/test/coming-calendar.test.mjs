@@ -56,3 +56,21 @@ test('calendar can add the recent past and marks released days without changing 
 	assert.equal(releasedFilm.items[0].title, 'Released film');
 	assert.equal(calendar.days({ tv: [], movies: [] }, new Date(2026, 9, 18, 12)).length, 7, 'the default stays a single week');
 });
+
+test('only the episode the card represents keeps the library link', () => {
+	const first = new Date(2026, 9, 19, 1).toISOString();
+	const second = new Date(2026, 9, 20, 1).toISOString();
+	const schedule = {
+		tv: [{ type: 'tv', title: 'Example show', seasonNumber: 2, episodeNumber: 2,
+			library: { id: 'episode-2', type: 'episode' }, episodes: [
+				{ season: 2, number: 1, title: 'First', date: first },
+				{ season: 2, number: 2, title: 'Second', date: second }
+			] }],
+		movies: []
+	};
+	const days = calendar.days(schedule, new Date(2026, 9, 18, 12));
+	const aired = days[1].items.find(item => item.episodeTitle === 'First');
+	const chosen = days[2].items.find(item => item.episodeTitle === 'Second');
+	assert.equal(aired.library, undefined, 'an earlier episode must not inherit the card link');
+	assert.deepEqual(chosen.library, { id: 'episode-2', type: 'episode' });
+});
