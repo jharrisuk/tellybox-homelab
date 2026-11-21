@@ -6,7 +6,7 @@ import path from 'node:path';
 // never accepted from a cookie, app token, local address or forwarded header.
 export const STATS_PATH = '/api/integrations/home-assistant/stats';
 export const STATS_SCHEMA = 'tellybox.home-assistant.stats';
-export const STATS_VERSION = 1;
+export const STATS_VERSION = 2;
 
 const tokenFile = 'home-assistant-token.json';
 const installationFile = 'installation.json';
@@ -79,6 +79,22 @@ export function createInstallationIdentity(directory) {
 
 const count = value => Number.isInteger(value) && value >= 0 ? value : null;
 const number = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
+// A viewer is one person, or one device/browser when no person is attached.
+// An entry with no usable identity only becomes the single shared local viewer
+// when the snapshot marks it local; otherwise it is not counted as a person.
+function viewerKey(entry) {
+	const personKey = typeof entry.personKey === 'string' ? entry.personKey.trim() : '';
+	if (personKey) return 'key:' + personKey;
+	const personId = typeof entry.personId === 'string' ? entry.personId.trim() : '';
+	if (personId) return 'person:' + personId;
+	const personName = typeof entry.personName === 'string' ? entry.personName.trim().toLowerCase() : '';
+	if (personName) return 'name:' + personName;
+	const deviceId = typeof entry.deviceId === 'string' ? entry.deviceId.trim() : '';
+	if (deviceId) return 'device:' + deviceId;
+	const browserId = typeof entry.browserId === 'string' ? entry.browserId.trim() : '';
+	if (browserId) return 'browser:' + browserId;
+	return entry.local === true || entry.home === true ? 'local' : null;
+}
 function percent(used, total) {
 	if (used === null || total === null || total <= 0) return null;
 	return Math.round(Math.max(0, Math.min(100, used / total * 100)) * 10) / 10;
@@ -86,7 +102,7 @@ function percent(used, total) {
 
 // Only aggregate counters and sanitised host readings leave the server. Titles,
 // account identities, addresses, paths and provider URLs are never selected.
-export function createHomeAssistantIntegration({ directory, activity, serverHealth, uploadLimit, version, clock = Date.now }) {
+export function createHomeAssistantIntegration({ directory, activity, serverHealth, uploadLimit, maintenance, version, clock = Date.now }) {
 	const tokens = createHomeAssistantTokens(directory);
 	let installation = null;
 	function installationId() {
@@ -118,14 +134,22 @@ export function createHomeAssistantIntegration({ directory, activity, serverHeal
 		// marks the sensors unavailable instead of showing a fabricated zero.
 		const current = hasStreams ? snapshot.active.filter(entry => entry && entry.purpose !== 'download') : [];
 		const playing = hasStreams ? current.filter(entry => entry.state === 'playing').length : null;
+		const viewers = hasStreams ? new Set(current.map(viewerKey).filter(Boolean)).size : null;
 		const streams = hasStreams ? {
 			active: playing,
 			connected: current.length,
 			paused: current.filter(entry => entry.state === 'paused').length,
 			local: current.filter(entry => entry.mediaRoute === 'local').length,
-			remote: current.filter(entry => entry.mediaRoute === 'remote').length
-		} : { active: null, connected: null, paused: null, local: null, remote: null };
+			remote: current.filter(entry => entry.mediaRoute === 'remote').length,
+			viewers
+		} : { active: null, connected: null, paused: null, local: null, remote: null, viewers: null };
 		const downloads = hasDownloads ? snapshot.downloads.filter(entry => entry && !['ended', 'failed'].includes(entry.state)).length : null;
+		// The activity snapshot already computes these daily aggregates. They are
+		// only counters: titles, people and addresses are never selected.
+		const activityStats = snapshot?.stats && typeof snapshot.stats === 'object' ? snapshot.stats : null;
+		let maintenanceState = null;
+		try { maintenanceState = maintenance?.read?.() || null; }
+		catch { maintenanceState = null; }
 		return {
 			schema: STATS_SCHEMA,
 			schemaVersion: STATS_VERSION,
@@ -144,6 +168,12 @@ export function createHomeAssistantIntegration({ directory, activity, serverHeal
 				disks
 			},
 			streams,
+			activity: {
+				plays: count(activityStats?.plays),
+				failed: count(activityStats?.failed),
+				remoteIps: count(activityStats?.remoteIps)
+			},
+			maintenance: maintenanceState && typeof maintenanceState === 'object' ? { enabled: maintenanceState.enabled === true } : null,
 			downloads: { active: downloads },
 			upload: {
 				configuredMbps: number(upload?.mbps),

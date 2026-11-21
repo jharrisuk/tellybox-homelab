@@ -226,9 +226,13 @@ const pausedEnforcer = createPausedEnforcer({
 	}
 });
 const serverHealth = createServerHealth(process.env.HOST_HEALTH_PATH || path.join(path.dirname(configPath), 'host-health.json'), { bandwidth: () => uploadLimit.status(), streaming: () => activity.snapshot().active.filter(item => item.purpose !== 'download').length });
+// The same file-backed state drives the 503 page and the Home Assistant
+// maintenance binary sensor. It is created before the viewer gate so the
+// public status can be read by signed-out callers.
+const maintenance = createMaintenance({ directory: process.env.AUTH_DIR || path.join(root, 'auth-data') });
 const homeAssistant = createHomeAssistantIntegration({
 	directory: process.env.AUTH_DIR || path.join(root, 'auth-data'),
-	activity, serverHealth, uploadLimit, version: serverRelease.version
+	activity, serverHealth, uploadLimit, maintenance, version: serverRelease.version
 });
 // Registered before the viewer-login gate. This route authenticates only the
 // dedicated bearer token; it is never satisfied by a viewer cookie or app token.
@@ -275,7 +279,6 @@ for (const file of ['style.css', 'tellybox-logo.png', 'tellybox-logo.webp']) {
 }
 // Maintenance state is created before the viewer gate so the public status can
 // be read by signed-out callers; the gate itself is installed after installAuth.
-const maintenance = createMaintenance({ directory: process.env.AUTH_DIR || path.join(root, 'auth-data') });
 app.get('/api/maintenance', (req, res) => {
 	res.set('Cache-Control', 'no-store');
 	res.json({ ...maintenance.read(), message: MAINTENANCE_MESSAGE });

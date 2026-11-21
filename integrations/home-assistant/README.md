@@ -8,13 +8,15 @@ It is not an official Home Assistant integration. It is not listed in HACS. Noth
 
 Included:
 
-- Active, connected, local and remote stream counts. Local/remote describe the actual media route; sessions with an unknown route are not guessed from viewer location.
+- Active, connected, paused, local and remote stream counts. Local/remote describe the actual media route; sessions with an unknown route are not guessed from viewer location.
+- Distinct viewer count, grouped by the server's person identity and never by a raw address.
 - Active download count.
+- Daily play requests, failed or rate-limited sign-ins and distinct remote addresses as counters only. No titles, people or addresses are exposed.
 - Measured remote upload rate and the configured upload cap.
-- Tellybox service uptime.
-- Host CPU and memory percentages from the existing host-health collector.
+- Tellybox service and host uptime.
+- Host CPU and memory percentages and total/available memory bytes from the existing host-health collector.
 - Available bytes for each host disk, keyed by a stable sanitised disk ID.
-- An optional connectivity binary sensor.
+- Connectivity and maintenance binary sensors.
 
 Not included:
 
@@ -29,7 +31,7 @@ The integration never reads the normal viewer API. It only reads the separate Ho
 
 - Home Assistant Core 2026.9 or newer (the configuration flow uses its current schema library).
 
-- A Tellybox server that provides `GET /api/integrations/home-assistant/stats` with schema version 1.
+- A Tellybox server that provides `GET /api/integrations/home-assistant/stats` with schema version 1 or 2. Version 1 payloads omit the newer activity and maintenance fields; those sensors simply stay unavailable.
 - A dedicated Home Assistant token created in Tellybox installation settings.
 - A recent 2026 Home Assistant release with the `probatio` schema library used by current config flows. Older releases may fail to load the config flow.
 - Home Assistant able to reach the Tellybox server address. Use `http://` on a trusted LAN or `https://` when crossing an untrusted network.
@@ -65,14 +67,22 @@ Entity IDs depend on the config entry title, which includes the server address. 
 | `connected_streams` | `sensor...connected_streams` | Sessions still active within the server's recent 120 second window, including paused sessions. |
 | `local_streams` | `sensor...local_streams` | Connected playback sessions whose media route is direct from the home server. |
 | `remote_streams` | `sensor...remote_streams` | Connected playback sessions whose media route is through the remote relay path. |
+| `paused_streams` | `sensor...paused_streams` | Connected playback sessions currently paused. |
+| `viewers` | `sensor...viewers` | Distinct people currently watching. One person can hold several sessions; unidentified entries collapse into one local viewer only when marked local. |
 | `active_downloads` | `sensor...active_downloads` | Current downloads. |
+| `plays` | `sensor...plays` | Play requests in the server's rolling 24 hour window. Counter only. |
+| `failed_plays` | `sensor...failed_plays` | Failed or rate-limited sign-ins in the rolling 24 hour window. Counter only. |
 | `measured_remote_upload` | `sensor...measured_remote_upload` | Measured remote upload over the server's 10 second window, in Mbit/s. |
 | `configured_upload_limit` | `sensor...configured_upload_limit` | Effective configured upload cap in Mbit/s. `0` means unlimited. |
 | `uptime` | `sensor...uptime` | Tellybox service uptime. |
+| `host_uptime` | `sensor...host_uptime` | Host uptime. |
 | `cpu_usage` | `sensor...cpu_usage` | Host CPU percentage. |
 | `memory_usage` | `sensor...memory_usage` | Host memory percentage. |
+| `memory_total` | `sensor...memory_total` | Total host memory in bytes. |
+| `memory_available` | `sensor...memory_available` | Available host memory in bytes. |
 | Disk sensor | `sensor...available_space` | Free bytes for one disk, created per stable disk ID. |
 | `online` | `binary_sensor...online` | Whether the last statistics poll succeeded. |
+| `maintenance` | `binary_sensor...maintenance` | Whether the server's maintenance mode is enabled. |
 
 A value is `unavailable` when the server reports it as missing or stale. The integration does not turn missing CPU, memory, uptime or disk readings into zero. A real zero, such as no active streams, remains `0`.
 
@@ -105,7 +115,7 @@ The server returns an explicit versioned JSON object. Only these aggregate field
 ```json
 {
   "schema": "tellybox.home-assistant.stats",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "generatedAt": 1760000000000,
   "installationId": "00000000-0000-0000-0000-000000000000",
   "server": {
@@ -133,8 +143,15 @@ The server returns an explicit versioned JSON object. Only these aggregate field
     "connected": 2,
     "paused": 1,
     "local": 1,
-    "remote": 1
+    "remote": 1,
+    "viewers": 1
   },
+  "activity": {
+    "plays": 0,
+    "failed": 0,
+    "remoteIps": 0
+  },
+  "maintenance": { "enabled": false },
   "downloads": { "active": 0 },
   "upload": {
     "configuredMbps": 50,
@@ -148,6 +165,12 @@ The server returns an explicit versioned JSON object. Only these aggregate field
 `hostStatus` is `ok`, `stale` or `missing`. When it is not `ok`, host CPU, memory, uptime and disk byte values are `null`. The integration leaves those sensors unavailable rather than reporting `0`.
 
 `streams.local` and `streams.remote` follow the media route on the server: direct from the home server or through the remote relay path. They are not a guess based on the viewer's network address. If an active entry has no route yet, it counts as connected but not in either route count.
+
+`streams.viewers` counts distinct people, not sessions. Sessions are grouped by the server's person identity, then by device or browser identity when no person is attached. Entries with no identity collapse into a single local viewer only when the server marks them local; an unidentifiable remote entry is not counted.
+
+`activity.plays`, `activity.failed` and `activity.remoteIps` are rolling 24 hour counters. `activity.failed` counts failed or rate-limited sign-ins. `activity.remoteIps` is a count of distinct remote addresses, never the addresses themselves. `maintenance.enabled` is the same flag that serves the maintenance page.
+
+A server that returns schema version 1 omits `streams.viewers`, `activity` and `maintenance`. The integration accepts both versions; the newer sensors stay unavailable until the server is updated, and the fields never become a fabricated `0`.
 
 ## Troubleshooting
 

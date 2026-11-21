@@ -25,13 +25,14 @@ const fakeHealth = overrides => ({
 });
 const fakeActivity = () => ({
 	active: [
-		{ id: 'one', state: 'playing', local: false, mediaRoute: 'local', purpose: 'playback', title: 'Private title', ip: '192.0.2.10', email: 'private@example.test' },
+		{ id: 'one', state: 'playing', local: false, mediaRoute: 'local', purpose: 'playback', personId: 'p-one', personName: 'Private Person', title: 'Private title', ip: '192.0.2.10', email: 'private@example.test' },
 		{ id: 'two', state: 'paused', local: true, mediaRoute: 'remote', purpose: 'playback', title: 'Another private title' }
 	],
 	downloads: [{ title: 'Private download' }],
-	stats: { active: 2, downloads: 1 }
+	stats: { active: 2, downloads: 1, plays: 7, failed: 2, remoteIps: 3 }
 });
 const fakeUpload = () => ({ mbps: 50, measuredMbps: 12.34, measurementSeconds: 10 });
+const fakeMaintenance = () => ({ enabled: true, scope: 'both', updatedAt: 10, updatedBy: 'admin' });
 
 test('Home Assistant tokens are high entropy, stored only as a hash, persistent and revocable', t => {
 	const dir = directory(t), store = createHomeAssistantTokens(dir);
@@ -84,10 +85,11 @@ test('aggregate stats keep real zero distinct from missing or stale readings and
 	const dir = directory(t);
 	const integration = createHomeAssistantIntegration({
 		directory: dir, activity: { snapshot: fakeActivity }, serverHealth: async () => fakeHealth(),
-		uploadLimit: { status: fakeUpload }, version: '1.2.3', clock: () => 5000
+		uploadLimit: { status: fakeUpload }, maintenance: { read: fakeMaintenance }, version: '1.2.3', clock: () => 5000
 	});
 	const stats = await integration.stats();
 	assert.equal(stats.schema, STATS_SCHEMA);
+	assert.equal(stats.schemaVersion, 2);
 	assert.equal(stats.schemaVersion, STATS_VERSION);
 	assert.equal(stats.generatedAt, 5000);
 	assert.match(stats.installationId, /^[a-f0-9-]{36}$/);
@@ -97,14 +99,16 @@ test('aggregate stats keep real zero distinct from missing or stale readings and
 	assert.equal(stats.server.memoryPercent, 60);
 	assert.equal(stats.server.uptimeSeconds, 123.4);
 	assert.equal(stats.server.hostUptimeSeconds, 900);
-	assert.deepEqual(stats.streams, { active: 1, connected: 2, paused: 1, local: 1, remote: 1 });
+	assert.deepEqual(stats.streams, { active: 1, connected: 2, paused: 1, local: 1, remote: 1, viewers: 2 });
+	assert.deepEqual(stats.activity, { plays: 7, failed: 2, remoteIps: 3 });
+	assert.deepEqual(stats.maintenance, { enabled: true });
 	assert.deepEqual(stats.downloads, { active: 1 });
 	assert.deepEqual(stats.upload, { configuredMbps: 50, unlimited: false, measuredMbps: 12.34, measurementSeconds: 10 });
 	assert.equal(stats.server.disks[0].id, 'disk-a');
 	assert.equal(stats.server.disks[0].availableBytes, 500);
 	assert.equal(stats.server.disks[1].availableBytes, null);
 	const text = JSON.stringify(stats);
-	for (const value of ['Private title', 'Another private title', 'private@example.test', '192.0.2.10', 'Private download', '/private/path', 'provider.example.test']) assert.ok(!text.includes(value), value);
+	for (const value of ['Private title', 'Another private title', 'private@example.test', '192.0.2.10', 'Private download', 'Private Person', 'p-one', '/private/path', 'provider.example.test']) assert.ok(!text.includes(value), value);
 });
 
 test('stale and missing host samples make host metrics unavailable instead of reporting zero', async t => {
@@ -146,8 +150,48 @@ test('missing activity arrays stay unavailable instead of becoming fabricated ze
 		serverHealth: async () => fakeHealth(), uploadLimit: { status: fakeUpload }, version: '1.2.3'
 	});
 	const stats = await integration.stats();
-	assert.deepEqual(stats.streams, { active: null, connected: null, paused: null, local: null, remote: null });
+	assert.deepEqual(stats.streams, { active: null, connected: null, paused: null, local: null, remote: null, viewers: null });
 	assert.deepEqual(stats.downloads, { active: null });
+	assert.deepEqual(stats.activity, { plays: null, failed: null, remoteIps: null });
+	assert.equal(stats.maintenance, null);
+});
+
+test('activity and maintenance stay null when absent, invalid or unreadable', async t => {
+	const base = { directory: directory(t), serverHealth: async () => fakeHealth(), uploadLimit: { status: fakeUpload }, version: '1.2.3' };
+	let stats = await createHomeAssistantIntegration({ ...base, activity: { snapshot: () => ({ active: [], downloads: [], stats: { plays: -1, failed: '2', remoteIps: 1.5 } }) } }).stats();
+	assert.deepEqual(stats.activity, { plays: null, failed: null, remoteIps: null });
+	assert.equal(stats.maintenance, null);
+	stats = await createHomeAssistantIntegration({ ...base, activity: { snapshot: () => ({ active: [], downloads: [], stats: { plays: 0, failed: 0, remoteIps: 0 } }) }, maintenance: { read: () => { throw Error('/private/maintenance/path'); } } }).stats();
+	assert.deepEqual(stats.activity, { plays: 0, failed: 0, remoteIps: 0 });
+	assert.equal(stats.maintenance, null);
+	stats = await createHomeAssistantIntegration({ ...base, activity: { snapshot: () => ({ active: [], downloads: [] }) }, maintenance: { read: () => ({ enabled: 'yes' }) } }).stats();
+	assert.deepEqual(stats.activity, { plays: null, failed: null, remoteIps: null });
+	assert.deepEqual(stats.maintenance, { enabled: false });
+});
+
+test('distinct viewers group one identity per person and collapse local or unidentified entries', async t => {
+	const activity = { active: [
+		{ id: 'a', state: 'playing', personKey: 'key-1', mediaRoute: 'remote' },
+		{ id: 'b', state: 'playing', personId: 'person-1', mediaRoute: 'remote' },
+		{ id: 'c', state: 'paused', personId: 'person-1', mediaRoute: 'local' },
+		{ id: 'd', state: 'playing', personName: 'Same Name', mediaRoute: 'local' },
+		{ id: 'e', state: 'playing', personName: 'same name', mediaRoute: 'remote' },
+		{ id: 'f', state: 'playing', deviceId: 'device-1', mediaRoute: 'remote' },
+		{ id: 'g', state: 'playing', local: true, mediaRoute: 'local' },
+		{ id: 'h', state: 'playing', home: true, mediaRoute: 'local' },
+		{ id: 'i', state: 'playing', mediaRoute: 'remote' },
+		{ id: 'j', state: 'playing', purpose: 'download', personId: 'person-2' }
+	], downloads: [], stats: {} };
+	const stats = await createHomeAssistantIntegration({
+		directory: directory(t), activity: { snapshot: () => activity },
+		serverHealth: async () => fakeHealth(), uploadLimit: { status: fakeUpload }, version: '1.2.3'
+	}).stats();
+	// key-1, person-1, "same name", device-1 and one shared local viewer.
+	// The unidentified remote entry and the download are not viewers.
+	assert.equal(stats.streams.viewers, 5);
+	assert.equal(stats.streams.connected, 9);
+	assert.ok(!JSON.stringify(stats).includes('key-1'));
+	assert.ok(!JSON.stringify(stats).includes('person-1'));
 });
 
 async function fixture(t, { token = true, stats } = {}) {

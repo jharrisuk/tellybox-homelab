@@ -28,14 +28,36 @@ class EntityMappingTests(unittest.TestCase):
 		sensor_keys = translation_keys(COMPONENT / "sensor.py")
 		self.assertEqual(sensor_keys, {
 			"active_streams", "connected_streams", "local_streams", "remote_streams",
-			"active_downloads", "measured_remote_upload", "configured_upload_limit",
-			"uptime", "cpu_usage", "memory_usage",
+			"paused_streams", "viewers",
+			"active_downloads", "plays", "failed_plays",
+			"measured_remote_upload", "configured_upload_limit",
+			"uptime", "host_uptime", "cpu_usage", "memory_usage", "memory_total", "memory_available",
 		})
 		for key in sensor_keys:
 			self.assertIn("name", strings["entity"]["sensor"][key], key)
 		binary = (COMPONENT / "binary_sensor.py").read_text(encoding="utf-8")
 		self.assertIn('_attr_translation_key = "online"', binary)
 		self.assertIn("name", strings["entity"]["binary_sensor"]["online"])
+		self.assertIn('_attr_translation_key = "maintenance"', binary)
+		self.assertIn("name", strings["entity"]["binary_sensor"]["maintenance"])
+
+	def test_sensor_fields_match_the_server_allowlist(self) -> None:
+		source = (COMPONENT / "sensor.py").read_text(encoding="utf-8")
+		for section, key in [
+			("streams", "paused"), ("streams", "viewers"),
+			("activity", "plays"), ("activity", "failed"),
+			("server", "host_uptime_seconds"), ("server", "memory_total_bytes"),
+			("server", "memory_available_bytes"),
+		]:
+			self.assertIn(f'_section("{section}", "{key}")', source, f"{section}.{key}")
+		self.assertIn("SensorDeviceClass.DURATION", source)
+		self.assertIn("SensorDeviceClass.DATA_SIZE", source)
+
+	def test_maintenance_binary_sensor_reads_only_the_aggregate_flag(self) -> None:
+		binary = (COMPONENT / "binary_sensor.py").read_text(encoding="utf-8")
+		self.assertIn("BinarySensorDeviceClass.RUNNING", binary)
+		self.assertIn('.get("maintenance")', binary)
+		self.assertIn('.get("enabled") is True', binary)
 
 	def test_first_version_has_no_media_player_switch_or_button_platform(self) -> None:
 		for path in COMPONENT.glob("*.py"):

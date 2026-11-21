@@ -2,6 +2,21 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Server 0.26.57 - 21 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Home Assistant
+
+- Seven more sensors: viewers now, paused streams, plays, failed plays, host
+  uptime, memory total and memory available.
+- A maintenance binary sensor, on while maintenance mode is active.
+- The statistics payload is now version 2. Older v1 payloads still parse, and a
+  field the server does not send reads as unavailable rather than zero.
+- All additions are aggregate counters; no titles, account identities, addresses
+  or provider URLs are exposed.
+
 ## Server 0.26.56 - 21 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

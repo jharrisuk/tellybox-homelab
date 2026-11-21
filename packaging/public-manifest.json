@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.56",
+	"serverVersion": "0.26.57",
 	"files": [
 		{
 			"path": ".env.example",
@@ -24,8 +24,8 @@
 		},
 		{
 			"path": ".gitignore",
-			"bytes": 281,
-			"sha256": "bf95a4ee7d52a5c7f959ed41ef62adc433aeb01043b390ea8350b9aa51446304"
+			"bytes": 296,
+			"sha256": "f84cfc5b40ecc7c007c5a7965f973050a103cf59e5bf890a35d759d25ce39e07"
 		},
 		{
 			"path": "APP-TERMS.md",
@@ -59,8 +59,8 @@
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 53210,
-			"sha256": "7a45e0dc43af308304fecd8d14b331c58eef825402d818c28c40f435b7751ac0"
+			"bytes": 53819,
+			"sha256": "7a3c9c1ab61088971c7fd7253548fb09368679cfe60aa4172078c6537b88ce05"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -134,8 +134,8 @@
 		},
 		{
 			"path": "integrations/home-assistant/custom_components/tellybox/binary_sensor.py",
-			"bytes": 1313,
-			"sha256": "9488999354a5e326208f2232a7d569dc86ca032dfe61bde6de70799d47a54f62"
+			"bytes": 2123,
+			"sha256": "4899324ceb9b978865ae7804d6f9fd698f4146b65a4025a33aa757aeed1b6de2"
 		},
 		{
 			"path": "integrations/home-assistant/custom_components/tellybox/config_flow.py",
@@ -144,8 +144,8 @@
 		},
 		{
 			"path": "integrations/home-assistant/custom_components/tellybox/const.py",
-			"bytes": 352,
-			"sha256": "d21c07b0ab1af555d2cc5be469de721821854cd0f0ba1e90e7df6e0c8f2a051f"
+			"bytes": 376,
+			"sha256": "68ba78aa409850a2992b072c3f37d23cdfc421db9116ac4b3a0d50394df8921d"
 		},
 		{
 			"path": "integrations/home-assistant/custom_components/tellybox/coordinator.py",
@@ -164,23 +164,23 @@
 		},
 		{
 			"path": "integrations/home-assistant/custom_components/tellybox/sensor.py",
-			"bytes": 6270,
-			"sha256": "ebfb10328768a22a0874d8df1bad51f2b92aa5cf2a3fe9a540278b174869fa4a"
+			"bytes": 8168,
+			"sha256": "83635910676655de4b06f650f8fc0493a5495e00d4ce5180008adc2fbdffe5e6"
 		},
 		{
 			"path": "integrations/home-assistant/custom_components/tellybox/stats.py",
-			"bytes": 6264,
-			"sha256": "0e1de0248eae606fb9e43e7d7b42e69a211973da5e352473046687293b33854e"
+			"bytes": 6868,
+			"sha256": "c62731bc704df0883230be57e8e9f5345a1718ba126f234379264c7e8b36ef92"
 		},
 		{
 			"path": "integrations/home-assistant/custom_components/tellybox/strings.json",
-			"bytes": 2443,
-			"sha256": "f9679fb44fab689db1e04818fa8925092a45f2289a2d52bb6845eb5e1b0e25f9"
+			"bytes": 2908,
+			"sha256": "efe83979181be1dbef7a4080ca4e2a8c1d1b8beddde963e46373fe8183b9957e"
 		},
 		{
 			"path": "integrations/home-assistant/custom_components/tellybox/translations/en.json",
-			"bytes": 2443,
-			"sha256": "f9679fb44fab689db1e04818fa8925092a45f2289a2d52bb6845eb5e1b0e25f9"
+			"bytes": 2908,
+			"sha256": "efe83979181be1dbef7a4080ca4e2a8c1d1b8beddde963e46373fe8183b9957e"
 		},
 		{
 			"path": "integrations/home-assistant/dashboard-example.yaml",
@@ -189,23 +189,23 @@
 		},
 		{
 			"path": "integrations/home-assistant/README.md",
-			"bytes": 9693,
-			"sha256": "3439fa06632e71c47ad8f4670cf01e6762527bbeed70a41e76a7f2226a88b275"
+			"bytes": 11942,
+			"sha256": "db478dcc753e65c43ba192af2ec109db077682b5cca355a94e777db771cdf9e3"
 		},
 		{
 			"path": "integrations/home-assistant/tests/test_api.py",
-			"bytes": 4327,
-			"sha256": "93761385308c534b8da88104bb55ab58754cec595f22b8df20d8650fe380499d"
+			"bytes": 4665,
+			"sha256": "b6c1ee7a2e5d2a6d1a50d1e48b5331e1db5836d40a79320f41586e356e94a196"
 		},
 		{
 			"path": "integrations/home-assistant/tests/test_entity_mapping.py",
-			"bytes": 2202,
-			"sha256": "f5ee7705cb6397ecc264e7720b98bb7900d9ce4ece49cf85dbe52c3e3dc3eb8e"
+			"bytes": 3327,
+			"sha256": "bd35e0742ff4512c250cd8893ee4df63690b6c9afa0d3dada8b62ae1df7b90fa"
 		},
 		{
 			"path": "integrations/home-assistant/tests/test_stats.py",
-			"bytes": 5499,
-			"sha256": "cc23b88af67f2fdee864010e3a2e62fddc0cfe869fe21862d2a6f2339e0dd686"
+			"bytes": 7381,
+			"sha256": "4262ff17b4cc2d2e20f5a318714cc931564ad55e200674b16bb662a093d8aa56"
 		},
 		{
 			"path": "LICENSE",
@@ -444,8 +444,8 @@
 		},
 		{
 			"path": "server/home-assistant.mjs",
-			"bytes": 8201,
-			"sha256": "c942d54f90cef11d2643d2939b07060ab8e104a6ca510cb079b3d7dd468326c7"
+			"bytes": 9990,
+			"sha256": "fbc9d88cb45a4cbc2a8d46bc6ce8a90b588bd84bbfd8d60a846c438a6a2d63f1"
 		},
 		{
 			"path": "server/home-continue.mjs",
@@ -660,12 +660,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "d111d52e7f4b58dbb9cd02a831397932c736e030e702dd8604ddd6b05e5cc32b"
+			"sha256": "a89e41bcc4ea44a95d9b77729101c38bafdf2d830c666ceb1e943acdc86f2fb8"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "0297db9b1e8844e4c55b3d056356ee8c56976749410219194a55b8fcc0c49e41"
+			"sha256": "1bc243dfdc96d547c2da7dac85c825363e7b7989d56240fba4eaad6b5ed50c9f"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -1144,8 +1144,8 @@
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 188088,
-			"sha256": "21954a0a9e052be4071b8c8333d99e64eb0fade5af20e476e2f602072fc938e3"
+			"bytes": 188300,
+			"sha256": "096fdfa10f4939b35d158b2fd78b6ec1bb5d734d96798ea1a029f619753e1f69"
 		},
 		{
 			"path": "server/session-limits.mjs",
@@ -1744,8 +1744,8 @@
 		},
 		{
 			"path": "server/test/home-assistant.test.mjs",
-			"bytes": 13569,
-			"sha256": "663814a5f5cba7ac7f0a815cf23fc272aaa791f52a103dae328906bf1c8574be"
+			"bytes": 16843,
+			"sha256": "00bb9679f59059fc2c03de2e53575619af2f452791d2b06b4fa50a20faaa9a51"
 		},
 		{
 			"path": "server/test/home-backdrop-131.test.mjs",

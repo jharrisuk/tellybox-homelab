@@ -42,7 +42,9 @@ VALID = {
 		],
 		"email": "do-not-expose@example.test",
 	},
-	"streams": {"active": 1, "connected": 2, "paused": 1, "local": 1, "remote": 1},
+	"streams": {"active": 1, "connected": 2, "paused": 1, "local": 1, "remote": 1, "viewers": 2},
+	"activity": {"plays": 4, "failed": 1, "remoteIps": 2, "ips": ["do-not-expose"], "title": "do-not-expose"},
+	"maintenance": {"enabled": True, "scope": "both", "updatedBy": "admin"},
 	"downloads": {"active": 0},
 	"upload": {"configuredMbps": 50, "unlimited": False, "measuredMbps": 3.25, "measurementSeconds": 10},
 	"title": "do-not-expose",
@@ -77,12 +79,38 @@ class ParserTests(unittest.TestCase):
 		self.assertEqual(data["server"]["memory_percent"], 42.1)
 		self.assertEqual(len(data["server"]["disks"]), 1)
 		self.assertEqual(data["server"]["disks"][0]["available_bytes"], 500)
-		self.assertEqual(data["streams"], {"active": 1, "connected": 2, "paused": 1, "local": 1, "remote": 1})
+		self.assertEqual(data["streams"], {"active": 1, "connected": 2, "paused": 1, "local": 1, "remote": 1, "viewers": 2})
+		self.assertEqual(data["activity"], {"plays": 4, "failed": 1, "remote_ips": 2})
+		self.assertEqual(data["maintenance"], {"enabled": True})
 		self.assertEqual(data["downloads"], {"active": 0})
 		self.assertEqual(data["upload"]["configured_mbps"], 50)
 		text = repr(data)
-		for value in ["do-not-expose", "email", "title"]:
+		for value in ["do-not-expose", "email", "title", "scope", "admin"]:
 			self.assertNotIn(value, text)
+
+	def test_schema_version_two_is_accepted_and_new_counters_are_optional(self) -> None:
+		payload = {**VALID, "schemaVersion": 2, "streams": {**VALID["streams"], "viewers": 3},
+			"activity": {"plays": 5, "failed": 0, "remoteIps": 0}, "maintenance": {"enabled": False}}
+		data = parse_stats(payload)
+		self.assertEqual(data["streams"]["viewers"], 3)
+		self.assertEqual(data["activity"], {"plays": 5, "failed": 0, "remote_ips": 0})
+		self.assertEqual(data["maintenance"], {"enabled": False})
+
+	def test_missing_or_invalid_new_fields_stay_none(self) -> None:
+		payload = {key: value for key, value in VALID.items() if key not in ("activity", "maintenance")}
+		payload["streams"] = {key: value for key, value in VALID["streams"].items() if key != "viewers"}
+		data = parse_stats(payload)
+		self.assertIsNone(data["streams"]["viewers"])
+		self.assertEqual(data["activity"], {"plays": None, "failed": None, "remote_ips": None})
+		self.assertIsNone(data["maintenance"])
+		payload = {**VALID, "streams": {**VALID["streams"], "viewers": -1},
+			"activity": {"plays": "3", "failed": True, "remoteIps": 1.5}, "maintenance": {"enabled": "yes"}}
+		data = parse_stats(payload)
+		self.assertIsNone(data["streams"]["viewers"])
+		self.assertEqual(data["activity"], {"plays": None, "failed": None, "remote_ips": None})
+		self.assertIsNone(data["maintenance"])
+		self.assertIsNone(parse_stats({**VALID, "maintenance": ["enabled"]})["maintenance"])
+		self.assertIsNone(parse_stats({**VALID, "activity": "none"})["activity"]["plays"])
 
 	def test_missing_or_stale_metrics_stay_none(self) -> None:
 		payload = {**VALID, "server": {**VALID["server"], "hostStatus": "stale", "cpuPercent": 5, "memoryPercent": 50, "hostUptimeSeconds": 10, "disks": [{"id": "d1", "name": "Media", "availableBytes": 100, "totalBytes": 200, "usedBytes": 100}]}}
@@ -112,7 +140,7 @@ class ParserTests(unittest.TestCase):
 		self.assertEqual(data["server"]["disks"][0]["name"], "Disk")
 
 	def test_rejects_unknown_schema_and_missing_identity(self) -> None:
-		for payload in [{**VALID, "schemaVersion": 2}, {**VALID, "schema": "other"}, {**VALID, "installationId": ""}, {**VALID, "server": None}, "not an object"]:
+		for payload in [{**VALID, "schemaVersion": 3}, {**VALID, "schema": "other"}, {**VALID, "installationId": ""}, {**VALID, "server": None}, "not an object"]:
 			with self.subTest(payload=payload):
 				with self.assertRaises(StatsFormatError):
 					parse_stats(payload)

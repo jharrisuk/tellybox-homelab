@@ -52,8 +52,20 @@
 			"remote_streams": {
 				"name": "Remote streams"
 			},
+			"paused_streams": {
+				"name": "Paused streams"
+			},
+			"viewers": {
+				"name": "Viewers"
+			},
 			"active_downloads": {
 				"name": "Active downloads"
+			},
+			"plays": {
+				"name": "Play requests (24 hours)"
+			},
+			"failed_plays": {
+				"name": "Failed or limited sign-ins (24 hours)"
 			},
 			"measured_remote_upload": {
 				"name": "Measured remote upload"
@@ -64,16 +76,28 @@
 			"uptime": {
 				"name": "Service uptime"
 			},
+			"host_uptime": {
+				"name": "Host uptime"
+			},
 			"cpu_usage": {
 				"name": "CPU usage"
 			},
 			"memory_usage": {
 				"name": "Memory usage"
+			},
+			"memory_total": {
+				"name": "Memory total"
+			},
+			"memory_available": {
+				"name": "Memory available"
 			}
 		},
 		"binary_sensor": {
 			"online": {
 				"name": "Online"
+			},
+			"maintenance": {
+				"name": "Maintenance mode"
 			}
 		}
 	}

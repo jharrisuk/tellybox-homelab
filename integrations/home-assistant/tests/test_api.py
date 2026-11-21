@@ -103,6 +103,12 @@ class ApiTests(unittest.TestCase):
 		self.assertFalse(options["allow_redirects"])
 		self.assertEqual(options["timeout"].total, 7)
 
+	def test_schema_version_two_is_accepted(self) -> None:
+		data, _session = self.run_api(Response(payload={**VALID, "schemaVersion": 2,
+			"activity": {"plays": 1, "failed": 0, "remoteIps": 0}, "maintenance": {"enabled": True}}))
+		self.assertEqual(data["activity"]["plays"], 1)
+		self.assertEqual(data["maintenance"], {"enabled": True})
+
 	def test_auth_failures_are_distinct_and_do_not_echo_the_token(self) -> None:
 		for status in (401, 403):
 			with self.subTest(status=status):
@@ -118,7 +124,7 @@ class ApiTests(unittest.TestCase):
 			(Response(status=500), TellyboxApiError),
 			(Response(payload=VALID, headers={"Content-Type": "text/html"}), TellyboxApiError),
 			(Response(error=ValueError("bad json")), TellyboxApiError),
-			(Response(payload={**VALID, "schemaVersion": 2}), TellyboxApiError),
+			(Response(payload={**VALID, "schemaVersion": 3}), TellyboxApiError),
 			(Response(payload=VALID, headers={"Content-Type": "application/json", "Content-Length": str(600 * 1024)}), TellyboxApiError),
 		]
 		for response, expected in cases:

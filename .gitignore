@@ -24,3 +24,4 @@ packaging/*-results.txt
 
 outputs/
 *.log
+.pytest_cache/
