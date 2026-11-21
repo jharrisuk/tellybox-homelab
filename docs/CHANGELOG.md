@@ -44,6 +44,22 @@ Web only.
 - Turning maintenance on now ends only the sessions the chosen scope covers:
   a remote-only activation no longer interrupts local playback.
 
+## Android 0.26.32 (build 86) - 21 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+Apps only.
+
+### Maintenance screen
+
+- The TV app now takes over the whole screen during planned maintenance instead
+  of dropping a small box into the page: animated Tellybox wordmark, a friendly
+  "Back in a tick", and one line explaining that it will recover by itself.
+- It retries automatically every 30 seconds, so a TV left on recovers without
+  anyone touching the remote. "Try now" is there if you are impatient.
+- The phone app uses the same wording instead of the formal maintenance line.
+
 ## Android 0.26.31 (build 85) - 20 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home
