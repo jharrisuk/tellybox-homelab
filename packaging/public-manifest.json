@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.57",
+	"serverVersion": "0.26.59",
 	"files": [
 		{
 			"path": ".env.example",
@@ -54,13 +54,13 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 26874,
-			"sha256": "d4ddcf6670ade4b4d37392d824ec4fcc810735270e0dcb59aeebf6a3471bc2b0"
+			"bytes": 27189,
+			"sha256": "c7af408d140b286ce39bd8d93c74f1bb034479416b3ab3d7edec6765a1d38b77"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 53819,
-			"sha256": "7a3c9c1ab61088971c7fd7253548fb09368679cfe60aa4172078c6537b88ce05"
+			"bytes": 54871,
+			"sha256": "a2ee216155d470890fcad67b833922b4be0da75594ccd8a8d60d220f275e4122"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -114,8 +114,8 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 49921,
-			"sha256": "be8308f8c7aaf8d828c237bcace24451dad2338129b4c9e6bc726baef99c0376"
+			"bytes": 50236,
+			"sha256": "8ed71e344ea9bcb5dedfa706ed60a7fcba21a146ed1cc8edac8bd80fd90be536"
 		},
 		{
 			"path": "docs/story.html",
@@ -160,7 +160,7 @@
 		{
 			"path": "integrations/home-assistant/custom_components/tellybox/manifest.json",
 			"bytes": 368,
-			"sha256": "d1aeb941bd412c9a6a5c0cfba843920ed3c6cfebdbcb040f4dce03a7b1382805"
+			"sha256": "b66fa1912f5f900f748da5ce6baeb75c31b6fe4f2349ab5d3abf57f3f192aca2"
 		},
 		{
 			"path": "integrations/home-assistant/custom_components/tellybox/sensor.py",
@@ -299,8 +299,8 @@
 		},
 		{
 			"path": "server/admin-push.mjs",
-			"bytes": 8853,
-			"sha256": "22bbb0fcf2b045142c97d70d14fa522913570362e7cc4dd51255befb5ac24ef9"
+			"bytes": 9827,
+			"sha256": "9196cc25085a11ba39399e2eec57de220fe92fa14b72d6b61b35e39fe154944b"
 		},
 		{
 			"path": "server/app-access.mjs",
@@ -444,8 +444,8 @@
 		},
 		{
 			"path": "server/home-assistant.mjs",
-			"bytes": 9990,
-			"sha256": "fbc9d88cb45a4cbc2a8d46bc6ce8a90b588bd84bbfd8d60a846c438a6a2d63f1"
+			"bytes": 10255,
+			"sha256": "565bcaa6e2e9f6bbf8e8aec50ca7b11d831708e0c8bccd3b07d4844ca643105b"
 		},
 		{
 			"path": "server/home-continue.mjs",
@@ -474,8 +474,8 @@
 		},
 		{
 			"path": "server/homelab/admin.mjs",
-			"bytes": 17685,
-			"sha256": "cf85179bf393ed23c26a1c2f9eebd15b672df834b84887ad2e9c98d12852ae33"
+			"bytes": 19036,
+			"sha256": "b89052f2d4e373af937a6bbbc2d35b7eb611716b07edb03fd4d9ff78bf6a629d"
 		},
 		{
 			"path": "server/homelab/apply.mjs",
@@ -660,12 +660,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "a89e41bcc4ea44a95d9b77729101c38bafdf2d830c666ceb1e943acdc86f2fb8"
+			"sha256": "bdc8873fac48770e2e88932a587c69b0acd8f6040b4756a9ff004ed4558ac053"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "1bc243dfdc96d547c2da7dac85c825363e7b7989d56240fba4eaad6b5ed50c9f"
+			"sha256": "be13454dd37af461fca5d9cb4a60266e9e7e29d56fda136597094dab57a132d7"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -1083,6 +1083,11 @@
 			"sha256": "dd2fb1c6d9f82ece7c76282666142d0b0e8a2108d903f5313f39a8da0ef3c799"
 		},
 		{
+			"path": "server/refresh-alert.mjs",
+			"bytes": 8044,
+			"sha256": "bb8182ccaca01d0be08552ebd4b665c37b59d482e57501bb3bee6940753cc06a"
+		},
+		{
 			"path": "server/relay-media/control-client.mjs",
 			"bytes": 2748,
 			"sha256": "e2be29211765903e8b42cd5371aa5fa1712257c130e16d12f440f97edd3559d7"
@@ -1144,8 +1149,8 @@
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 188300,
-			"sha256": "096fdfa10f4939b35d158b2fd78b6ec1bb5d734d96798ea1a029f619753e1f69"
+			"bytes": 189062,
+			"sha256": "b32db87f37123198a59b82e3f33257761ca7ad190647613b41391ac359611052"
 		},
 		{
 			"path": "server/session-limits.mjs",
@@ -1745,7 +1750,7 @@
 		{
 			"path": "server/test/home-assistant.test.mjs",
 			"bytes": 16843,
-			"sha256": "00bb9679f59059fc2c03de2e53575619af2f452791d2b06b4fa50a20faaa9a51"
+			"sha256": "3e54daeff584c0642229ae5e5ebcb63ba9fd172e674217e0bb219c643d2be349"
 		},
 		{
 			"path": "server/test/home-backdrop-131.test.mjs",
@@ -2351,6 +2356,11 @@
 			"path": "server/test/recordings.test.mjs",
 			"bytes": 5879,
 			"sha256": "a7a0c6082c686b324e007167645d49cebba229fa39acf26445748b1f357580d1"
+		},
+		{
+			"path": "server/test/refresh-alert.test.mjs",
+			"bytes": 16228,
+			"sha256": "9526dd5483c822ce67d0a447968e936f73327c766630eb9e5483be1bbb92d0da"
 		},
 		{
 			"path": "server/test/relay-caddy.test.mjs",

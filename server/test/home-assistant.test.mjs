@@ -89,7 +89,7 @@ test('aggregate stats keep real zero distinct from missing or stale readings and
 	});
 	const stats = await integration.stats();
 	assert.equal(stats.schema, STATS_SCHEMA);
-	assert.equal(stats.schemaVersion, 2);
+	assert.equal(stats.schemaVersion, 1);
 	assert.equal(stats.schemaVersion, STATS_VERSION);
 	assert.equal(stats.generatedAt, 5000);
 	assert.match(stats.installationId, /^[a-f0-9-]{36}$/);

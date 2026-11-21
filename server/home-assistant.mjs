@@ -6,7 +6,11 @@ import path from 'node:path';
 // never accepted from a cookie, app token, local address or forwarded header.
 export const STATS_PATH = '/api/integrations/home-assistant/stats';
 export const STATS_SCHEMA = 'tellybox.home-assistant.stats';
-export const STATS_VERSION = 2;
+// Additive fields do NOT get a version bump. Older integrations reject any
+// schemaVersion they do not know, so raising it breaks working dashboards.
+// Only raise it when clients can negotiate, and keep the previous version
+// accepted for at least one release.
+export const STATS_VERSION = 1;
 
 const tokenFile = 'home-assistant-token.json';
 const installationFile = 'installation.json';

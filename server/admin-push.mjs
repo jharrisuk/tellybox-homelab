@@ -4,7 +4,17 @@ import { createSign } from 'node:crypto';
 import { jsonStore } from './json-store.mjs';
 import {createPushGatewayClient,PUSH_GATEWAY,PUBLIC_APP_PACKAGE} from './push-gateway-client.mjs';
 
-export const notificationTypes = ['app_requested', 'person_requested', 'media_request', 'login_success', 'watch_started'];
+// The first five are the complete set older app builds register. A device that
+// opted into every alert type keeps receiving installation-level alerts added
+// later; a device that narrowed its selection is left exactly as it chose.
+export const legacyNotificationTypes = ['app_requested', 'person_requested', 'media_request', 'login_success', 'watch_started'];
+export const notificationTypes = [...legacyNotificationTypes, 'refresh_alert'];
+export function wantsNotification(registration, type) {
+	const types = registration?.types;
+	if (!Array.isArray(types)) return false;
+	if (types.includes(type)) return true;
+	return type === 'refresh_alert' && legacyNotificationTypes.every(value => types.includes(value));
+}
 export function pushClient(config, packageId = 'uk.co.jimbos.jserver') {
 	if(!config)return {enabled:false};
 	const applicationId=packageId==='uk.co.jimbos.jserver'?config.applicationId:packageId==='app.tellybox.homelab'?config.publicApplicationId:null;
@@ -12,6 +22,13 @@ export function pushClient(config, packageId = 'uk.co.jimbos.jserver') {
 }
 export function notification(event) {
 	const clean = value => typeof value === 'string' ? value.replace(/[\x00-\x1f\x7f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300) : '';
+	// A refresh alert carries its own title and plain-text message. It is still
+	// delivered through the same admin notification feed and wake-up path.
+	if (event.type === 'refresh_alert') return {
+		id: event.id, time: event.time, type: event.type,
+		title: clean(event.title) || 'Nightly refresh',
+		message: clean(event.message) || 'The nightly refresh has finished.'
+	};
 	const person = clean(event.personName) || clean(event.deviceName);
 	const local = event.home || event.local;
 	const viewer = person || (local ? 'Someone at home' : 'A guest');
@@ -59,7 +76,7 @@ export function installAdminPush(app, { directory, admin, writeCheck, record, de
 			while (queue.length) {
 				const event = queue.shift();
 				for (const [id, registration] of Object.entries(registrations.get())) {
-					if (!devices().some(d => d.id === id && d.role === 'admin') || !registration.types.includes(event.type)) continue;
+					if (!devices().some(d => d.id === id && d.role === 'admin') || !wantsNotification(registration, event.type)) continue;
 					if(registration.mode==='gateway') {
 						if(gateway.enabled&&registration.package===PUBLIC_APP_PACKAGE)try{await gateway.wake(registration.handle,event.id);}catch{}
 						continue;

@@ -2,6 +2,33 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Server 0.26.59 - 21 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Refresh notifications
+
+- A separate, revocable credential lets the nightly refresh report its result to
+  the server, which delivers it through the admin push that already reaches the
+  phone apps.
+- The ingest endpoint is POST-only, body-capped, field-checked, rate-limited and
+  never accepts the Home Assistant token or an app/session credential.
+- The admin surface mirrors the Home Assistant token flow: create, rotate,
+  revoke.
+
+## Server 0.26.58 - 21 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Home Assistant compatibility
+
+- The statistics schema stays at version 1. The new fields are additive, and an
+  older integration rejects any version it does not know; bumping it took a
+  working dashboard offline.
+- Only raise the schema version when clients can negotiate, and keep the
+  previous version accepted for at least one release.
 ## Server 0.26.57 - 21 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

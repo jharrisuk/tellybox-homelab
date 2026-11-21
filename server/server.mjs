@@ -68,6 +68,7 @@ import { createRecordingDeletion, installRecordingDeletion } from './recording-d
 import { loadCapabilities, optionalDispatcharr } from './homelab/runtime.mjs';
 import { installReleaseVersion, serverRelease } from './release-version.mjs';
 import { createHomeAssistantIntegration, installHomeAssistantStats } from './home-assistant.mjs';
+import { createRefreshAlertTokens, installRefreshAlert } from './refresh-alert.mjs';
 import { createRelayMediaService } from './relay-media/install.mjs';
 import { normalizeRelayQuality } from './relay-media/quality.mjs';
 import { contentSecurityPolicy, normalizeRelayOrigin } from './csp.mjs';
@@ -108,6 +109,14 @@ const publicAssets = createPublicAssetCdn({ directory: path.join(root, 'public')
 const app = express();
 app.disable('x-powered-by');
 app.get('/homelab-ready', (req, res) => res.json({ instance: process.env.HOMELAB_INSTANCE || '' }));
+// The nightly refresh job needs one narrow write capability: create an admin
+// alert. It is a separate credential from the read-only Home Assistant token
+// and is installed before the shared JSON parser (so its 4 KB limit applies to
+// the raw body) and before the viewer gate (so cookies, owner sessions and app
+// tokens can never reach it). The activity store is lazily referenced because
+// it is created later in this module, before any request can arrive.
+const refreshAlertTokens = createRefreshAlertTokens(process.env.AUTH_DIR || path.join(root, 'auth-data'));
+installRefreshAlert(app, { tokens: refreshAlertTokens, record: (...args) => activity.record(...args) });
 const jsonSmall=express.json({ limit: '16kb' });
 const jsonHome=express.json({ limit: '512kb' });
 app.use((req,res,next)=>(req.method==='POST'&&['/api/web/home','/api/web/home/continue','/api/web/similar'].includes(req.path)?jsonHome:jsonSmall)(req,res,next));

@@ -13,6 +13,7 @@ import { setupHosts, localConnectionSuggestion } from './setup-hosts.mjs';
 import { relayHealth } from './relay-health.mjs';
 import { installReleaseVersion } from '../release-version.mjs';
 import { createHomeAssistantTokens } from '../home-assistant.mjs';
+import { createRefreshAlertTokens } from '../refresh-alert.mjs';
 import { createDispatcharrStatus } from './dispatcharr-status.mjs';
 import { createDispatcharrStreams, createCachedCatalogue, createCachedLocalSessions } from './dispatcharr-streams.mjs';
 import { createQbittorrentSettings } from './qbittorrent-settings.mjs';
@@ -47,6 +48,10 @@ export function createSetup({ directory, apply = async () => {}, status = () => 
 	const remoteHealth = relayHealth(directory, { fetcher, clock, localPort: Number(process.env.PORT || 8082) });
 	// The media process receives this same directory as AUTH_DIR.
 	const homeAssistant = createHomeAssistantTokens(path.join(directory, 'access'));
+	// A second, write-only ingest credential. Its file and scope are separate
+	// from the Home Assistant read-only token, so neither can stand in for the
+	// other. Only this owner-authenticated setup surface can issue it.
+	const refreshAlert = createRefreshAlertTokens(path.join(directory, 'access'));
 	const ownerFile = path.join(directory, 'owner.json'), bootstrapFile = path.join(directory, 'bootstrap.json');
 	let owner = existsSync(ownerFile) ? JSON.parse(readFileSync(ownerFile, 'utf8')) : null;
 	if (!owner && !existsSync(bootstrapFile)) atomicJson(bootstrapFile, { token: randomBytes(24).toString('hex') });
@@ -174,6 +179,22 @@ export function createSetup({ directory, apply = async () => {}, status = () => 
 			return res.status(action === 'create' ? 201 : 200).json(result);
 		} catch (error) {
 			return res.status(error.status || 500).json({ error: error.status ? error.message : 'The Home Assistant token could not be changed.' });
+		}
+	});
+	// The refresh job on the nightly host gets its own writable ingest token.
+	// The route mirrors the Home Assistant lifecycle exactly and is protected
+	// by the same owner-session guard on /api/setup.
+	app.get('/api/setup/refresh-alert', (req, res) => res.json(refreshAlert.status()));
+	app.post('/api/setup/refresh-alert', (req, res) => {
+		const action = req.body?.action;
+		try {
+			if (!['create', 'rotate', 'revoke'].includes(action)) return res.status(400).json({ error: 'Choose create, rotate or revoke.' });
+			if (action === 'revoke') return res.json(refreshAlert.revoke());
+			const result = action === 'create' ? refreshAlert.create() : refreshAlert.rotate();
+			// Returned once. Only its hash is stored, so it cannot be shown again.
+			return res.status(action === 'create' ? 201 : 200).json(result);
+		} catch (error) {
+			return res.status(error.status || 500).json({ error: error.status ? error.message : 'The refresh alert token could not be changed.' });
 		}
 	});
 	app.post('/api/setup/apply', async (req, res) => {
