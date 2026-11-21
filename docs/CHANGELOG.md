@@ -60,6 +60,30 @@ Web only.
 - Turning maintenance on now ends only the sessions the chosen scope covers:
   a remote-only activation no longer interrupts local playback.
 
+## Android 0.26.33 (build 87) - 21 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+Apps only.
+
+### TV player
+
+- A viewing-allowance notice now appears in the player and can be dismissed,
+  instead of the limit only showing up as an error later.
+- When playback struggles, the trouble panel offers a direct "Lower quality"
+  action rather than making you leave and start again.
+- A timeout or policy stop now explains itself in a dialog and waits for you to
+  close it. Previously the still-watching monitor finished the player underneath
+  the dialog, which is why this batch was held back until the cause was found.
+- Larger status text and a clearer end-of-episode "Next episode" block at
+  ten-foot size; guide tabs are sized so their labels are not clipped.
+
+### Fix
+
+- Abandoning the still-watching monitor now marks it ended, so its own shutdown
+  no longer closes the player while a dialog is open.
+
 ## Android 0.26.32 (build 86) - 21 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

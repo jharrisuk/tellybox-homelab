@@ -55,12 +55,12 @@
 		{
 			"path": "docs/build-guide.mjs",
 			"bytes": 26874,
-			"sha256": "fa6317e2609e5322e3a97d11a1c1ad7b2b2c8a20288264d3b92d23cf213c8a7f"
+			"sha256": "ab9cf219402568b2606db0743a1641d1ba1e4b03ac412bb9850cb6cb1aa33903"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 49953,
-			"sha256": "84cb1bff764003945accddc46b437ec5b052c5300d50281c04959096cafd354c"
+			"bytes": 50922,
+			"sha256": "b45bdd12e1a3a2aa6f024165f09e87e12c29520e59e3cad602878019eb2daeb9"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -115,7 +115,7 @@
 		{
 			"path": "docs/site/index.html",
 			"bytes": 49921,
-			"sha256": "120a09374b6a908c2996a09a6e7f13dacb6c6f20dda4f29e16d0603c641be9b8"
+			"sha256": "5f027fc6059a984ccd29f84d0e44b5e243e1a3ab2f91b9336400b42a3bd46088"
 		},
 		{
 			"path": "docs/story.html",
