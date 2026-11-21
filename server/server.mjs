@@ -22,6 +22,7 @@ import { createLiveGuide } from './live-tv.mjs';
 import { installSeerr, mediaView } from './seerr.mjs';
 import { createGlobalSearch } from './global-search.mjs';
 import { insightsFromFile, score } from './insights.mjs';
+import { resolveComingMatches } from './coming-library.mjs';
 import { recentTvEpisodes, episodeReleaseDates } from './tv-releases.mjs';
 import { newlyAvailableItems, newlyAvailableQuery } from './newly-available.mjs';
 import { createShares, installPublicShares } from './shares.mjs';
@@ -372,14 +373,10 @@ app.use((req, res, next) => {
 // memory (vodLibrary); no extra request is made from the route and the browser
 // still calls only /api/coming-soon.
 const insights = insightsFromFile(path.join(path.dirname(configPath), 'insights.json'), {
-	library: async items => {
-		const matched = await vodLibrary.availability(items);
-		const index = new Map();
-		for (const item of matched) {
-			if (item?.watchId) index.set(`${item.type === 'tv' ? 'tv' : 'movie'}:${item.id}`, item.watchId);
-		}
-		return index;
-	}
+	library: items => resolveComingMatches(items, {
+		availability: matched => vodLibrary.availability(matched),
+		episodes: seriesEpisodes
+	})
 });
 installTvControl(app, { auth, sessions });
 // Only the signed-in caller's own allowance. No person, device or other account details.

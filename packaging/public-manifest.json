@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.60",
+	"serverVersion": "0.26.62",
 	"files": [
 		{
 			"path": ".env.example",
@@ -59,8 +59,8 @@
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 55578,
-			"sha256": "ac17b2dca8a687ee9e550c949cd189ddd79aea3d4dcc7a178905a96f71379d83"
+			"bytes": 56538,
+			"sha256": "179316f54df0b7261a4eec09cbd57daec412d8c2b84d57f51820a45054ded7ac"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -368,6 +368,11 @@
 			"sha256": "e783ecef4f1f0e6c811eb56e256c1ae6378fc9794459cb979e4233230ca826ca"
 		},
 		{
+			"path": "server/coming-library.mjs",
+			"bytes": 2139,
+			"sha256": "94caec3630efe3067cbfd4f9226432b05be220c4b720b66c35a81190cc0c727a"
+		},
+		{
 			"path": "server/csp.mjs",
 			"bytes": 1798,
 			"sha256": "35577f42fa09bc4803073e6a1a37efb6836c2ea2fc99cb8628eb60443d1195c1"
@@ -609,8 +614,8 @@
 		},
 		{
 			"path": "server/insights.mjs",
-			"bytes": 9879,
-			"sha256": "40e4d1ba2c0292173ca33149243a5a7135b10b5b4a889f4dde8f77f2d30e32ef"
+			"bytes": 10700,
+			"sha256": "6442303da35b0edad90691dae933b313c32921f3e5fe4b4ef621835f3139bdc0"
 		},
 		{
 			"path": "server/json-store.mjs",
@@ -660,12 +665,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "7942e0bbc1bba22794acbfc79fab708d121cafbb9011c9eb4820cd61008044e2"
+			"sha256": "0bf0b567b6d43fa12aff7a67a2aed453935363873e5ae8468e2365220d9432c5"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "5f5d8ca4eeae08c5bf7f25d0f1c8aa88ad146bef0245dd2c65e3b4bf8f8a6dcf"
+			"sha256": "0af3a783a567842375325a4a3ca7cf44ce4943cb94a0fbb977da3477be7ce232"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -1149,8 +1154,8 @@
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 189603,
-			"sha256": "2239221f7875ee656438e6abbedffc8042815debacd98181e56d380f0471a632"
+			"bytes": 189540,
+			"sha256": "0b62a9dee0dec03a954645d1af776d284188f35224445f8b3f45a199628951be"
 		},
 		{
 			"path": "server/session-limits.mjs",
@@ -1461,6 +1466,11 @@
 			"path": "server/test/coming-calendar.test.mjs",
 			"bytes": 2956,
 			"sha256": "fb89240653993857d295eb97baf267903b8f585b9102c55cde6d915e517d2e8f"
+		},
+		{
+			"path": "server/test/coming-episode-q66.test.mjs",
+			"bytes": 4472,
+			"sha256": "b173770877aef594cb93c8ce45e177956201500d27e11b67a9c0f1a767f90fbb"
 		},
 		{
 			"path": "server/test/coming-soon-q65.test.mjs",

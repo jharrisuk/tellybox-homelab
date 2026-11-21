@@ -34,6 +34,17 @@ function poster(images = []) {
 
 function libraryKey(type, id) { return `${type === 'tv' ? 'tv' : 'movie'}:${id}`; }
 
+// A no-library result keeps the old shape. A TV match may also be an object
+// ({ id, type: 'episode' }) when the exact scheduled episode was resolved; a
+// plain id still means the series for television and the film for movies.
+function libraryMatch(item, value) {
+	const id = value !== null && typeof value === 'object' ? value.id : value;
+	if (!id) return null;
+	const type = value !== null && typeof value === 'object' && value.type === 'episode'
+		? 'episode' : item.type === 'tv' ? 'series' : 'movie';
+	return { id: String(id), type };
+}
+
 // `matches` is a Map (or plain object) of "movie:<tmdb>" / "tv:<tmdb>" to the
 // id of the same title in the local library. It is built from catalogue data
 // that the server already holds; no extra lookup happens here.
@@ -42,8 +53,9 @@ export function attachLibrary(items, matches) {
 	const lookup = key => matches instanceof Map ? matches.get(key) : matches[key];
 	return items.map(item => {
 		const id = item?.id === null || item?.id === undefined ? null : lookup(libraryKey(item.type, item.id));
-		if (!id) return item;
-		return { ...item, library: { id: String(id), type: item.type === 'tv' ? 'series' : 'movie' } };
+		const library = id ? libraryMatch(item, id) : null;
+		if (!library) return item;
+		return { ...item, library };
 	});
 }
 
@@ -115,6 +127,10 @@ export function upcomingSeries(episodes, now = Date.now(), matches = null) {
 			.sort((a, b) => Date.parse(a.airDateUtc) - Date.parse(b.airDateUtc));
 		return { type: 'tv', id: series.tmdbId || null, title: series.title, overview: series.overview || '', poster: poster(series.images),
 			date: chosen.airDateUtc,
+			// The card stands for this one episode, so keep its identity beyond the
+			// bounded history below. The library link uses it to open that episode
+			// instead of the series (and therefore episode one).
+			seasonNumber: chosen.seasonNumber, episodeNumber: chosen.episodeNumber,
 			dateLabel: next ? (chosen.episodeNumber === 1 ? `Season ${chosen.seasonNumber} begins` : 'Next episode airs') : 'Aired',
 			released: !next && isReleased(Date.parse(chosen.airDateUtc), now),
 			episode: `S${String(chosen.seasonNumber).padStart(2, '0')} · E${String(chosen.episodeNumber).padStart(2, '0')}`,

@@ -2,6 +2,29 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Server 0.26.62 - 21 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Coming soon
+
+- A TV card now links to the library only when that exact episode is present.
+  If it is not, the card opens the details panel instead of starting episode one
+  of the series, which was a different episode from the one on the card.
+## Server 0.26.61 - 21 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Coming soon
+
+- Clicking a TV title now opens the episode shown on the card. Previously the
+  card carried only the series, so a recent S28E12 opened the show at episode 1.
+- The exact episode is resolved through the existing episode lookup and linked
+  by its own id. If it cannot be resolved, the link falls back to the series, so
+  it is never worse than before.
+- No extra provider requests; the lookup shares the existing episode cache.
 ## Server 0.26.60 - 21 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home
