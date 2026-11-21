@@ -60,6 +60,34 @@ Web only.
 - Turning maintenance on now ends only the sessions the chosen scope covers:
   a remote-only activation no longer interrupts local playback.
 
+## Android 0.26.34 (build 88) - 21 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+Apps only.
+
+### Updates
+
+- The update check now understands signing-key rotation. An app signed with a
+  newer key in the same lineage is accepted, and an unrelated key is still
+  refused before the installer opens. Previously a future rotation would have
+  refused every update.
+
+### Sign-in
+
+- If this device's stored sign-in can no longer be decrypted (for example after
+  an OEM lockscreen reset or a restore onto new hardware), the app now says
+  "Sign-in expired on this device. Connect again to restore access." instead of
+  silently enrolling as a brand-new device.
+
+### Viewing history
+
+- Resume points and history are now kept apart by a SHA-256 account fingerprint
+  rather than a 32-bit hash that two different accounts could collide on.
+  Existing progress is adopted once, and ambiguous legacy data is left alone
+  rather than guessed at.
+
 ## Android 0.26.33 (build 87) - 21 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home
