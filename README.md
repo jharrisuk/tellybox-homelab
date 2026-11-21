@@ -17,6 +17,8 @@
 
 **Tellybox HomeLab brings the media services you already run together.** Browse films and series from Jellyfin and Dispatcharr, switch to the TV guide, settle into a 24/7 channel, or discover something new and request it for your collection. Use a web browser, Android phone or Android TV.
 
+> **Public source status:** the current published GitHub source release is **v0.26.10**. Private home installations may run newer builds; that does not mean those newer builds are publicly installable. Always use the Releases page for the current public source and installer.
+
 **Start small. Enable only what you want.** Every integration is optional and starts switched off. Use just Jellyfin, just Dispatcharr, or bring both together. Add discovery, requests, subtitles, upcoming releases, remote access and home automation when they suit your setup.
 
 ![Jellyfin and Dispatcharr feed one Tellybox viewing experience, with optional integrations and web, Android phone and Android TV clients.](docs/images/tellybox-sources.svg)
@@ -59,7 +61,7 @@ A real setup screen: each service has its own controls. All integrations start o
 
 </details>
 
-## Actively developed
+## Actively developed, shaped by real use
 
 Tellybox is an **early-access project under active development**, with ongoing fixes, interface improvements and integration work. Follow the [changelog](docs/CHANGELOG.md), [releases](https://github.com/jharrisuk/tellybox-homelab/releases) and [development activity](https://github.com/jharrisuk/tellybox-homelab/commits/main/) to see what has shipped. Server and app versions are independent.
 
@@ -134,3 +136,4 @@ Official companion apps are covered separately by [App terms](APP-TERMS.md). Thi
 ## Feedback
 
 This is an early-access hobby project. Device compatibility, playback and third-party features depend on your setup. [Open an issue](https://github.com/jharrisuk/tellybox-homelab/issues) with your server version, app version, device and a short description of what happened. Remove passwords, setup codes, API keys, email addresses, private media URLs and other personal details from screenshots or logs before posting.
+

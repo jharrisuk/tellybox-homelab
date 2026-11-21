@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head><script src="/admin-nav.js"></script>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta name="theme-color" content="#101310">
+	<title>Coming soon - Tellybox</title>
+	<link rel="icon" href="/icon.svg" type="image/svg+xml">
+	<link rel="stylesheet" href="/style.css">
+	<link rel="stylesheet" href="/coming-soon.css">
+	<script src="/visitor-ui.js" defer></script>
+	<script src="/coming-calendar.js" defer></script>
+	<script src="/navigation.js" defer></script>
+	<script src="/coming-soon.js" defer></script>
+	<script src="/connection-status.js" defer></script>
+</head>
+<body>
+	<header class="topbar">
+		<a class="brand" href="/" aria-label="Tellybox home"><img class="brand-logo" src="/tellybox-logo.png" alt="Tellybox"></a>
+		<button class="menu-toggle" id="menuToggle" aria-controls="siteNavigation" aria-expanded="false"><span class="menu-icon" aria-hidden="true">&#9776;</span><span>Menu</span></button>
+		<div id="siteNavigation" class="navigation-panel">
+			<nav aria-label="Primary"><a class="nav-item" href="/">Home</a><a class="nav-item" href="/discover">Discover</a><a class="nav-item nav-coming active" href="/coming-soon" aria-current="page">Coming soon</a><a class="nav-item" href="/?view=movies">Films</a><a class="nav-item" href="/?view=tvshows">Series</a><a class="nav-item" href="/?view=livetv">Live TV</a><a class="nav-item" href="/?view=nonstop">24/7</a><a class="nav-item" href="/?view=recordings">Recordings</a><a class="nav-item" href="/search">Search</a><a class="nav-item" href="/activity">Activity</a></nav>
+			<div class="account-actions"><a href="/settings" id="remoteSettings" hidden>Settings</a><button id="signOut" class="button quiet" hidden>Sign out</button></div>
+		</div>
+	</header>
+	<main class="coming-page">
+		<header class="coming-page-heading">
+			<p class="eyebrow">WHAT'S NEXT</p>
+			<h1>Coming soon</h1>
+			<p>Upcoming episodes and films already on the list. Release and broadcast dates can change; a title becomes watchable here once it arrives.</p>
+		</header>
+		<section class="coming-calendar" id="comingCalendar" aria-label="Coming up in the next seven days">
+			<div class="calendar-heading"><h2>Next 7 days</h2><span>Coming up</span></div>
+			<div class="calendar-days" id="calendarDays"></div>
+			<p id="calendarSummary" class="calendar-summary" role="status">Checking what's coming up...</p>
+		</section>
+		<section class="hero coming-hero" id="comingHero" aria-label="Coming soon highlight" hidden>
+			<img id="comingHeroImage" alt="" hidden>
+			<div class="hero-content">
+				<p class="eyebrow" id="comingHeroEyebrow">NEXT ON THE LIST</p>
+				<h1 id="comingHeroTitle"></h1>
+				<p class="hero-description" id="comingHeroDescription"></p>
+				<div class="hero-meta" id="comingHeroMeta"></div>
+				<div class="hero-actions">
+					<button class="button primary" id="comingHeroAction">View details</button>
+					<button class="button quiet" id="comingHeroNext">Next highlight &rarr;</button>
+				</div>
+			</div>
+		</section>
+		<p id="comingStatus" class="status" role="status">Checking what's on the way...</p>
+		<details class="coming-browse" id="comingBrowse">
+			<summary class="button quiet">Browse all upcoming</summary>
+			<div class="filters" id="comingFilters" aria-label="Coming soon category"><button class="chip active" data-coming="tv" aria-pressed="true">TV episodes</button><button class="chip" data-coming="movie" aria-pressed="false">Films</button></div>
+			<div id="comingGrid" class="coming-grid"></div>
+			<div class="more"><button id="comingMore" class="button quiet" aria-controls="comingGrid" aria-expanded="false" hidden>Show all upcoming</button></div>
+		</details>
+		<p class="coming-note">Broadcast times use your device's time zone. Film dates are original release dates, not a promise of when they will be available here.</p>
+	</main>
+	<footer><a class="brand footer-brand" href="/">Telly<span class="brand-server">box</span></a><p>A little nostalgia. A lot to watch.</p><a class="credits-link" href="/legal.html">Credits &amp; licences</a></footer>
+	<dialog id="comingDetails" aria-labelledby="comingDetailsTitle"><button class="close" id="closeComingDetails" aria-label="Close details">&times;</button><div id="comingDetailsBody"></div></dialog>
+</body>
+</html>
+

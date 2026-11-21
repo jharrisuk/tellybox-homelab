@@ -8,3 +8,4 @@ test
 .env
 **/*service-account*.json
 **/google-services.json
+*.pre-*

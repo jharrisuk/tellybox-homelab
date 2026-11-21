@@ -22,3 +22,5 @@ google-services.json
 .DS_Store
 packaging/*-results.txt
 
+outputs/
+*.log

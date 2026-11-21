@@ -14,7 +14,7 @@ test('remote switches persist, distinguish sources, exempt trusted home and incl
 	assert.deepEqual(p.status(),{enabled:true,vod:true,nonstop:true});
 	assert.throws(()=>p.set({enabled:'false',vod:true,nonstop:true}),e=>e.status===400);
 	p.set({enabled:true,vod:false,nonstop:false});
-	for(const id of ['dispatch-movie-42','dispatch-episode-13-5'])assert.throws(()=>p.guard({},{itemId:id}),/only at home/);
+	for(const id of ['dispatch-movie-42','dispatch-episode-13-5','dispatch-series-42'])assert.throws(()=>p.guard({},{itemId:id}),/only at home/);
 	assert.throws(()=>p.guard({},{itemId:'dispatch-live-channel',nonstop:true}),/24\/7/);
 	for(const id of ['abc','dispatch-recording-4','catchup-123','dispatch-live-channel'])assert.equal(p.allowed({},{itemId:id}),true);
 	p.set({enabled:false,vod:false,nonstop:false});
@@ -101,7 +101,7 @@ test('live HTTP controls protect writes, stop existing remote streams, block VOD
 	assert.equal((await request('local',new URL(ticket.url).pathname)).status,200);
 	await request('local','/api/sessions/'+home.session,{action:'stop'});
 	await request('local','/api/remote-controls',{enabled:true,vod:false,nonstop:false});
-	for(const blocked of ['dispatch-movie-12','dispatch-episode-12-3','dispatch-live-'+uuid]){
+	for(const blocked of ['dispatch-movie-12','dispatch-episode-12-3','dispatch-series-12','dispatch-live-'+uuid]){
 		const response=await request('remote','/api/play',{id:blocked},device.token);assert.equal(response.status,403,await response.text());
 	}
 	const resumed=await(await request('remote','/api/play',{id},device.token)).json();assert.ok(resumed.session);await request('remote','/api/sessions/'+resumed.session,{action:'stop'},device.token);

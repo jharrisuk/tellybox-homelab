@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync, renameSync } from 'node:fs';
+import { providerLogoUrl } from './provider-logo.mjs';
 
 const fail = (message, status = 502) => Object.assign(new Error(message), { status });
 const reconnectMessage = 'Dispatcharr sign-in has expired or been revoked. Reconnect Dispatcharr in local server settings using a personal API key for a lasting connection.';
@@ -6,6 +7,48 @@ function expiresAt(value) {
 	try { const exp=JSON.parse(Buffer.from(value.split('.')[1],'base64url').toString()).exp; return Number.isFinite(exp)?exp*1000:null; } catch { return null; }
 }
 export const isNonstop = value => /(?:\b24\s*[\/×x-]?\s*7\b|\b247\b)/i.test(value || '');
+
+// The only logo path the local server may proxy. It is also the shape the
+// playlist sanitiser keeps, so a channel can never acquire a foreign logo.
+const CHANNEL_LOGO_PATH = /^\/api\/channels\/logos\/(\d+)\/cache\/$/;
+
+export function channelLogoPath(value) {
+	return CHANNEL_LOGO_PATH.test(value || '') ? value : '';
+}
+
+// Build the same-origin logo URL for a channel, or null when the channel has no
+// logo or the logo is not a Dispatcharr logo-cache path. `origin` is compared
+// after URL normalisation so a configured trailing slash cannot widen the
+// allowlist.
+export function channelLogoUrl(channel, origin) {
+	const logo = channelLogoPath(channel?.logo);
+	if (!logo) return null;
+	try {
+		const base = new URL(origin);
+		const url = new URL(logo, base);
+		if (url.origin !== base.origin || !CHANNEL_LOGO_PATH.test(url.pathname)) return null;
+		return url;
+	} catch {
+		return null;
+	}
+}
+
+// Resolve whatever identifier an artwork URL carries. The catalogue emits the
+// stream UUID, but remember both the uuid and the numeric EPG/logo id so an
+// older cached response still resolves after a refresh.
+export function findChannelForArtwork(channels, id) {
+	const wanted = String(id || '').toLowerCase();
+	if (!wanted) return null;
+	const list = Array.isArray(channels) ? channels : [];
+	const direct = list.find(channel => {
+		const key = String(channel?.id || '').toLowerCase();
+		return (key && key === wanted) || (key && 'dispatch-live-' + key === wanted)
+			|| (channel?.epgId && String(channel.epgId) === wanted);
+	});
+	if (direct) return direct;
+	if (!/^\d+$/.test(wanted)) return null;
+	return list.find(channel => CHANNEL_LOGO_PATH.exec(channel?.logo || '')?.[1] === wanted) || null;
+}
 
 export function parsePlaylist(text, origin) {
 	const channels = [], ids = new Set(); let info;
@@ -32,13 +75,124 @@ export function parsePlaylist(text, origin) {
 export function createDispatcharr({ file, origin = 'http://127.0.0.1:1', fetcher = fetch, clock = Date.now }) {
 	let playlist, playlistPromise, token = '', tokenUntil = 0, tokenPromise;
 	let playlistAttempt = -Infinity;
+	// Only channels whose cache logo is known to fail get a provider fallback.
+	// The host allowlist comes from the provider's own playlist output, never
+	// from a request, and provider URLs stay in memory.
+	let providerHosts = new Set(), sourceById = null, sourceAt = 0, sourcePromise = null, sourceAttempt = -Infinity;
 	const playlistFile = file + '.channels-cache.json';
-	const validSnapshot = value => value?.origin === origin && Number.isFinite(value.time) && value.time <= clock() && clock()-value.time < 86400000 && Array.isArray(value.items) && value.items.length && value.items.every(c => /^[a-f0-9-]{36}$/i.test(c.id) && typeof c.name === 'string');
+	const validLogo = value => value === undefined || value === '' || /^\/api\/channels\/logos\/\d+\/cache\/$/.test(value || '');
+	const validSnapshot = value => value?.origin === origin && Number.isFinite(value.time) && value.time <= clock() && clock()-value.time < 86400000 && Array.isArray(value.items) && value.items.length && value.items.every(c => /^[a-f0-9-]{36}$/i.test(c.id) && typeof c.name === 'string' && validLogo(c.logo));
 	try { const saved=JSON.parse(readFileSync(playlistFile,'utf8')); if(validSnapshot(saved))playlist=saved; } catch {}
+	// Channel logos are proxied from the Dispatcharr logo cache, with a
+	// validated provider-origin fallback when the cache refuses the image (for
+	// example a rejected remote logo URL). Health is bounded, in-memory and
+	// refreshed with the playlist.
+	const logoState = new Map();
+	const logoOkMs = 24 * 3600000, logoFailMs = 6 * 3600000, logoStateLimit = 4096;
+	const logoType = /^image\/(?:png|jpeg|webp|gif)(?:;|$)/i;
+	function noteLogo(logo, ok) {
+		if (!logo) return;
+		logoState.set(logo, { ok: ok === true, until: clock() + (ok === true ? logoOkMs : logoFailMs) });
+		if (logoState.size > logoStateLimit) for (const key of logoState.keys()) {
+			logoState.delete(key);
+			if (logoState.size <= logoStateLimit) break;
+		}
+	}
+	function logoAvailable(logo) {
+		if (!logo) return false;
+		const state = logoState.get(logo);
+		return !state || state.ok || state.until <= clock();
+	}
+	function logoNeedsProbe(logo) {
+		const state = logoState.get(logo);
+		return !state || state.until <= clock();
+	}
+	async function probeLogo(logo) {
+		const response = await fetcher(new URL(logo, origin), { method:'HEAD', redirect:'error', signal:AbortSignal.timeout(2500) });
+		const type = response.headers.get('content-type') || '';
+		// Only a definitive answer changes health. A transient upstream error
+		// must not hide artwork that may still be served.
+		if (response.ok) noteLogo(logo, logoType.test(type));
+		else if (response.status === 404 || response.status === 410) noteLogo(logo, false);
+		try { await response.body?.cancel(); } catch {}
+	}
+	async function verifyLogos(items, { budgetMs = 6000, concurrency = 8 } = {}) {
+		const pending = [...new Set(items.filter(item => item.logo && logoNeedsProbe(item.logo)).map(item => item.logo))];
+		if (!pending.length) return;
+		const deadline = Date.now() + budgetMs;
+		let index = 0;
+		const worker = async () => {
+			while (index < pending.length && Date.now() < deadline) {
+				const logo = pending[index++];
+				// A network failure stays unknown: artwork is not hidden just
+				// because the health probe timed out.
+				try { await probeLogo(logo); } catch {}
+			}
+		};
+		await Promise.all(Array.from({ length: Math.min(concurrency, pending.length) }, worker));
+	}
+	const needsSourceLogo = item => Boolean(channelLogoPath(item?.logo)) && !logoAvailable(item.logo) && !item.sourceLogo;
+	// The cached-logos playlist and the origin playlist carry the same stream
+	// IDs. Only after a cache logo fails do we read the origin playlist once and
+	// keep a validated provider URL for that channel. Failures are coalesced and
+	// retried no more than once a minute.
+	function applySourceLogos(items) {
+		if (!sourceById) return;
+		for (const item of items) {
+			if (!needsSourceLogo(item)) continue;
+			const candidate = sourceById.get(item.id);
+			if (!candidate) continue;
+			const logo = providerLogoUrl(candidate, providerHosts);
+			if (logo) item.sourceLogo = logo;
+		}
+	}
+	async function ensureSourceLogos(items) {
+		if (!Array.isArray(items) || !items.some(item => item.nonstop && needsSourceLogo(item))) return;
+		if (sourceById && clock() - sourceAt < 86400000) { applySourceLogos(items); return; }
+		if (!sourcePromise) {
+			if (clock() - sourceAttempt < 60000) return;
+			sourceAttempt = clock();
+			sourcePromise = (async () => {
+				const text = await (await request('/output/m3u?cachedlogos=false', { timeoutMs:30000 })).text();
+				if (text.length > 20000000) return;
+				const sourceItems = parsePlaylist(text, origin);
+				if (!sourceItems.length) return;
+				const hosts = new Set();
+				for (const entry of sourceItems) {
+					try {
+						const url = new URL(entry.logo);
+						if (url.protocol === 'https:') hosts.add(url.hostname.toLowerCase());
+					} catch { /* Ignore a logo that is not a URL. */ }
+				}
+				if (!hosts.size) return;
+				providerHosts = hosts;
+				// Keep only already-validated URLs, so an http or credential-like
+				// playlist logo is never retained anywhere.
+				const safe = new Map();
+				for (const entry of sourceItems) {
+					const logo = providerLogoUrl(entry.logo, hosts);
+					if (logo) safe.set(entry.id, logo);
+				}
+				if (!safe.size) return;
+				sourceById = safe;
+				sourceAt = clock();
+			})();
+		}
+		try { await sourcePromise; } catch { /* A missing fallback is a text placeholder, not an error. */ }
+		finally { sourcePromise = null; }
+		applySourceLogos(items);
+	}
+	// Start checking a snapshot restored from disk immediately, and make the
+	// first read wait for that pass so it cannot advertise known-broken art.
+	const restoredProbe = playlist ? (async () => {
+		await verifyLogos(playlist.items.filter(item => item.nonstop)).catch(() => {});
+		await ensureSourceLogos(playlist.items);
+	})() : null;
 	function config() { try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return {}; } }
 	function save(value) { writeFileSync(file+'.tmp', JSON.stringify(value), { mode:0o600 }); renameSync(file+'.tmp',file); }
 	async function request(route, options = {}) {
-		const response = await fetcher(new URL(route,origin), { ...options, redirect:'error', signal:AbortSignal.timeout(30000) });
+		const { timeoutMs = 30000, ...fetchOptions } = options;
+		const response = await fetcher(new URL(route,origin), { ...fetchOptions, redirect:'error', signal:AbortSignal.timeout(timeoutMs) });
 		if (!response.ok) {
 			await response.body?.cancel();
 			throw Object.assign(fail(response.status === 401 || response.status === 403 ? 'Dispatcharr access was not accepted. Check the connection in local settings.' : 'Dispatcharr is unavailable. Please try again.', response.status === 401 || response.status === 403 ? 503 : 502),{upstreamStatus:response.status});
@@ -65,14 +219,15 @@ export function createDispatcharr({ file, origin = 'http://127.0.0.1:1', fetcher
 		try{await tokenPromise;}finally{tokenPromise=null;}
 		return {Authorization:'Bearer '+token};
 	}
-	async function api(route) {
+	async function api(route, { timeoutMs } = {}) {
 		const url=new URL(route,origin);
 		if (url.origin!==origin || !/^\/api\/vod\/(movies|series|episodes)\/(?:\d+\/(?:episodes\/|providers\/|provider-info\/)?)?$/.test(url.pathname)) throw fail('Invalid catalogue request.',400);
-		try{return await (await request(route,{headers:await authHeaders()})).json();}
+		const options = { headers: await authHeaders(), ...(timeoutMs ? { timeoutMs } : {}) };
+		try{return await (await request(route,options)).json();}
 		catch(error){
 			if(error.upstreamStatus!==401||!config().refresh)throw error;
 			token='';tokenUntil=0;
-			return(await request(route,{headers:await authHeaders()})).json();
+			return(await request(route,{...options,headers:await authHeaders()})).json();
 		}
 	}
 	async function connect(body) {
@@ -92,8 +247,9 @@ export function createDispatcharr({ file, origin = 'http://127.0.0.1:1', fetcher
 		return status();
 	}
 	async function channels(force = false) {
-		if(!force&&playlist&&clock()-playlist.time<60000)return playlist.items;
+		if(!force&&playlist&&clock()-playlist.time<60000){await restoredProbe;return playlist.items;}
 		if(!force&&playlist&&clock()-playlist.time<86400000){
+			await restoredProbe;
 			if(!playlistPromise&&clock()-playlistAttempt>=15000)void refreshChannels().catch(()=>{});
 			return playlist.items;
 		}
@@ -106,11 +262,20 @@ export function createDispatcharr({ file, origin = 'http://127.0.0.1:1', fetcher
 			const text=await(await request('/output/m3u')).text();
 			if(text.length>20000000)throw fail('The channel playlist is too large.');
 			const items=parsePlaylist(text,origin); if(!items.length)throw fail('Dispatcharr returned an empty channel playlist.');
-			playlist={time:clock(),items};
-			// Persist only channel metadata. Stream addresses and provider credentials never enter this cache.
+			// Keep only a same-origin logo cache path. Stream addresses and provider
+			// credentials never enter the in-memory result or the cache.
 			const safeItems=items.map(item=>{let logo='';try{const url=new URL(item.logo,origin);if(url.origin===origin&&/^\/api\/channels\/logos\/\d+\/cache\/$/.test(url.pathname))logo=url.pathname;}catch{}return {...item,logo};});
-			try{writeFileSync(playlistFile+'.tmp',JSON.stringify({origin,time:playlist.time,items:safeItems}),{mode:0o600});renameSync(playlistFile+'.tmp',playlistFile);}catch{}
-			return items;
+			// Verify the 24/7 logos once per playlist refresh so the channel list
+			// never advertises a logo-cache URL Dispatcharr already refuses.
+			await verifyLogos(safeItems.filter(item=>item.nonstop));
+			// When the cache refuses a logo, fall back to the provider's own
+			// HTTPS artwork from the same playlist output.
+			await ensureSourceLogos(safeItems);
+			playlist={time:clock(),items:safeItems};
+			// Provider URLs are deliberately kept in memory only.
+			const persisted=safeItems.map(({sourceLogo,...item})=>item);
+			try{writeFileSync(playlistFile+'.tmp',JSON.stringify({origin,time:playlist.time,items:persisted}),{mode:0o600});renameSync(playlistFile+'.tmp',playlistFile);}catch{}
+			return safeItems;
 		})();
 		try{return await playlistPromise;}finally{playlistPromise=null;}
 	}
@@ -161,5 +326,6 @@ export function createDispatcharr({ file, origin = 'http://127.0.0.1:1', fetcher
 		// Keep connected as the configured flag for cached catalogue compatibility.
 		return {connected:Boolean(c.key||c.refresh),origin,authMode:c.key?'api-key':c.refresh?'sign-in':'none',expiresAt:expiry,needsReconnect:expiry!==null&&expiry<=clock()};
 	}
-	return {channels,api,connect,stream,stopStream,recordingApi,recordingFile,catchupSession,origin,status};
+	return {channels,api,connect,stream,stopStream,recordingApi,recordingFile,catchupSession,origin,status,logoAvailable,noteLogo,verifyLogos,
+		providerLogo:value=>providerLogoUrl(value,providerHosts), providerHosts:()=>new Set(providerHosts)};
 }

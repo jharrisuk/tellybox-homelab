@@ -1,3 +1,5 @@
+import { stableQueryKey } from './discover-cache.mjs';
+
 const fail = message => Object.assign(new Error(message), { status: 400 });
 export function discoveryOrder(type, sort = 'popular') {
 	if (!['popular', 'rating', 'release'].includes(sort)) throw fail('Choose a valid sort order.');
@@ -45,17 +47,28 @@ export function rank(items, taste) {
 	const confidence = item => { const rating=item.ratings?.[0]; if(!rating)return 0; const votes=rating.votes || 0; return ((rating.value / (rating.max || 10) * 10) * votes + 6 * 50) / (votes + 50); };
 	return rows.sort((a,b) => b.score-a.score || confidence(b)-confidence(a));
 }
-export function createDiscoveryFeeds({ call, view, enrich, library = async () => [] }) {
+export function createDiscoveryFeeds({ call, view, enrich, library = async () => [], publicCache = null }) {
 	const cache = new Map(); let running = 0; const waiters = [];
+	// Without a public cache this is the historical behavior: load and enrich
+	// per request. With one, sanitized catalogue metadata is shared, while
+	// enrichment/availability is still recomputed for every response.
+	const read = publicCache?.read || (async (_key, loader) => {
+		const data = await loader();
+		return { ...data, items: await enrich(data.items || []) };
+	});
+	// Scope the short-lived raw upstream cache by public source generation, so a
+	// dynamic Seerr/config switch can never replay the previous source's rows.
+	const generation = () => { try { return publicCache?.generation?.() || ''; } catch { return ''; } };
 	async function cached(route) {
-		const saved = cache.get(route); if (saved && saved.expires > Date.now()) return saved.promise;
+		const routeKey = generation() + '\u0000' + route;
+		const saved = cache.get(routeKey); if (saved && saved.expires > Date.now()) return saved.promise;
 		const promise = (async () => {
 			if (running >= 3) await new Promise(resolve => waiters.push(resolve)); else running++;
 			try { return await call(route); } finally { const next = waiters.shift(); if (next) next(); else running--; }
 		})();
 		if (cache.size >= 100) cache.delete(cache.keys().next().value);
-		cache.set(route, { expires:Date.now()+180000, promise });
-		try { return await promise; } catch (error) { cache.delete(route); throw error; }
+		cache.set(routeKey, { expires:Date.now()+180000, promise });
+		try { return await promise; } catch (error) { cache.delete(routeKey); throw error; }
 	}
 	async function catalogue(type, filters) {
 		const data = await cached('/discover/' + (type === 'movie' ? 'movies' : 'tv') + '?' + new URLSearchParams(filters));
@@ -66,19 +79,27 @@ export function createDiscoveryFeeds({ call, view, enrich, library = async () =>
 		if (!genre || !['movie','tv'].includes(type) || !Number.isInteger(page) || page < 1 || page > 20) throw fail('Choose a valid category.');
 		const genreId = type === 'tv' && tvIds[genre] || Number(Object.keys(ids).find(id => ids[id] === genre));
 		if (genre === 'Documentary' && excludeDocumentaries) throw fail('Choose documentaries or other genres.');
-		for (let attempt = 0; attempt < 3; attempt++) {
-			const result = await catalogue(type, { page:String(page), genre:String(genreId), ...discoveryOrder(type, sort) });
-			const items = result.items.filter(item => !excludeDocumentaries || !item.genres.includes('Documentary'));
-			if (items.length || !excludeDocumentaries || page >= result.pages || attempt === 2) return { ...result, page, items:await enrich(items) };
-			page++;
-		}
+		// The key is date-independent; discoveryOrder adds the runtime release
+		// ceiling inside the loader so yesterday's snapshot stays reusable.
+		const key = stableQueryKey('category', { genre, type, page, sort, exclude: excludeDocumentaries ? 1 : 0 });
+		return read(key, async () => {
+			let cursor = page;
+			for (let attempt = 0; attempt < 3; attempt++) {
+				const result = await catalogue(type, { page:String(cursor), genre:String(genreId), ...discoveryOrder(type, sort) });
+				const items = result.items.filter(item => !excludeDocumentaries || !item.genres.includes('Documentary'));
+				if (items.length || !excludeDocumentaries || cursor >= result.pages || attempt === 2) return { ...result, page:cursor, items };
+				cursor++;
+			}
+		});
 	}
-	async function provider(id, type = 'all', page = 1, {genre:name='',sort='release'} = {}) {
+	// Raw provider rail read. The public cache stores only allowlisted catalogue
+	// metadata plus provider/note/page attribution; availability is recomposed.
+	function providerKey(id, type, page, genre, sort) {
+		return stableQueryKey('provider', { id, type, page, sort, genre:genre || '', region:'GB' });
+	}
+	async function providerRaw(id, type, page, {genre:name='',sort='release'} = {}) {
 		const provider = providers.find(p => p.id === Number(id));
-		if (!provider || !['all','movie','tv'].includes(type) || !Number.isInteger(page) || page<1 || page>20) throw fail('Choose a valid streaming service.');
 		const genre=name?canonical(name):null;
-		if(name&&!genre)throw fail('Choose a valid category.');
-		if(!['release','rating','popular'].includes(sort)||type==='all'&&sort!=='release')throw fail('Choose films or TV shows and a valid sort order.');
 		const today = new Date().toISOString().slice(0,10);
 		const groups = await Promise.all((type === 'all' ? ['movie','tv'] : [type]).map(t => {
 			const genreId=genre&&(t==='tv'&&tvIds[genre]||Number(Object.keys(ids).find(id=>ids[id]===genre)));
@@ -87,7 +108,15 @@ export function createDiscoveryFeeds({ call, view, enrich, library = async () =>
 		const seen = new Set();
 		const items = groups.flatMap(g => g.items).filter(i => i.date && i.date <= today).filter(i => { const key=i.type+':'+i.id; if(seen.has(key)) return false; seen.add(key); return true; });
 		if(type==='all')items.sort((a,b)=>b.date.localeCompare(a.date));
-		return { provider, note:providerNote, page, pages:Math.max(...groups.map(g => g.pages)), items:await enrich(items) };
+		return { provider, note:providerNote, page, pages:Math.max(...groups.map(g => g.pages)), region:'GB', items };
+	}
+	async function provider(id, type = 'all', page = 1, {genre:name='',sort='release'} = {}) {
+		const provider = providers.find(p => p.id === Number(id));
+		if (!provider || !['all','movie','tv'].includes(type) || !Number.isInteger(page) || page<1 || page>20) throw fail('Choose a valid streaming service.');
+		const genre=name?canonical(name):null;
+		if(name&&!genre)throw fail('Choose a valid category.');
+		if(!['release','rating','popular'].includes(sort)||type==='all'&&sort!=='release')throw fail('Choose films or TV shows and a valid sort order.');
+		return read(providerKey(provider.id, type, page, genre, sort), () => providerRaw(provider.id, type, page, { genre:name, sort }));
 	}
 	async function forYou(body) {
 		const taste = preferences(body), top = [...taste.weights].filter(([,w]) => w>0).sort((a,b)=>b[1]-a[1]).slice(0,3);
@@ -108,5 +137,13 @@ export function createDiscoveryFeeds({ call, view, enrich, library = async () =>
 		];
 		return { personalized:true, partial:results.some(r=>r.status==='rejected'), sections:await Promise.all(sections.map(async s=>({...s,items:await enrich(s.items)}))), interests };
 	}
-	return { provider, forYou, category };
+	// Five default provider rails only (type all, page 1, release order). The
+	// scheduler must not multiply provider x type x genre x sort x page.
+	function discoverWarmers() {
+		return providers.map(provider => ({
+			key: providerKey(provider.id, 'all', 1, null, 'release'),
+			load: () => providerRaw(provider.id, 'all', 1, { genre:'', sort:'release' })
+		}));
+	}
+	return { provider, forYou, category, discoverWarmers };
 }

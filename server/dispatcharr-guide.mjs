@@ -15,8 +15,14 @@ export function xmltvTime(value) {
 }
 
 export function channelView(channel) {
+	const logo = /^\/api\/channels\/logos\/(\d+)\/cache\/$/.exec(channel.logo || '');
+	// The provider fallback is resolved by the server from the playlist; the
+	// browser only ever receives this same-origin artwork route.
+	const artwork = logo || channel.sourceLogo
+		? '/api/dispatcharr/channels/' + channel.id + '/image' + (logo ? '?v=' + logo[1] : '')
+		: undefined;
 	return { Id:'dispatch-live-' + channel.id, Name:channel.name, Type:'TvChannel', ChannelNumber:channel.number, Group:channelGroupName(channel.group),
-		Nonstop:channel.nonstop, Provider:'Dispatcharr', Artwork:'/api/dispatcharr/channels/' + channel.id + '/image', ImageTags:{} };
+		Nonstop:channel.nonstop, Provider:'Dispatcharr', ...(artwork ? { Artwork:artwork } : {}), ImageTags:{} };
 }
 
 export async function parseEpg(body, channels, now = Date.now(), historyDays = 0) {

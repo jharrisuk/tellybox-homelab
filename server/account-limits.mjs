@@ -63,6 +63,31 @@ export function createAccountLimits(directory,{clock=Date.now,resolveViewer=view
 			activeSessions:admin?0:(Number.isFinite(activeSessions)?Math.max(0,activeSessions):0),blocked,code:blocked?'VIEWING_LIMIT':null,
 			message:blocked?reason(viewer):''};
 	}
+	/**
+	 * Stable relay budget view. Each enabled quota is evaluated against its own
+	 * usage: the manual total never consumes the daily window and the daily window
+	 * never consumes the manual one. The relay grants only the smaller remaining
+	 * window. `seconds` remains the lifetime monotonic usage used for settlement
+	 * deltas; `dailySeconds` is the separately resettable window.
+	 */
+	function relayBudget(id){
+		const e=entry(id);
+		const windows={};
+		const remaining=[];
+		if(e.minutes){
+			const value=Math.max(0,e.minutes*60-e.seconds);
+			windows.manual={limitSeconds:e.minutes*60,usedSeconds:e.seconds,remainingSeconds:value};
+			remaining.push(value);
+		}
+		if(e.dailyMinutes){
+			const value=Math.max(0,e.dailyMinutes*60-e.dailySeconds);
+			windows.daily={limitSeconds:e.dailyMinutes*60,usedSeconds:e.dailySeconds,remainingSeconds:value};
+			remaining.push(value);
+		}
+		return {seconds:e.seconds,dailySeconds:e.dailySeconds,windows,
+			remainingSeconds:remaining.length?Math.min(...remaining):null,
+			unlimited:remaining.length===0};
+	}
 	function media(id,viewer){
 		if(home(viewer)||!key(viewer)){if(active.has(id)){tick();active.delete(id);}return;}guard(viewer);
 		if(!active.has(id))active.set(id,{viewer,at:clock(),heartbeat:0,playing:true});
@@ -91,5 +116,5 @@ export function createAccountLimits(directory,{clock=Date.now,resolveViewer=view
 		if(!/^(person|device):[a-f0-9]{32}$/.test(id)||!Number.isFinite(seconds)||seconds<=0)return null;
 		tick();const e=entry(id);e.seconds+=seconds;e.dailySeconds+=seconds;store.save();return status(id);
 	}
-	return {status,set,allowed,guard,reason,key,media,heartbeat,tick,end,charge,maxSessions,viewing};
+	return {status,set,allowed,guard,reason,key,media,heartbeat,tick,end,charge,maxSessions,viewing,relayBudget};
 }

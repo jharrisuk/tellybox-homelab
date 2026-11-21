@@ -10,7 +10,8 @@ const fail = (message, code = 'RELAY_BUDGET') => Object.assign(Error(message), {
  * Unlimited accounts still receive short grants. Grant duration is not an
  * entitlement; the worker hard-stops at the granted seconds.
  */
-export function createRelayLedger({ clock = Date.now, chargedSeconds = () => 0, allowanceSeconds = () => null, maxGrantSeconds = 45, minGrantSeconds = 1, chargeDifference = () => {}, onChange = () => {} } = {}) {
+export function createRelayLedger({ clock = Date.now, chargedSeconds = () => 0, allowanceSeconds = () => null, availableSeconds = null,
+	maxGrantSeconds = 45, minGrantSeconds = 1, chargeDifference = () => {}, onChange = () => {} } = {}) {
 	if (!Number.isInteger(maxGrantSeconds) || maxGrantSeconds < 1 || maxGrantSeconds > 300) throw fail('Invalid relay grant window.', 'RELAY_CONFIG');
 	if (!Number.isInteger(minGrantSeconds) || minGrantSeconds < 1 || minGrantSeconds > maxGrantSeconds) throw fail('Invalid relay minimum grant.', 'RELAY_CONFIG');
 	const leases = new Map();
@@ -32,10 +33,25 @@ export function createRelayLedger({ clock = Date.now, chargedSeconds = () => 0, 
 		const value = allowanceSeconds(accountKey);
 		return value === null || value === undefined ? null : Math.max(0, Number(value));
 	}
-	function finiteAvailable(accountKey) {
+	const perWindow = typeof availableSeconds === 'function';
+	/**
+	 * Remaining before reservations. In per-window mode this is the minimum
+	 * remaining across enabled quotas (manual total and daily, each using its own
+	 * usage). Otherwise it is the legacy single allowance minus lifetime usage.
+	 */
+	function remainingBeforeOutstanding(accountKey) {
+		if (perWindow) {
+			const value = availableSeconds(accountKey);
+			return value === null || value === undefined ? null : Math.max(0, Number(value) || 0);
+		}
 		const total = allowance(accountKey);
 		if (total === null) return null;
-		return Math.max(0, total - Number(chargedSeconds(accountKey) || 0) - outstanding(accountKey));
+		return Math.max(0, total - Number(chargedSeconds(accountKey) || 0));
+	}
+	function finiteAvailable(accountKey) {
+		const remaining = remainingBeforeOutstanding(accountKey);
+		if (remaining === null) return null;
+		return Math.max(0, remaining - outstanding(accountKey));
 	}
 	function register(leaseId, accountKey, { unlimited = false } = {}) {
 		if (!/^[A-Za-z0-9_-]{8,128}$/.test(String(leaseId || ''))) throw fail('Invalid relay lease.', 'RELAY_LEASE');
@@ -68,7 +84,12 @@ export function createRelayLedger({ clock = Date.now, chargedSeconds = () => 0, 
 		const extra = lostContact ? unused : 0;
 		const releasedSeconds = lease.grantSeconds;
 		lease.grantSeconds = 0; lease.released = true;
-		const chargedExtra = extra > 0 && !lease.unlimited && allowance(lease.accountKey) !== null ? extra : 0;
+		let finite;
+		if (perWindow) {
+			const value = availableSeconds(lease.accountKey);
+			finite = value !== null && value !== undefined;
+		} else finite = allowance(lease.accountKey) !== null;
+		const chargedExtra = extra > 0 && !lease.unlimited && finite ? extra : 0;
 		if (chargedExtra > 0) chargeDifference(lease.accountKey, chargedExtra);
 		const state = accountState(lease.accountKey);
 		state.released += releasedSeconds;
@@ -114,13 +135,18 @@ export function createRelayLedger({ clock = Date.now, chargedSeconds = () => 0, 
 		return grants;
 	}
 	function snapshot(accountKey) {
-		const total = allowance(accountKey);
-		return { accountKey, allowanceSeconds: total, chargedSeconds: Number(chargedSeconds(accountKey) || 0), outstandingGrantSeconds: outstanding(accountKey),
-			availableSeconds: total === null ? null : finiteAvailable(accountKey), leases: [...leases.values()].filter(lease => lease.accountKey === accountKey).map(lease => ({ ...lease })) };
+		const total = perWindow ? null : allowance(accountKey);
+		const before = remainingBeforeOutstanding(accountKey);
+		return { accountKey, allowanceSeconds: total, remainingBeforeOutstandingSeconds: before,
+			chargedSeconds: Number(chargedSeconds(accountKey) || 0), outstandingGrantSeconds: outstanding(accountKey),
+			availableSeconds: before === null ? null : finiteAvailable(accountKey),
+			leases: [...leases.values()].filter(lease => lease.accountKey === accountKey).map(lease => ({ ...lease })) };
 	}
 	function check(accountKey) {
 		const state = snapshot(accountKey);
-		if (state.allowanceSeconds !== null && state.chargedSeconds + state.outstandingGrantSeconds > state.allowanceSeconds) throw fail('Relay budget invariant failed.', 'RELAY_BUDGET_INVARIANT');
+		if (perWindow) {
+			if (state.remainingBeforeOutstandingSeconds !== null && state.outstandingGrantSeconds > state.remainingBeforeOutstandingSeconds) throw fail('Relay budget invariant failed.', 'RELAY_BUDGET_INVARIANT');
+		} else if (state.allowanceSeconds !== null && state.chargedSeconds + state.outstandingGrantSeconds > state.allowanceSeconds) throw fail('Relay budget invariant failed.', 'RELAY_BUDGET_INVARIANT');
 		return state;
 	}
 	return { register, allocate, settle, expire, snapshot, check, outstanding, accounts };

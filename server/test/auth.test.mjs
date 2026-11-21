@@ -388,3 +388,16 @@ test('migration trusts both named home proxies while rejecting other VPN peers a
 	}
 	assert.equal((await request('127.0.0.3','/api/items')).status,401);
 });
+
+test('auth status exposes only a server-issued opaque cache scope', async t => {
+	const directory=mkdtempSync(path.join(tmpdir(),'tellybox-home-scope-'));t.after(()=>rmSync(directory,{recursive:true,force:true}));
+	let scope='scope-a';
+	const {request}=await fixture(t,directory,{instanceId:'fixture-instance',homeScope:()=>scope});
+	const first=await (await request('local','/api/auth/status')).json();
+	assert.equal(first.scope,'scope-a');
+	assert.equal(JSON.stringify(first).includes('fixture-instance'),false,'the scope is opaque and does not expose the instance id');
+	scope='scope-b';
+	const second=await (await request('local','/api/auth/status')).json();
+	assert.equal(second.scope,'scope-b');
+	assert.notEqual(second.scope,first.scope);
+});

@@ -10,6 +10,9 @@ function player() {
 		localStorage:{getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)},
 		state:{playing:{Id:'episode',Type:'Episode',SeriesId:'series'}},viewingStarted:false,
 		casting:{active:false,remote:{}},video:{currentTime:60,duration:3600,ended:false},
+		// This test covers the local/at-home viewer, for whom the browser record is
+		// trusted. The remote-account guard itself is covered in web-perf-125.
+		browserProgressTrusted:()=>true,
 	});
 	vm.runInContext(`function playbackPosition(){return video.currentTime;}
 		${source.slice(source.indexOf('function getProgress('),source.indexOf('async function report('))}`,context);

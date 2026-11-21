@@ -3,34 +3,128 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width,initial-scale=1">
-	<title>Activity · Tellybox</title>
+	<title>Activity - Tellybox</title>
 	<link rel="icon" href="/icon.svg" type="image/svg+xml">
 	<link rel="stylesheet" href="/style.css">
+	<script src="/navigation.js" defer></script>
+	<script src="/activity-summary.js" defer></script>
 	<script src="/activity.js" defer></script>
 	<script src="/connection-status.js" defer></script>
 </head>
-<body class="auth-page">
+<body class="activity-page">
+	<header class="topbar">
+		<a class="brand" href="/" aria-label="Tellybox home"><img class="brand-logo" src="/tellybox-logo.png" alt="Tellybox"></a>
+		<button class="menu-toggle" id="menuToggle" aria-controls="siteNavigation" aria-expanded="false"><span class="menu-icon" aria-hidden="true">☰</span><span>Menu</span></button>
+		<div id="siteNavigation" class="navigation-panel">
+			<nav aria-label="Primary"><a class="nav-item" href="/">Home</a><a class="nav-item" href="/discover">Discover</a><a class="nav-item nav-coming" href="/coming-soon">Coming soon</a><a class="nav-item" href="/?view=movies">Films</a><a class="nav-item" href="/?view=tvshows">Series</a><a class="nav-item" href="/?view=livetv">Live TV</a><a class="nav-item" href="/?view=nonstop">24/7</a><a class="nav-item" href="/?view=recordings">Recordings</a><a class="nav-item" href="/search">Search</a></nav>
+			<div class="account-actions"><a href="/settings" id="remoteSettings">Settings</a></div>
+		</div>
+	</header>
 	<main class="auth-card activity-card">
-		<a class="brand" href="/"><img class="brand-logo" src="/tellybox-logo.png" alt="Tellybox"></a>
 		<p class="eyebrow">ONLY VISIBLE AT HOME</p>
 		<h1>Activity</h1>
-		<p class="auth-description">See who's connecting and what's playing. IP addresses identify connections, not people; a household or mobile network can share one address.</p>
-		<div class="activity-stats" id="stats"></div>
-		<div class="settings-actions"><a href="/settings">Password settings →</a><button class="button secondary" id="revokeAll">Sign out all remote browsers</button></div>
-		<p id="activityMessage" role="status">Loading activity…</p>
-		<h2>Watching now</h2>
-		<p class="auth-note">Playback seen in the last two minutes. Positions come from the player; a connection does not prove someone is watching.</p>
-		<div id="watching"></div>
-		<section id="downloadingSection" hidden><h2>Downloading now</h2><div id="downloading"></div></section>
-		<h2>Time watched</h2><div id="viewingTotals"></div><p id="viewingSince" class="auth-note"></p>
-		<h2>Signed-in remote browsers</h2>
-		<p class="auth-note">Saved logins, including browsers currently closed. Signing out stops their stream; change the password too if it has been shared.</p>
-		<div id="browsers"></div>
-		<h2>Recent activity</h2>
-		<div class="activity-filters"><label>Show <select id="filter"><option value="all">Everything</option><option value="remote">Remote only</option><option value="login">Login attempts</option><option value="playback">Viewing</option></select></label><label>IP address <input id="ipFilter" type="search" placeholder="Filter by IP"></label></div>
-		<p class="auth-note">Kept for 30 days, up to the latest 5,000 records. The latest 200 matching records are shown. Tracking starts with this update and covers Tellybox only.</p>
-		<div id="history"></div>
-		<p class="auth-note">Refreshes every 15 seconds. Proxy IP forwarding is accepted only from explicitly trusted connectors.</p>
+		<p class="auth-description">See who's connected and what's playing. Accounts and connections are shown separately, and an IP address is never treated as a person.</p>
+
+		<div class="activity-tabs" role="tablist" aria-label="Activity views">
+			<button class="activity-tab" id="tabActivity" type="button" role="tab" aria-selected="true" aria-controls="activityPanel" tabindex="0">Activity</button>
+			<button class="activity-tab" id="tabLogs" type="button" role="tab" aria-selected="false" aria-controls="logsPanel" tabindex="-1">Logs</button>
+			<button class="activity-tab" id="tabStreams" type="button" role="tab" aria-selected="false" aria-controls="streamsPanel" tabindex="-1">Streams</button>
+			<button class="activity-tab" id="tabDownloads" type="button" role="tab" aria-selected="false" aria-controls="downloadsPanel" tabindex="-1">Downloads</button>
+		</div>
+
+		<section id="activityPanel" class="activity-panel" role="tabpanel" aria-labelledby="tabActivity" tabindex="0">
+			<div class="activity-stats" id="stats" role="list" aria-label="Activity summary"></div>
+			<div class="settings-actions"><a href="/settings#activity">Activity settings →</a><button class="button secondary" id="revokeAll">Sign out all remote browsers</button></div>
+			<p id="activityMessage" role="status">Loading activity...</p>
+
+			<section aria-labelledby="watchingHeading">
+				<div class="activity-section-heading"><h2 id="watchingHeading">Watching now</h2><span class="activity-pill" id="watchingCount" hidden></span></div>
+				<p class="auth-note">Playback seen in the last two minutes. A connection does not prove someone is watching.</p>
+				<div id="watching" class="activity-list"></div>
+			</section>
+
+			<section id="downloadingSection" hidden aria-labelledby="downloadingHeading">
+				<div class="activity-section-heading"><h2 id="downloadingHeading">Downloading now</h2></div>
+				<div id="downloading"></div>
+			</section>
+
+			<section aria-labelledby="recentPreviewHeading">
+				<div class="activity-section-heading"><h2 id="recentPreviewHeading">Recent activity</h2><button class="button quiet" id="openLogs" type="button">View all in Logs</button></div>
+				<p class="auth-note">Newest first. Showing the latest five events; full search and paging are in Logs.</p>
+				<div id="recentPreview" class="activity-list"></div>
+			</section>
+
+			<section aria-labelledby="browsersHeading">
+				<div class="activity-section-heading"><h2 id="browsersHeading">Signed-in remote browsers</h2></div>
+				<p class="auth-note">Newest sign-in first. Saved logins include browsers currently closed. Last seen is separate and is only recorded for home browsers; an unknown sign-in time is shown last.</p>
+				<div id="browsers"></div>
+			</section>
+
+			<section aria-labelledby="totalsHeading">
+				<div class="activity-section-heading"><h2 id="totalsHeading">Time watched</h2></div>
+				<p class="auth-note">Total time and today's time are separate. Today uses the existing account-limit day. Last sign-in is not the same as last seen.</p>
+				<div id="viewingTotals"></div>
+				<p id="viewingSince" class="auth-note"></p>
+			</section>
+		</section>
+
+		<section id="logsPanel" class="activity-panel" role="tabpanel" aria-labelledby="tabLogs" tabindex="0" hidden>
+			<section aria-labelledby="recentHeading">
+				<div class="activity-section-heading"><h2 id="recentHeading">Logs</h2><span class="activity-pill" id="pageStatus" role="status"></span></div>
+				<p class="auth-note">Newest first. Full retained activity history with search, filters and server-side paging.</p>
+				<div class="activity-filters" role="group" aria-label="Filter activity logs">
+					<label>Event<select id="filter"><option value="all">Everything</option><option value="playback">Viewing</option><option value="login">Sign-in attempts</option><option value="remote">Remote only</option><option value="download">Downloads</option><option value="security">Security changes</option></select></label>
+					<label>User<select id="userFilter"><option value="">Anyone</option></select></label>
+					<label>Device<select id="deviceFilter"><option value="">Any device</option></select></label>
+					<label>Date<input id="dateFilter" type="date" aria-label="Filter by UK calendar date"></label>
+					<label>Search<input id="ipFilter" type="search" placeholder="IP, title, email or reason" autocomplete="off"></label>
+					<button class="button quiet" id="clearFilters" type="button">Clear filters</button>
+				</div>
+				<details class="activity-help">
+					<summary>How this list works</summary>
+					<p>Activity is kept for 30 days, up to the latest 5,000 records. Results are paged, so only one page is shown at a time. Dates use the UK day boundary. Proxy IP forwarding is accepted only from trusted connectors. Diagnostics stay collapsed by default and are not shown in the compact Activity preview.</p>
+				</details>
+				<div id="history" class="activity-list"></div>
+				<nav class="activity-paging" aria-label="Activity log pages">
+					<button class="button secondary" id="historyPrev" type="button">Newer</button>
+					<button class="button secondary" id="historyNext" type="button">Older</button>
+				</nav>
+			</section>
+		</section>
+
+		<section id="streamsPanel" class="activity-panel" role="tabpanel" aria-labelledby="tabStreams" tabindex="0" hidden>
+			<section aria-labelledby="streamsHeading">
+				<div class="activity-section-heading streams-heading">
+					<h2 id="streamsHeading">Upstream streams</h2>
+					<div class="streams-heading-actions">
+						<span class="activity-pill" id="streamsStatusPill" hidden></span>
+						<button class="button secondary" id="streamsRefresh" type="button">Refresh streams</button>
+					</div>
+				</div>
+				<div id="streamsStatus" class="streams-summary" role="status" aria-live="polite" aria-atomic="true" aria-busy="false"></div>
+				<p class="auth-note streams-note">Dispatcharr-reported; statistics may be incomplete and connections are not Tellybox viewers or unique people.</p>
+				<div id="streamsList" class="activity-list qb-compact-list"></div>
+			</section>
+		</section>
+
+		<section id="downloadsPanel" class="activity-panel" role="tabpanel" aria-labelledby="tabDownloads" tabindex="0" hidden>
+			<section aria-labelledby="downloadsHeading">
+				<div class="activity-section-heading streams-heading">
+					<h2 id="downloadsHeading">qBittorrent downloads</h2>
+					<div class="streams-heading-actions">
+						<label class="downloads-filter">Showing<select id="downloadsFilter"><option value="downloading" selected>Downloading</option><option value="seeding">Seeding</option><option value="all">Everything</option></select></label>
+						<span class="activity-pill" id="downloadsStatusPill" hidden></span>
+						<button class="button secondary" id="downloadsRefresh" type="button">Refresh downloads</button>
+					</div>
+				</div>
+				<div id="downloadsStatus" class="streams-summary" role="status" aria-live="polite" aria-atomic="true" aria-busy="false"></div>
+				<div id="downloadsList" class="activity-list qb-compact-list"></div>
+				<p class="auth-note" id="downloadsOwnerNote" hidden>Removing a torrent or deleting its files is still restricted to the installation owner.</p>
+				<a class="button secondary" id="downloadsOwnerLink" href="/activity/downloads" hidden>Open owner download controls</a>
+			</section>
+		</section>
+
+		<p class="auth-note">Updates automatically. The selected tab, filters and page are kept while this page is open.</p>
 		<a href="/">Back to the collection →</a>
 	</main>
 </body>

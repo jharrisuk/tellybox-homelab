@@ -1,6 +1,6 @@
 {
 	"name": "tellybox-relay-worker",
-	"version": "0.26.9",
+	"version": "0.26.15",
 	"private": true,
 	"type": "module",
 	"description": "Optional Dispatcharr media executor for an approved Tellybox relay.",

@@ -16,16 +16,23 @@ export function createRelayMedia({ directory, registry, mainKeys, accountLimits,
 	maxSessionSeconds = 6 * 60 * 60 } = {}) {
 	const leases = new Map();
 	const egress = { bytesOutTotal: 0, sessions: new Map(), updated: 0 };
+	/**
+	 * The smallest remaining enabled quota, each compared with its own usage.
+	 * `relayBudget` is the authoritative account-limits API; the status fallback
+	 * keeps older injected test doubles and installations working.
+	 */
+	function budgetFor(accountKey) {
+		if (accountLimits?.relayBudget) return accountLimits.relayBudget(accountKey);
+		const status = accountLimits?.status?.(accountKey);
+		if (!status) return { remainingSeconds: null, unlimited: true };
+		const manual = status.minutes ? Math.max(0, status.minutes * 60 - Number(status.seconds || 0)) : null;
+		const daily = status.dailyMinutes ? Math.max(0, status.dailyMinutes * 60 - Number(status.dailySeconds || 0)) : null;
+		const values = [manual, daily].filter(value => value !== null);
+		return { remainingSeconds: values.length ? Math.min(...values) : null, unlimited: values.length === 0 };
+	}
 	const ledger = createRelayLedger({ clock,
-		chargedSeconds: accountKey => { const status = accountLimits?.status?.(accountKey); return Math.max(Number(status?.seconds || 0), Number(status?.dailySeconds || 0)); },
-		allowanceSeconds: accountKey => {
-			const status = accountLimits?.status?.(accountKey);
-			if (!status) return null;
-			const manual = status.minutes ? status.minutes * 60 : null;
-			const daily = status.dailyMinutes ? status.dailyMinutes * 60 : null;
-			const values = [manual, daily].filter(value => value !== null);
-			return values.length ? Math.min(...values) : null;
-		},
+		chargedSeconds: accountKey => Number(accountLimits?.status?.(accountKey)?.seconds || 0),
+		availableSeconds: accountKey => budgetFor(accountKey).remainingSeconds,
 		chargeDifference: (accountKey, seconds) => accountLimits?.charge?.(accountKey, seconds),
 		maxGrantSeconds });
 	function worker() {
@@ -47,7 +54,7 @@ export function createRelayMedia({ directory, registry, mainKeys, accountLimits,
 		if (share) return { accountKey: 'share:' + String(sessionId || 'relay'), unlimited: true };
 		const accountKey = accountLimits?.key?.(viewer) || (viewer?.local || viewer?.home ? 'local:relay' : '');
 		if (!accountKey) throw fail('Relay playback needs a linked viewer account.', 403, 'RELAY_ACCOUNT');
-		const remaining = accountLimits?.viewing?.(viewer)?.remainingSeconds;
+		const remaining = budgetFor(accountKey).remainingSeconds;
 		return { accountKey, unlimited: remaining === null || remaining === undefined || accountKey === 'local:relay' };
 	}
 	function publicPath(sessionUrl) {
@@ -75,6 +82,7 @@ export function createRelayMedia({ directory, registry, mainKeys, accountLimits,
 			accountKeyHash: createHash('sha256').update(lease.accountKey).digest('hex').slice(0, 32),
 			itemId: lease.itemId, mode: lease.mode, modeParameters: lease.params,
 			quality: lease.quality, audioIndex: lease.audioIndex, subtitleIndex: lease.subtitleIndex, position: lease.position,
+			capabilities: lease.capabilities,
 			externalSubtitle: lease.externalSubtitle, maxSessionSeconds: lease.maxSessionSeconds, maxBytes: lease.maxBytes,
 			hardEndsAt: lease.hardEndsAt, allowedResourceClasses: RESOURCES,
 			capability: lease.capability, generation: lease.generation, grantSeconds: lease.grantSeconds || 0,
@@ -83,14 +91,14 @@ export function createRelayMedia({ directory, registry, mainKeys, accountLimits,
 		};
 	}
 	async function prepare({ session, viewer, itemId, mode, params = {}, quality = 8000000, audioIndex, subtitleIndex, position = 0, textSubtitles = false,
-		externalSubtitle = null, maxBytes = 0, local = false, share = false, onRelease } = {}) {
+		externalSubtitle = null, maxBytes = 0, local = false, share = false, capabilities = undefined, onRelease } = {}) {
 		const approved = unavailable();
 		if (!MODES.has(mode)) throw fail('Unsupported relay media mode.', 400, 'RELAY_MODE');
 		const { accountKey, unlimited } = accountFor(viewer, { share, sessionId: session?.id });
 		const leaseId = randomUUID(), generation = 1;
 		const now = clock();
 		const lease = { leaseId, sessionId: session?.id || randomUUID(), accountKey, unlimited, viewer, itemId: String(itemId), mode, params,
-			quality, audioIndex, subtitleIndex, textSubtitles, externalSubtitle, maxBytes, position: Math.max(0, Number(position) || 0),
+			quality, audioIndex, subtitleIndex, textSubtitles, externalSubtitle, maxBytes, capabilities, position: Math.max(0, Number(position) || 0),
 			maxSessionSeconds: Math.max(1, Math.min(12 * 60 * 60, Number(maxSessionSeconds) || 6 * 60 * 60)),
 			hardEndsAt: now + Math.max(1, Math.min(12 * 60 * 60, Number(maxSessionSeconds) || 6 * 60 * 60)) * 1000,
 			generation, createdAt: now, clientHeartbeat: now, grantSeconds: 0, grantEndsAt: 0, revoked: false, tombstoneUntil: 0,
@@ -109,13 +117,16 @@ export function createRelayMedia({ directory, registry, mainKeys, accountLimits,
 			lease.sessionUrl = publicPath(result.sessionUrl);
 			lease.duration = Number(result.duration) || 0;
 			lease.method = result.method || '';
+			lease.videoCodec = result.videoCodec || '';
+			lease.audioCodec = result.audioCodec || 'aac';
 			lease.audio = result.audio || [];
 			lease.subtitles = result.subtitles || [];
 			if (Number.isInteger(result.subtitleIndex)) lease.subtitleIndex = result.subtitleIndex;
-			lease.position = Number(result.position) || lease.position;
+			if (Number.isFinite(Number(result.position)) && Number(result.position) >= 0) lease.position = Number(result.position);
 			leases.set(leaseId, lease);
 			return { ...result, url: playbackUrl(lease.sessionUrl, { local }), mediaRoute: 'relay', routeSource: 'lease', workerId: approved.workerId, leaseId, generation,
-				duration: lease.duration, audio: lease.audio, subtitles: lease.subtitles, subtitleIndex: lease.subtitleIndex, position: lease.position, grantSeconds: seconds };
+				duration: lease.duration, audio: lease.audio, subtitles: lease.subtitles, subtitleIndex: lease.subtitleIndex, position: lease.position, grantSeconds: seconds,
+				method: lease.method, videoCodec: lease.videoCodec, audioCodec: lease.audioCodec };
 		} catch (error) {
 			ledger.settle(leaseId, { acknowledged: true, reason: 'prepare_failed' });
 			try { await control.stop({ workerId: approved.workerId, leaseId, sessionId: lease.sessionId, workerSessionId: lease.workerSessionId, reason: 'prepare_failed' }, `${leaseId}:${generation}:prepare_failed`); } catch {}
@@ -130,7 +141,9 @@ export function createRelayMedia({ directory, registry, mainKeys, accountLimits,
 		lease.generation += 1;
 		Object.assign(lease, { quality: changes.quality ?? lease.quality, audioIndex: changes.audioIndex ?? lease.audioIndex,
 			subtitleIndex: changes.subtitleIndex ?? lease.subtitleIndex, externalSubtitle: changes.externalSubtitle ?? lease.externalSubtitle,
+			capabilities: Object.hasOwn(changes, 'capabilities') ? changes.capabilities : lease.capabilities,
 			position: changes.position === undefined ? lease.position : Math.max(0, Number(changes.position) || 0) });
+		if (Object.hasOwn(changes, 'compatibility')) lease.params = { ...lease.params, compatibility: Boolean(changes.compatibility) };
 		lease.capability = createMediaToken(mainKeys.media.privateKey, {
 			aud: approved.workerId, leaseId, sessionId: lease.sessionId, itemId: lease.itemId, mode: lease.mode, generation: lease.generation,
 			resources: RESOURCES, iat: Math.floor(clock() / 1000), exp: Math.floor(clock() / 1000) + lease.maxSessionSeconds, jti: randomUUID()
@@ -142,12 +155,16 @@ export function createRelayMedia({ directory, registry, mainKeys, accountLimits,
 			lease.sessionUrl = publicPath(result.sessionUrl || lease.sessionUrl);
 			lease.duration = Number(result.duration) || lease.duration;
 			lease.method = result.method || lease.method;
+			lease.videoCodec = result.videoCodec || lease.videoCodec || '';
+			lease.audioCodec = result.audioCodec || lease.audioCodec || 'aac';
 			lease.audio = result.audio || lease.audio;
 			lease.subtitles = result.subtitles || lease.subtitles;
+			if (Number.isFinite(Number(result.quality)) && Number(result.quality) > 0) lease.quality = Number(result.quality);
 			if (Number.isInteger(result.subtitleIndex)) lease.subtitleIndex = result.subtitleIndex;
-			lease.position = Number(result.position) || lease.position;
-			return { ...result, url: playbackUrl(lease.sessionUrl), mediaRoute: 'relay', routeSource: 'lease', workerId: approved.workerId, leaseId, generation: lease.generation,
-				duration: lease.duration, audio: lease.audio, subtitles: lease.subtitles, subtitleIndex: lease.subtitleIndex, position: lease.position, method: lease.method };
+			if (Number.isFinite(Number(result.position)) && Number(result.position) >= 0) lease.position = Number(result.position);
+			return { ...result, url: playbackUrl(lease.sessionUrl, { local: changes.local === true }), mediaRoute: 'relay', routeSource: 'lease', workerId: approved.workerId, leaseId, generation: lease.generation,
+				duration: lease.duration, audio: lease.audio, subtitles: lease.subtitles, subtitleIndex: lease.subtitleIndex, position: lease.position, method: lease.method,
+				videoCodec: lease.videoCodec, audioCodec: lease.audioCodec };
 		} catch (error) {
 			lease.generation -= 1;
 			throw error;

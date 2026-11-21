@@ -54,6 +54,7 @@ test('prepare is idempotent; HEAD does not start; first GET activates once', asy
 	assert.match(playlist, /segment0\.ts/);
 	assert.match(playlist, /\/relay-media\/v1\/s\/v1\./);
 	assert.equal(f.started.length, 1);
+	assert.equal(f.started.at(-1).options.capabilities, undefined, 'older clients keep the legacy path when metadata is absent');
 	const segment = await (await fetch(f.mediaUrl + playlist.split('\n')[2])).text();
 	assert.equal(segment, 'segment-bytes');
 	assert.equal(f.started.length, 1, 'later GET reuses the active session');
@@ -64,6 +65,24 @@ test('prepare is idempotent; HEAD does not start; first GET activates once', asy
 	assert.equal((await f.prepare()).status, 410, 'an old prepare key returns ended, not a new session');
 	assert.equal(f.stopped.length, 1);
 });
+test('prepare forwards bounded client capabilities to the live player', async t => {
+	const f = await fixture(t);
+	const capabilities = { videoCodecs: ['hevc'], audioCodecs: ['aac'], maxWidth: 3840, maxHeight: 2160, maxBitrate: 80000000, hevcMain10: true, hls: true, mpegTs: true };
+	const prepared = await (await f.prepare({ capabilities })).json();
+	await fetch(f.mediaUrl + prepared.sessionUrl);
+	assert.deepEqual(f.started.at(-1).options.capabilities, capabilities);
+});
+
+test('player producer stop releases the relay session slot', async t => {
+	const f = await fixture(t);
+	const prepared = await (await f.prepare()).json();
+	await fetch(f.mediaUrl + prepared.sessionUrl);
+	assert.equal(f.w._sessions.size, 1);
+	f.started.at(-1).options.onStopped();
+	await new Promise(resolve => setTimeout(resolve, 20));
+	assert.equal(f.w._sessions.size, 0);
+});
+
 test('wrong audience, wrong generation, method and post-revoke reads are denied', async t => {
 	const f = await fixture(t);
 	const other = createMediaToken((await import('node:crypto')).generateKeyPairSync('ed25519').privateKey, { aud: 'worker-1', leaseId: 'lease-0001', sessionId: 'session-1', itemId: 'dispatch-live-' + 'a'.repeat(36), mode: 'live', generation: 1, resources: ['hls'], exp: 3000000000, jti: 'x' });

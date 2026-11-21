@@ -48,3 +48,16 @@ test('recent TV excludes missing, future, old and undated episodes and caps the 
 	assert.deepEqual(recentTvEpisodes(invalid, now), []);
 	assert.equal(recentTvEpisodes(Array.from({ length: 20 }, (_, index) => episode(String(index), `Show ${index}`, '2026-10-17')), now).length, 12);
 });
+
+test('recent TV puts local shows before streamed ones, then newest first', () => {
+	const localOld = { Id: 'local-old', Type: 'Episode', SeriesId: 'local-a', SeriesName: 'Local A',
+		ParentIndexNumber: 1, IndexNumber: 1, PremiereDate: '2026-10-01T00:00:00Z', LocationType: 'FileSystem' };
+	const localNew = { ...localOld, Id: 'local-new', SeriesId: 'local-d', SeriesName: 'Local D',
+		PremiereDate: '2026-10-15T00:00:00Z' };
+	const vodNew = { Id: 'vod-new', Type: 'Episode', SeriesId: 'vod-b', SeriesName: 'Streamed B',
+		ParentIndexNumber: 1, IndexNumber: 1, PremiereDate: '2026-10-17T00:00:00Z', LocationType: 'Remote', Source: 'streamed' };
+	const vodOld = { ...vodNew, Id: 'vod-old', SeriesId: 'vod-c', SeriesName: 'Streamed C',
+		PremiereDate: '2026-10-10T00:00:00Z' };
+	assert.deepEqual(recentTvEpisodes([vodNew, localOld, vodOld, localNew], now, 20).map(item => item.Id),
+		['local-new', 'local-old', 'vod-new', 'vod-old']);
+});

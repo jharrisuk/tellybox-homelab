@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { score } from './insights.mjs';
 import { createDiscoveryFeeds, discoveryOrder, genreNames, providers, interests, providerNote } from './discovery-feeds.mjs';
+import { createDiscoverCache, stableQueryKey } from './discover-cache.mjs';
 
 const fail = (message, status = 400) => Object.assign(new Error(message), { status });
 const validType = value => ['movie', 'tv'].includes(value);
@@ -36,7 +37,13 @@ export function mediaView(item, type = item.mediaType) {
 	};
 }
 
-export function createSeerr({ config, fetcher = fetch, audit = () => {}, enrich = async items => items, library, trendingCachePath }) {
+// A cached public catalogue entry has no trustworthy request state: request
+// status lives in Seerr's mediaInfo/requests, which is deliberately not
+// persisted. On a cache hit return a neutral, honest status; the details
+// dialog and any request action still use the live Seerr route.
+const neutralStatus = item => ({ ...item, status: 6, statusLabel: 'Status not checked', requestable: false, watchId: null, seasons: [] });
+
+export function createSeerr({ config, fetcher = fetch, audit = () => {}, enrich = async items => items, library, trendingCachePath, discoverCache = null }) {
 	const locks = new Map();
 	const metadata = new Map();
 	async function call(route, body) {
@@ -63,20 +70,46 @@ export function createSeerr({ config, fetcher = fetch, audit = () => {}, enrich 
 		}
 		return (await enrich([item]))[0];
 	}
+	// Raw upstream catalogue read. Cacheable only when it contains no search
+	// relevance, viewer identity or workflow state.
+	async function browseRaw(query, page, type, sort, excludeDocumentaries) {
+		const searching = Boolean(query.trim());
+		const order = discoveryOrder(type, sort);
+		const catalogue = { all: 'trending', movie: 'movies', tv: 'tv' }[type];
+		// Seerr search is mixed. Skip empty filtered pages, with bounded upstream work.
+		let cursor = page;
+		for (let attempt = 0; attempt < 3; attempt++) {
+			const data = await call(searching ? `/search?query=${encodeURIComponent(query.trim())}&page=${cursor}` : `/discover/${catalogue}?page=${cursor}${sort === 'popular' ? '' : '&' + new URLSearchParams(order)}`);
+			const pages = Math.min(data.totalPages || 1, 100);
+			const items = (data.results || []).filter(i => validType(i.mediaType) && (type === 'all' || i.mediaType === type)).map(i => mediaView(i)).filter(i => !excludeDocumentaries || !i.genres.includes('Documentary'));
+			if (items.length || (!searching && !excludeDocumentaries) || cursor >= pages || attempt === 2) return { page: cursor, pages, items };
+			cursor++;
+		}
+	}
+	// Public reads recompose per request. A miss keeps the fresh upstream view;
+	// a hit replays only cached catalogue metadata through current enrichment and
+	// a neutral request-status overlay. Cached metadata is never playback proof.
+	async function publicRead(key, loader) {
+		if (!discoverCache) {
+			const data = await loader();
+			return { ...data, items: await enrich(data.items || []) };
+		}
+		const snapshot = await discoverCache.get(key, loader);
+		const items = snapshot.cacheState === 'miss' ? snapshot.items || [] : (snapshot.items || []).map(neutralStatus);
+		return { ...snapshot, items: await enrich(items) };
+	}
 	async function browse(query = '', page = 1, type = 'all', sort = 'popular', excludeDocumentaries = false) {
 		if (typeof query !== 'string' || query.length > 200 || !Number.isInteger(page) || page < 1 || page > 100 || !['all', 'movie', 'tv'].includes(type)) throw fail('Invalid search.');
 		const searching = Boolean(query.trim());
-		const order = discoveryOrder(type, sort);
 		if (searching && sort !== 'popular') throw fail('Search results are ordered by relevance. Clear the search to browse by rating or date.');
-		const catalogue = { all: 'trending', movie: 'movies', tv: 'tv' }[type];
-		// Seerr search is mixed. Skip empty filtered pages, with bounded upstream work.
-		for (let attempt = 0; attempt < 3; attempt++) {
-			const data = await call(searching ? `/search?query=${encodeURIComponent(query.trim())}&page=${page}` : `/discover/${catalogue}?page=${page}${sort === 'popular' ? '' : '&' + new URLSearchParams(order)}`);
-			const pages = Math.min(data.totalPages || 1, 100);
-			const items = (data.results || []).filter(i => validType(i.mediaType) && (type === 'all' || i.mediaType === type)).map(i => mediaView(i)).filter(i => !excludeDocumentaries || !i.genres.includes('Documentary'));
-			if (items.length || (!searching && !excludeDocumentaries) || page >= pages || attempt === 2) return { page, pages, items: await enrich(items) };
-			page++;
+		if (searching || !discoverCache) {
+			const result = await browseRaw(query, page, type, sort, excludeDocumentaries);
+			return { ...result, items: await enrich(result.items) };
 		}
+		// The key is the normalised public query, never today's date: the loader
+		// applies releaseDate<=today at refresh time instead.
+		const key = stableQueryKey('browse', { type, sort, page, exclude: excludeDocumentaries ? 1 : 0 });
+		return publicRead(key, () => browseRaw(query, page, type, sort, excludeDocumentaries));
 	}
 	async function requests(page = 1) {
 		if (!Number.isInteger(page) || page < 1 || page > 100) throw fail('Invalid page.');
@@ -129,13 +162,46 @@ export function createSeerr({ config, fetcher = fetch, audit = () => {}, enrich 
 		locks.set(key, pending);
 		try { return await pending; } finally { if (locks.get(key) === pending) locks.delete(key); }
 	}
-	const feeds = createDiscoveryFeeds({ call, view:mediaView, enrich, library });
-	return { browse, details, requests, request, channelSearch:async query=>(await call('/search?query='+encodeURIComponent(query)+'&page=1')).results||[], catalogueMetadata:(type,id)=>call('/'+identify(type,id)), ...feeds, ...createTrending({call,view:mediaView,enrich,cachePath:trendingCachePath}) };
+	const feeds = createDiscoveryFeeds({ call, view:mediaView, enrich, library, publicCache: discoverCache ? { read: publicRead, generation: () => discoverCache.generation() } : null });
+	// Finite, real Discover-landing warm set: default mixed browse, films and
+	// series popular, plus the five provider rails. Never a Cartesian product of
+	// provider x type x genre x sort x page.
+	function discoverWarmers() {
+		if (!discoverCache) return [];
+		const rows = [['all', 'popular'], ['movie', 'popular'], ['tv', 'popular']].map(([type, sort]) => ({
+			key: stableQueryKey('browse', { type, sort, page: 1, exclude: 0 }),
+			load: () => browseRaw('', 1, type, sort, false)
+		}));
+		return [...rows, ...feeds.discoverWarmers()];
+	}
+	function startDiscoverCache() {
+		if (!discoverCache) return null;
+		return discoverCache.start(discoverWarmers());
+	}
+	const trending = createTrending({ call, view: mediaView, enrich,
+		cachePath: trendingCachePath,
+		// A URL/key change starts a new public chart generation; the fingerprint
+		// is one-way and never written to the response or logs.
+		sourceKey: () => { const c = config(); return c ? String(c.url || '') + '\u0000' + String(c.key || '') : ''; } });
+	// Default first-screen chart rows only. The caller runs this on a clock and
+	// backs off while playback is active; each row is refreshed sequentially.
+	async function warmTrending({ isBusy } = {}) {
+		const group = trendingGroups.find(entry => entry.id === 'highlights');
+		return trending.preload(group ? group.rows : [], { max: 6, ...(typeof isBusy === 'function' ? { isBusy } : {}) });
+	}
+	return { browse, details, requests, request, channelSearch:async query=>(await call('/search?query='+encodeURIComponent(query)+'&page=1')).results||[], catalogueMetadata:(type,id)=>call('/'+identify(type,id)), ...feeds, ...trending, warmTrending, discoverCache, startDiscoverCache, discoverWarmers };
 }
 
-export function installSeerr(app, { configPath, audit, enrich, library }) {
+export function installSeerr(app, { configPath, audit, enrich, library, discoverCache = null, discoverCachePath, discoverBusy = null }) {
 	const config = () => { try { return JSON.parse(readFileSync(configPath, 'utf8')); } catch { return null; } };
-	const service = createSeerr({ config, audit, enrich, library, trendingCachePath:process.env.TRENDING_CACHE_PATH || '/auth/trending-cache.json' });
+	// Only a SHA-256 of this source identity is persisted, never the URL or key.
+	const cache = discoverCache || (discoverCachePath ? createDiscoverCache({
+		file: discoverCachePath,
+		schema: 'discover-128b',
+		sourceKey: () => { const c = config(); return c ? String(c.url || '') + '\u0000' + String(c.key || '') : ''; },
+		isBusy: typeof discoverBusy === 'function' ? discoverBusy : undefined
+	}) : null);
+	const service = createSeerr({ config, audit, enrich, library, trendingCachePath:process.env.TRENDING_CACHE_PATH || '/auth/trending-cache.json', discoverCache: cache });
 	app.use('/api/discover', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 	app.get('/api/discover', async (req, res) => res.json(req.query.genre ? await service.category(req.query.genre, req.query.type || 'movie', Number(req.query.page || 1), req.query.sort || 'popular', req.query.excludeDocumentaries === 'true') : await service.browse(req.query.q || '', Number(req.query.page || 1), req.query.type || 'all', req.query.sort || 'popular', req.query.excludeDocumentaries === 'true')));
 	app.get('/api/discover/trending', (req,res)=>res.json({groups:trendingGroups,note:trendingNote}));

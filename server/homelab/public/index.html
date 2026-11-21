@@ -22,6 +22,64 @@
 		<div id="settings" hidden>
 			<div class="page-heading"><div><p class="eyebrow">INSTALLATION</p><h1>Your Tellybox.</h1><p class="intro">Enable what you want. Leave the rest switched off.</p></div><button id="logout" class="quiet">Sign out</button></div>
 			<div class="notice" id="runtime" role="status"></div>
+			<section class="integration-section" id="coreIntegrations" aria-label="Core services">
+				<h2>Core services</h2>
+				<div id="integrations"></div>
+			</section>
+			<section class="integration-section optional-addons" id="optionalIntegrations">
+				<h2>Optional add-ons</h2>
+				<div id="optionalGroups"></div>
+				<details class="service service-row" id="qbittorrentPanel" data-enabled="false">
+					<summary class="service-row-heading">
+						<span class="service-row-title"><strong>qBittorrent</strong><span class="service-row-description">Download statistics from qBittorrent</span></span>
+						<span class="service-state" id="qbittorrentState">Not configured</span>
+						<svg class="service-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+					</summary>
+					<div class="service-row-body">
+						<p>Connect the qBittorrent WebUI to show aggregate download statistics. Monitoring is read-only; removing a torrent is a separate confirmed action on the Activity downloads page.</p>
+						<div id="qbittorrentStatus" class="relay-health" role="status" aria-live="polite">Checking qBittorrent...</div>
+						<form id="qbittorrentForm" autocomplete="off">
+							<div class="fields">
+								<label>WebUI address<input name="url" type="url" inputmode="url" placeholder="http://192.168.1.10:8080" maxlength="2048"><small>Include http:// or https:// and the port. Do not put a username or password in this address.</small></label>
+								<label>WebUI username<input name="username" autocomplete="username" maxlength="200"><small>Leave blank to keep the saved username.</small></label>
+								<label>WebUI password<input name="password" type="password" autocomplete="new-password" maxlength="1000"><small>Leave blank to keep the saved password. It is never shown again.</small></label>
+								<label>Refresh while visible (seconds)<input name="pollSeconds" type="number" min="15" max="30" step="1" inputmode="numeric" value="20"><small>Between 15 and 30 seconds.</small></label>
+								<label>Needs attention after no progress (minutes)<input name="stalledMinutes" type="number" min="10" max="180" step="1" inputmode="numeric" value="30"><small>Between 10 and 180 minutes.</small></label>
+							</div>
+							<label><input name="enabled" type="checkbox"> Monitor qBittorrent. When off, no request is made.</label>
+							<div class="relay-actions">
+								<button type="submit" class="primary">Save qBittorrent settings</button>
+								<button type="button" id="qbittorrentTest">Test connection</button>
+								<button type="button" id="qbittorrentRemove" class="quiet">Remove saved connection</button>
+							</div>
+							<p id="qbittorrentMessage" class="test-result" role="status"></p>
+						</form>
+						<p>Completed downloads are not the same as imported or playable titles. A finished qBittorrent transfer only means the download finished.</p>
+					</div>
+				</details>
+				<details class="service service-row" id="homeAssistantPanel" data-enabled="false">
+					<summary class="service-row-heading">
+						<span class="service-row-title"><strong>Home Assistant</strong><span class="service-row-description">Read-only server and stream statistics</span></span>
+						<span class="service-state" id="homeAssistantState">Not set up</span>
+						<svg class="service-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"></path></svg>
+					</summary>
+					<div class="service-row-body">
+						<p>Connect a read-only Home Assistant custom integration. It reads aggregate stream, download, upload and server health numbers. It cannot control playback or read titles, accounts or addresses.</p>
+						<div id="homeAssistantStatus" class="relay-health" role="status" aria-live="polite"></div>
+						<div class="relay-actions">
+							<button id="homeAssistantCreate" type="button">Create token</button>
+							<button id="homeAssistantRotate" type="button">Rotate token</button>
+							<button id="homeAssistantRevoke" type="button">Revoke token</button>
+						</div>
+						<div id="homeAssistantTokenBox" hidden>
+							<h3>New token</h3>
+							<p>Copy this now. It is shown only once and cannot be recovered.</p>
+							<div class="token-row"><input id="homeAssistantToken" readonly autocomplete="off" spellcheck="false"><button id="homeAssistantCopy" type="button">Copy</button></div>
+						</div>
+						<p id="homeAssistantMessage" role="status" aria-live="polite"></p>
+					</div>
+				</details>
+			</section>
 			<section class="panel" id="relayPanel">
 				<p class="eyebrow">REMOTE VIEWING</p><h2>Your relay</h2>
 				<div id="relayHealth" class="relay-health" role="status" aria-live="polite"></div>
@@ -42,32 +100,15 @@
 				<div id="relayReview" hidden><h3>Review the changes</h3><div id="relayPlanText"></div><label>Confirm the public hostname<input id="relayConfirm" autocomplete="off" spellcheck="false"></label><button class="primary" id="relayInstall" type="button">Set up this relay</button></div>
 				<p id="relayStatus" role="status"></p><pre id="relayOutput" hidden></pre>
 				</details>
-			</section>
-			<section class="panel" id="relayMediaPanel">
-				<p class="eyebrow">RELAY MEDIA (OPTIONAL)</p><h2>Relay media worker</h2>
-				<div id="relayMediaStatus" class="relay-health" role="status" aria-live="polite"></div>
-				<p>Dispatcharr media can play directly from the relay. Main keeps accounts, catalogue, limits and revocation. Existing Caddy-only relays are unchanged until you register and approve a worker.</p>
-				<div class="relay-actions"><button id="relayMediaEnrol" type="button">Create one-time enrolment</button><button id="relayMediaApprove" type="button">Approve worker</button><button id="relayMediaRevoke" class="quiet" type="button">Revoke worker</button><button id="relayMediaDeploy" class="quiet" type="button">Show isolated deployment scripts</button></div>
-				<p id="relayMediaMessage" role="status"></p><pre id="relayMediaToken" hidden></pre>
-			</section>
-			<section class="panel" id="homeAssistantPanel">
-				<p class="eyebrow">MONITORING</p><h2>Home Assistant</h2>
-				<p>Connect a read-only Home Assistant custom integration. It reads aggregate stream, download, upload and server health numbers. It cannot control playback or read titles, accounts or addresses.</p>
-				<div id="homeAssistantStatus" class="relay-health" role="status" aria-live="polite"></div>
-				<div class="relay-actions">
-					<button id="homeAssistantCreate" type="button">Create token</button>
-					<button id="homeAssistantRotate" type="button">Rotate token</button>
-					<button id="homeAssistantRevoke" type="button">Revoke token</button>
-				</div>
-				<div id="homeAssistantTokenBox" hidden>
-					<h3>New token</h3>
-					<p>Copy this now. It is shown only once and cannot be recovered.</p>
-					<div class="token-row"><input id="homeAssistantToken" readonly autocomplete="off" spellcheck="false"><button id="homeAssistantCopy" type="button">Copy</button></div>
-				</div>
-				<p id="homeAssistantMessage" role="status" aria-live="polite"></p>
+				<section id="relayMediaPanel" class="relay-media">
+					<p class="eyebrow">OPTIONAL</p><h3>Relay media worker</h3>
+					<div id="relayMediaStatus" class="relay-health" role="status" aria-live="polite"></div>
+					<p>Dispatcharr media can play directly from the relay. Main keeps accounts, catalogue, limits and revocation. Existing Caddy-only relays are unchanged until you register and approve a worker.</p>
+					<div class="relay-actions"><button id="relayMediaEnrol" type="button">Create one-time enrolment</button><button id="relayMediaApprove" type="button">Approve worker</button><button id="relayMediaRevoke" class="quiet" type="button">Revoke worker</button><button id="relayMediaDeploy" class="quiet" type="button">Show isolated deployment scripts</button></div>
+					<p id="relayMediaMessage" role="status"></p><pre id="relayMediaToken" hidden></pre>
+				</section>
 			</section>
 			<form id="configuration">
-				<div id="integrations"></div>
 				<section class="panel notifications"><h2>Administrator notifications</h2>
 					<label>Notification provider<select id="notificationMode"><option value="off">Off</option><option value="standard">Standard Tellybox HomeLab</option><option value="custom">Custom Firebase</option></select></label>
 					<p id="notificationHint"></p><div id="customNotifications" hidden></div>

@@ -13,12 +13,24 @@ import { setupHosts, localConnectionSuggestion } from './setup-hosts.mjs';
 import { relayHealth } from './relay-health.mjs';
 import { installReleaseVersion } from '../release-version.mjs';
 import { createHomeAssistantTokens } from '../home-assistant.mjs';
+import { createDispatcharrStatus } from './dispatcharr-status.mjs';
+import { createDispatcharrStreams, createCachedCatalogue, createCachedLocalSessions } from './dispatcharr-streams.mjs';
+import { createQbittorrentSettings } from './qbittorrent-settings.mjs';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
 const equal = (a, b) => typeof a === 'string' && typeof b === 'string' && timingSafeEqual(Buffer.from(hash(a)), Buffer.from(hash(b)));
-export function createSetup({ directory, apply = async () => {}, status = () => ({}), fetcher = fetch, clock = Date.now, allowedHosts = '' }) {
+export function createSetup({ directory, apply = async () => {}, status = () => ({}), fetcher = fetch, clock = Date.now, allowedHosts = '', streams = null }) {
 	const hostAllowed=setupHosts(allowedHosts);
 	const app = express(), store = configStore(directory), sessions = new Map(), attempts = new Map(), relay = relayManager(directory);
+	const dispatcharrStatus = createDispatcharrStatus({ store, directory, fetcher, clock });
+	// The media process writes activity to <HOMELAB_DATA>/access/activity.json,
+	// the same file the Activity page reads. The setup process only reads it,
+	// with a small cache, to attribute a stream to a local viewer.
+	const dispatcharrStreams = streams || createDispatcharrStreams({ store, fetcher, clock,
+		catalogue: createCachedCatalogue({ directory, clock }),
+		sessions: createCachedLocalSessions({ directory: path.join(directory, 'access'), clock }) });
+	const qbittorrent = createQbittorrentSettings({ directory, fetcher });
+	const sessionValid = token => Boolean(token) && (sessions.get(hash(token)) || 0) > clock();
 	let relayKeys = null, relayWorkers = null;
 	const relayState = () => {
 		if (!relayKeys) { relayKeys = loadOrCreateMainKeys(directory); relayWorkers = createWorkerRegistry(directory, { mainControlKey: relayKeys.control }); }
@@ -73,16 +85,83 @@ export function createSetup({ directory, apply = async () => {}, status = () => 
 		res.cookie('tellybox_setup', token, { httpOnly: true, sameSite: 'strict', path: '/', maxAge: 3600000 });
 		res.json({ ok: true });
 	});
+	// The media service asks its own loopback setup endpoint for the sanitized
+	// stream report after the main-site local/home/admin guard has allowed the
+	// caller. This route never accepts configuration, credentials or a target,
+	// and it refuses anything that did not arrive over the loopback interface.
+	app.get('/api/setup/dispatcharr/streams/readonly', async (req, res) => {
+		const address = (req.socket.remoteAddress || '').replace(/^::ffff:/, '');
+		res.set('Cache-Control', 'no-store');
+		if (!['127.0.0.1', '::1'].includes(address)) {
+			return res.status(403).json({ error: 'Read-only stream monitoring is available only to the local media service.' });
+		}
+		try {
+			res.json(await dispatcharrStreams.get({ refresh: req.query?.refresh === '1' }));
+		} catch {
+			res.status(503).json({ error: 'Dispatcharr streams could not be checked.' });
+		}
+	});
 	app.use('/api/setup', (req, res, next) => {
 		const token = req.get('cookie')?.match(/(?:^|;\s*)tellybox_setup=([a-f0-9]{64})(?:;|$)/)?.[1];
 		if (!token || (sessions.get(hash(token)) || 0) <= clock()) return res.status(401).json({ error: 'Sign in to configure this installation.' });
 		next();
 	});
+	// Session probe for the main app. It returns no identity, configuration or
+	// token material, only that the existing owner session is still valid.
+	app.get('/api/setup/session', (req, res) => {
+		res.set('Cache-Control', 'no-store');
+		res.json({ ok: true });
+	});
 	app.get('/api/setup/config', (req, res) => res.json({ config: redacted(store.get()), services, infrastructure, presets, runtime: status(), connection:localConnectionSuggestion(req.socket.remoteAddress) }));
+	app.get('/api/setup/dispatcharr/status', async (req, res) => {
+		// Placement after the /api/setup session guard means no cache entry is
+		// read and no upstream request is made before the administrator check.
+		res.set('Cache-Control', 'no-store');
+		try { res.json(await dispatcharrStatus.get({ refresh: req.query?.refresh === '1' })); }
+		catch { res.status(500).json({ error: 'Dispatcharr status could not be checked.' }); }
+	});
+	app.get('/api/setup/dispatcharr/streams', async (req, res) => {
+		// Same owner-session guard as every /api/setup route. The session is
+		// captured so it can be re-checked after the upstream await: a session
+		// revoked mid-request must not receive the result.
+		const token = req.get('cookie')?.match(/(?:^|;\s*)tellybox_setup=([a-f0-9]{64})(?:;|$)/)?.[1] || '';
+		res.set('Cache-Control', 'no-store');
+		try {
+			const value = await dispatcharrStreams.get({ refresh: req.query?.refresh === '1' });
+			if (!sessionValid(token)) return res.status(401).json({ error: 'Sign in to configure this installation.' });
+			res.json(value);
+		} catch {
+			res.status(503).json({ error: 'Dispatcharr streams could not be checked.' });
+		}
+	});
 	app.post('/api/setup/config', (req, res) => {
 		const next = validateConfig(req.body, store.get());
 		if (next.services.dispatcharr?.enabled && next.services.dispatcharr.location === 'relay') assertRelayReady();
 		res.json({ config: store.save(req.body), saved: true, applyRequired: true });
+	});
+	// qBittorrent writes the same `qbittorrent.json` inside AUTH_DIR that the
+	// media process reads. Every route below is behind the owner-session guard
+	// above. Only the password is withheld and no response echoes a target.
+	const qbittorrentError = (res, error) => res.status(error?.status || 400).json({
+		error: error?.status ? error.message : 'The qBittorrent settings could not be saved.'
+	});
+	app.get('/api/setup/qbittorrent', (req, res) => {
+		res.set('Cache-Control', 'no-store');
+		res.json(qbittorrent.status());
+	});
+	app.post('/api/setup/qbittorrent', (req, res) => {
+		res.set('Cache-Control', 'no-store');
+		try { res.json({ ...qbittorrent.save(req.body), saved: true }); }
+		catch (error) { qbittorrentError(res, error); }
+	});
+	app.post('/api/setup/qbittorrent/test', async (req, res) => {
+		res.set('Cache-Control', 'no-store');
+		try { res.json(await qbittorrent.test(req.body)); }
+		catch (error) { qbittorrentError(res, error); }
+	});
+	app.post('/api/setup/qbittorrent/disconnect', (req, res) => {
+		res.set('Cache-Control', 'no-store');
+		res.json({ ...qbittorrent.remove(), removed: true });
 	});
 	app.get('/api/setup/home-assistant', (req, res) => res.json(homeAssistant.status()));
 	app.post('/api/setup/home-assistant', (req, res) => {

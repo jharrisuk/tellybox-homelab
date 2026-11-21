@@ -157,6 +157,52 @@
 		}
 	}
 
+	/** TMDB air dates are date-only. Keep the calendar date; never apply a
+	 * midnight timezone conversion. */
+	function dateOnly(value) {
+		const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value || ''));
+		if (!match) return '';
+		const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
+		const date = new Date(Date.UTC(year, month - 1, day));
+		if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return '';
+		return match[1] + '-' + match[2] + '-' + match[3];
+	}
+
+	function airDateInfo(value, now = new Date()) {
+		const date = dateOnly(value);
+		if (!date) return { date: '', phase: 'unknown', difference: null, label: 'Date not announced' };
+		const year = Number(date.slice(0, 4)), month = Number(date.slice(5, 7)), day = Number(date.slice(8, 10));
+		const target = Date.UTC(year, month - 1, day);
+		const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+		const difference = Math.round((target - today) / 86400000);
+		const formatted = new Date(target).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+		return { date, phase: difference < 0 ? 'past' : difference === 0 ? 'today' : 'future', difference,
+			label: difference === 0 ? 'Today' : difference === 1 ? 'Tomorrow' : formatted };
+	}
+
+	function nextEpisodeIdentity(next) {
+		if (!next) return '';
+		const label = 'S' + next.season + ' E' + next.episode;
+		return next.title ? label + ' - ' + next.title : label;
+	}
+
+	/** Copy for the finished screen. It never claims the episode is available
+	 * in Tellybox merely because it has a broadcast date. */
+	function nextScheduleCopy(schedule, now = new Date()) {
+		if (!schedule || !schedule.next || !['scheduled', 'aired-missing'].includes(schedule.status)) return null;
+		const air = airDateInfo(schedule.next.airDate, now);
+		if (schedule.status === 'aired-missing') {
+			const when = air.phase === 'unknown' ? 'Aired; date not announced'
+				: air.phase === 'today' ? 'Aired today'
+				: 'Aired ' + air.label;
+			return { phase: 'aired', identity: nextEpisodeIdentity(schedule.next), when, detail: 'Not yet available in Tellybox.' };
+		}
+		const when = air.phase === 'today' ? 'Airs today'
+			: air.phase === 'future' ? 'Airs ' + air.label
+			: air.phase === 'past' ? 'Scheduled date has passed' : 'Scheduled; date not announced';
+		return { phase: 'scheduled', identity: nextEpisodeIdentity(schedule.next), when, detail: 'Not yet available in Tellybox.' };
+	}
+
 	root.TellyboxEpisodeFlow = {
 		COUNTDOWN_SECONDS,
 		FALLBACK_LEAD_MS,
@@ -170,6 +216,10 @@
 		cardDue,
 		creditsCountdown,
 		countdownCanAdvance,
+		dateOnly,
+		airDateInfo,
+		nextEpisodeIdentity,
+		nextScheduleCopy,
 		IntroLedger
 	};
 })(typeof globalThis !== 'undefined' ? globalThis : this);

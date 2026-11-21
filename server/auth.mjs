@@ -6,11 +6,48 @@ import path from 'node:path';
 import { createPeople } from './people.mjs';
 import { createLoginProtection } from './login-protection.mjs';
 import { installAppAccess } from './app-access.mjs';
+import { appMarkers, clientOf } from './client-identity.mjs';
 
 const deriveKey = promisify(scrypt);
 const cookieName = 'jserver_session';
 const lifetime = 30 * 24 * 60 * 60 * 1000;
 const digest = value => createHash('sha256').update(value).digest('hex');
+const setupPortDefault = 8990;
+// Setup accepts loopback and explicit private addresses only. Mirror that
+// allowlist so a navigation link is never built for a public host.
+const setupPrivateAddresses = new BlockList();
+for (const [address, bits] of [['10.0.0.0', 8], ['172.16.0.0', 12], ['192.168.0.0', 16], ['100.64.0.0', 10], ['127.0.0.0', 8]]) setupPrivateAddresses.addSubnet(address, bits, 'ipv4');
+setupPrivateAddresses.addSubnet('fc00::', 7, 'ipv6');
+setupPrivateAddresses.addAddress('::1', 'ipv6');
+
+function normalizedSetupHost(value) {
+	return String(value || '').trim().toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+}
+
+// Read the Host header directly. req.hostname can follow X-Forwarded-Host when
+// a proxy is trusted, and that must never decide the setup address.
+function setupHostFromRequest(req) {
+	const match = /^(\[[0-9a-f:]+\]|[a-z0-9.-]+)(?::(\d{1,5}))?$/i.exec(req.get('host') || '');
+	if (!match || (match[2] && (Number(match[2]) < 1 || Number(match[2]) > 65535))) return '';
+	return normalizedSetupHost(match[1]);
+}
+
+function privateSetupHost(host) {
+	if (host === 'localhost') return true;
+	const type = isIP(host);
+	return Boolean(type) && setupPrivateAddresses.check(host, type === 6 ? 'ipv6' : 'ipv4');
+}
+
+// An explicitly configured setup origin is the only source that may carry a
+// scheme and port other than plain HTTP on SETUP_PORT.
+function configuredSetupOrigin(value) {
+	if (typeof value !== 'string' || !value.trim()) return undefined;
+	let url;
+	try { url = new URL(value.trim()); } catch { return null; }
+	if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return null;
+	if (url.search || url.hash || (url.pathname !== '/' && url.pathname !== '')) return null;
+	return { origin: url.origin, port: Number(url.port) || (url.protocol === 'https:' ? 443 : 80) };
+}
 
 export function installAuth(app, options) {
 	const { directory, publicDirectory, localPort = 8082, publicOrigin = '', localNetworks = [], localHosts = ['localhost', '127.0.0.1'] } = options;
@@ -43,6 +80,17 @@ export function installAuth(app, options) {
 			&& publicOrigin.startsWith('https://') && origin(req) === publicOrigin
 			&& options.homeNetwork.matches(req.get(options.clientIpHeader || 'cf-connecting-ip')));
 	}
+	const setupPortValue = Number(options.setupPort ?? process.env.SETUP_PORT ?? setupPortDefault);
+	const setupPort = Number.isInteger(setupPortValue) && setupPortValue >= 1 && setupPortValue <= 65535 ? setupPortValue : setupPortDefault;
+	const setupPublicOrigin = configuredSetupOrigin(options.setupPublicOrigin ?? process.env.SETUP_PUBLIC_ORIGIN ?? '');
+	// A navigation aid only: callers still need the setup administrator session.
+	function installation(req) {
+		if (setupPublicOrigin === null) return null;
+		if (setupPublicOrigin) return { ...setupPublicOrigin };
+		const host = setupHostFromRequest(req);
+		if (!host || (!privateSetupHost(host) && !localHosts.some(value => normalizedSetupHost(value) === host))) return null;
+		return { origin: `http://${isIP(host) === 6 ? '[' + host + ']' : host}:${setupPort}`, port: setupPort };
+	}
 	function identity(req) {
 		const peer = (req.socket.remoteAddress || '').replace(/^::ffff:/, '');
 		// Only an explicitly configured proxy may supply the viewer address. This never grants local access.
@@ -51,7 +99,12 @@ export function installAuth(app, options) {
 		const entry = read(sessionPath, {})[digest(token(req))];
 		const browser = (local(req) || home(req)) ? people.localBrowser(homeBrowserToken(req)) : null;
 		const person = browserIdentity(req);
-		return { ip: trusted ? forwarded : peer, ipSource: trusted ? 'trusted proxy' : 'connection', local: local(req), browser: (req.get('user-agent') || 'Unknown browser').slice(0, 240), browserId: person?.id || browser?.id || entry?.id || null, ...(browser ? {deviceName:browser.name} : {}), home: home(req), ...(person ? { personId: person.personId, personName: person.personName } : {}) };
+		// An app marker is trusted only after the normal authentication gate has
+		// accepted either an approved app bearer or a session cookie. The app
+		// declaration itself never authenticates anything.
+		const signedIn = Boolean(req.jserverApp) || authenticated(req);
+		const origins = [origin(req), publicOrigin].filter(Boolean);
+		return { ip: trusted ? forwarded : peer, ipSource: trusted ? 'trusted proxy' : 'connection', local: local(req), client: clientOf(req, { authenticated: signedIn, origins }), appMarkers: appMarkers(req), browser: (req.get('user-agent') || 'Unknown browser').slice(0, 240), browserId: person?.id || browser?.id || entry?.id || null, ...(browser ? {deviceName:browser.name} : {}), home: home(req), ...(person ? { personId: person.personId, personName: person.personName } : {}) };
 	}
 	function homeBrowserToken(req) { return (req.headers.cookie || '').split(';').map(p => p.trim()).find(p => p.startsWith('tellybox_browser='))?.slice(17) || ''; }
 	function browserIdentity(req) { return people.session(token(req)) || ((local(req) || home(req)) ? people.browserPerson(homeBrowserToken(req)) : null); }
@@ -114,6 +167,36 @@ export function installAuth(app, options) {
 		if (!local(req) || req.get('authorization') || req.get('x-jserver-app')) return res.status(403).json({ error: 'Open the local Tellybox address for this page.' });
 		next();
 	}
+	// The read-only Activity view (streams and downloads summaries) is for the
+	// installation owner and approved admin apps. Being on the home network is
+	// not an administrator role: a household viewer at home must not see who is
+	// watching what, or the torrent queue.
+	function ownerSession(req) {
+		const value = token(req);
+		if (!/^[a-f0-9]{64}$/.test(value)) return false;
+		const config = read(passwordPath, null);
+		const session = read(sessionPath, {})[digest(value)];
+		return Boolean(config && session && session.expires > Date.now() && session.version === config.version);
+	}
+	// One definition of "administrator" for pages and data routes alike. Browser
+	// person sessions are viewers unless their account is linked to an approved
+	// admin app; that link is the existing role model, so no second role store.
+	function personAdmin(req) {
+		const session = people.session(token(req));
+		if (!session?.personId) return false;
+		return apps.devices().some(device => device.role === 'admin'
+			&& people.device(device.id).personId === session.personId);
+	}
+	function ownerAdmin(req) {
+		if (local(req)) return true;
+		const device = apps.resolve(req);
+		if (device?.role === 'admin') return true;
+		return ownerSession(req) || personAdmin(req);
+	}
+	function localOrHomePage(req, res, next) {
+		if (!local(req) && !home(req)) return res.status(403).json({ error: 'Activity is available only at home or to an installation administrator.' });
+		next();
+	}
 	app.use((req, res, next) => {
 		res.setHeader('Cache-Control', 'no-store');
 		req.jserverLocal = local(req);
@@ -170,14 +253,31 @@ export function installAuth(app, options) {
 			}
 		});
 	}
+	if (options.pausedTimeout) {
+		app.get('/api/auth/paused-timeout', apps.requireAdmin, (req, res) => res.json(options.pausedTimeout.status()));
+		app.post('/api/auth/paused-timeout', csrf, apps.writeCheck, apps.requireAdmin, (req, res) => {
+			try {
+				const result = options.pausedTimeout.set(req.body || {});
+				audit?.record('paused_timeout_changed', identity(req), result);
+				res.json(result);
+			} catch (error) {
+				res.status(error.status || 500).json({ error: error.status ? error.message : 'Paused-stream timeout could not be saved.' });
+			}
+		});
+	}
 	app.get('/api/auth/status', (req, res) => {
 		const atHome = home(req);
 		if ((req.jserverLocal || atHome) && !apps.present(req)) {
 			const registered = people.registerBrowser(homeBrowserToken(req), req.get('user-agent'));
 			if (registered && registered.token !== homeBrowserToken(req)) res.cookie('tellybox_browser',registered.token,{httpOnly:true,sameSite:'strict',secure:secure(req),path:'/',maxAge:365*86400000});
 		}
-		res.json({ email: people.status().enabled, local: req.jserverLocal, home: atHome, authenticated: authenticated(req), configured: Boolean(read(passwordPath, null)),
+		let scope = '';
+		try { scope = typeof options.homeScope === 'function' ? String(options.homeScope(req) || '') : ''; } catch {}
+		const installationInfo = (req.jserverLocal || atHome) ? installation(req) : null;
+		res.json({ email: people.status().enabled, local: req.jserverLocal, home: atHome, authenticated: authenticated(req), admin: ownerAdmin(req), configured: Boolean(read(passwordPath, null)),
 			person: browserIdentity(req)?.personName || null,
+			...(scope ? { scope: scope.slice(0, 64) } : {}),
+			...(installationInfo ? { installation: installationInfo } : {}),
 			localPlayback: (req.jserverLocal || atHome) && options.localPlaybackOrigin ? { origin: options.localPlaybackOrigin, instance: options.instanceId } : null });
 	});
 	app.get('/api/auth/email/status', (req, res) => res.json({ enabled: people.status().enabled }));
@@ -247,13 +347,28 @@ export function installAuth(app, options) {
 	});
 	app.get(['/settings', '/settings.html'], localOnly, (req, res) => res.sendFile(path.join(publicDirectory, 'settings.html')));
 	app.get('/api/auth/tunnel', apps.requireAdmin, async (req, res) => res.json(options.tunnelStatus ? await options.tunnelStatus() : { url: null, connected: false }));
-	app.get(['/activity', '/activity.html'], localOnly, (req, res) => res.sendFile(path.join(publicDirectory, 'activity.html')));
-	app.get('/api/activity', apps.requireAdmin, (req, res) => {
-		const config = read(passwordPath, null);
-		const browsers = Object.values(read(sessionPath, {})).filter(entry => entry.expires > Date.now() && entry.version === config?.version).map(({ id, ip, browser, created, expires }) => ({ id, ip, browser, created, expires }));
-		res.json({ ...audit?.snapshot(), browsers: [...browsers, ...people.list().browsers] });
+	app.get(['/activity', '/activity.html'], (req, res, next) => {
+		if (!ownerAdmin(req)) return res.status(403).json({ error: 'Activity is available to installation administrators only.' });
+		res.sendFile(path.join(publicDirectory, 'activity.html'));
 	});
-	for (const file of ['style.css', 'auth.js', 'connection-status.js', 'icon.svg', 'tellybox-logo.png']) app.get('/' + file, (req, res) => res.sendFile(path.join(publicDirectory, file)));
+	app.get('/api/activity', apps.requireAdmin, (req, res) => {
+		res.set('Cache-Control', 'no-store');
+		const config = read(passwordPath, null);
+		const peopleState = people.list();
+		const names = new Map((peopleState.people || []).map(person => [person.id, person.name]));
+		const sessions = Object.values(read(sessionPath, {})).filter(entry => entry.expires > Date.now() && entry.version === config?.version)
+			.map(({ id, ip, browser, created, expires, personId }) => ({ id, ip, browser, created, expires, personId, personName: names.get(personId) || '' }));
+		const emailBrowsers = (peopleState.browsers || []).map(browser => ({ ...browser, personName: names.get(browser.personId) || '' }));
+		const localBrowsers = (peopleState.localBrowsers || []).map(browser => ({ ...browser, localBrowser: true,
+			personName: names.get(browser.personId) || browser.name || '' }));
+		const query = req.query || {};
+		res.json({ ...audit?.snapshot({
+			recentLimit: Number(query.limit) || 100, recentOffset: Number(query.offset) || 0,
+			type: String(query.type || 'all'), q: String(query.q || ''), user: String(query.user || ''),
+			device: String(query.device || ''), date: String(query.date || '')
+		}), browsers: [...sessions, ...emailBrowsers, ...localBrowsers] });
+	});
+	for (const file of ['style.css', 'auth.js', 'connection-status.js', 'icon.svg', 'tellybox-logo.png', 'tellybox-mark.svg', 'tmdb-logo.svg', 'asset-fallback.js']) app.get('/' + file, (req, res) => res.sendFile(path.join(publicDirectory, file)));
 
 	app.post('/api/auth/password', csrf, apps.requireAdmin, async (req, res) => {
 		const password = req.body?.password;
@@ -364,7 +479,7 @@ export function installAuth(app, options) {
 			}
 			return next();
 		}
-		if (['/', '/index.html', '/discover', '/discover.html', '/search', '/search.html'].includes(req.path)) return res.redirect('/login');
+		if (['/', '/index.html', '/discover', '/discover.html', '/search', '/search.html', '/coming-soon', '/coming-soon.html'].includes(req.path)) return res.redirect('/login');
 		res.status(401).json({ error: 'Please sign in to jServer.' });
 	});
 	// Evaluate on every request: a client hint or a previously granted role is not authority.
@@ -378,7 +493,7 @@ export function installAuth(app, options) {
 		if (!canShare(req)) return res.status(403).json({ error: 'Sharing is available to administrators or at home.' });
 		next();
 	});
-	return { viewerAccount: viewer => viewer?.deviceId ? {...viewer,personId:undefined,personName:undefined,...people.device(viewer.deviceId)} : viewer, identity, isLocal: local, isHome: req => local(req) || home(req), revokeOwner: disconnect, validOwner: key => key === 'local' || (key.startsWith('email:') ? people.validOwner(key) : key.startsWith('share:') ? Boolean(options.validShareOwner?.(key)) : key.startsWith('app:') ? apps.validOwner(key) : key.startsWith('home:') ? Boolean(options.homeNetwork?.matches(key.slice(5))) : (() => {
+	return { viewerAccount: viewer => viewer?.deviceId ? {...viewer,personId:undefined,personName:undefined,...people.device(viewer.deviceId)} : viewer, identity, isLocal: local, isHome: req => local(req) || home(req), isOwnerAdmin: ownerAdmin, revokeOwner: disconnect, validOwner: key => key === 'local' || (key.startsWith('email:') ? people.validOwner(key) : key.startsWith('share:') ? Boolean(options.validShareOwner?.(key)) : key.startsWith('app:') ? apps.validOwner(key) : key.startsWith('home:') ? Boolean(options.homeNetwork?.matches(key.slice(5))) : (() => {
 		const config = read(passwordPath, null);
 		const session = read(sessionPath, {})[key];
 		return Boolean(config && session && session.expires > Date.now() && session.version === config.version);

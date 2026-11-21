@@ -20,10 +20,11 @@ test('main prepares a scoped relay lease; worker serves bytes; main never carrie
 	const enrolment = service.registry.createEnrolment();
 	const workerKeys = generateKeyPairSync('ed25519');
 	let started = 0, stopped = 0;
+	const startedSessions = [];
 	const worker = createRelayWorker({ workerId: 'relay-worker-1', mainControlPublicKey: (await import('../relay-media/protocol.mjs')).readPublicKey(service.keys.control.publicPem),
 		mainMediaPublicKey: (await import('../relay-media/protocol.mjs')).readPublicKey(service.keys.media.publicPem),
 		workerPrivateKey: workerKeys.privateKey, players: { probe: async () => ({ duration: 1234, audio: [{ index: 1, label: 'English', selected: true }], subtitles: [{ index: 2, label: 'English', embedded: true, language: 'eng', ordinal: 0 }], subtitleIndex: 2, method: 'Transcode' }),
-			start: async () => { started++; return { read: async file => file.endsWith('.m3u8') ? Buffer.from('#EXTM3U\n#EXTINF:2,\nsegment0.ts\n') : Buffer.from('relay-segment-bytes'), stop: async () => { stopped++; } }; } },
+			start: async session => { started++; startedSessions.push(session); return { read: async file => file.endsWith('.m3u8') ? Buffer.from('#EXTM3U\n#EXTINF:2,\nsegment0.ts\n') : Buffer.from('relay-segment-bytes'), stop: async () => { await new Promise(resolve => setTimeout(resolve, 35)); stopped++; }, diagnostics: () => '' }; } },
 		upstream: { health: async () => true, recordingFile: async () => new Response('') }, clock: () => now, heartbeatEnabled: false, maxSessions: 3 });
 	const control = worker.controlServer(), media = worker.mediaServer();
 	control.listen(0, '127.0.0.1'); media.listen(0, '127.0.0.1');
@@ -35,8 +36,9 @@ test('main prepares a scoped relay lease; worker serves bytes; main never carrie
 	service.approve('relay-worker-1');
 	service.manager.workerHeartbeat({ workerId: 'relay-worker-1', body: { bytesOutTotal: 0, leases: [] } });
 	assert.equal(service.enabled(), true);
+	const capabilities = { videoCodecs: ['hevc'], audioCodecs: ['aac'], maxWidth: 3840, maxHeight: 2160, maxBitrate: 80000000, hevcMain10: true, hls: true, mpegTs: true };
 	const prepared = await service.prepare({ session: { id: 'session-1' }, viewer: { key: accountKey }, itemId: 'dispatch-live-' + 'a'.repeat(36),
-		mode: 'live', params: { channelId: 'b'.repeat(36) }, quality: 8000000, local: false, onRelease: () => {} });
+		mode: 'live', params: { channelId: 'b'.repeat(36) }, quality: 8000000, local: false, capabilities, onRelease: () => {} });
 	assert.equal(prepared.mediaRoute, 'relay');
 	assert.equal(prepared.routeSource, 'lease');
 	assert.match(prepared.url, /^\/relay-media\/v1\/s\/v1\./);
@@ -49,6 +51,7 @@ test('main prepares a scoped relay lease; worker serves bytes; main never carrie
 	const segment = await (await fetch('http://127.0.0.1:' + media.address().port + playlist.split('\n')[2])).text();
 	assert.equal(segment, 'relay-segment-bytes');
 	assert.equal(started, 1);
+	assert.deepEqual(startedSessions.at(-1).options.capabilities, capabilities);
 	assert.ok(service.manager.status().egress.bytesOutTotal >= 0);
 	const shared = await service.prepare({ session: { id: 'share-1' }, viewer: {}, share: true, itemId: 'dispatch-live-' + 'd'.repeat(36),
 		mode: 'live', params: { channelId: 'e'.repeat(36) }, quality: 8000000, onRelease: () => {} });
@@ -60,17 +63,25 @@ test('main prepares a scoped relay lease; worker serves bytes; main never carrie
 	assert.equal(vod.subtitles[0].index, 2);
 	assert.equal(vod.subtitleIndex, 2);
 	assert.equal(vod.position, 42);
-	const replaced = await service.replace(vod.leaseId, { audioIndex: 1, subtitleIndex: 2, position: 99 });
+	const replaced = await service.replace(vod.leaseId, { audioIndex: 1, subtitleIndex: 2, position: 99, local: true });
 	assert.equal(replaced.duration, 1234);
 	assert.equal(replaced.subtitles[0].index, 2);
 	assert.equal(replaced.subtitleIndex, 2);
 	assert.equal(replaced.position, 99);
 	assert.equal(replaced.audio[0].index, 1);
+	assert.match(replaced.url, /^https:\/\/watch\.example\.test\/relay-media\/v1\/s\/v1\./,
+		'a local replacement must stay absolute instead of falling back to the local origin');
 	// Client heartbeat timeout revokes without a second account slot.
 	now += 31000;
 	service.tick();
 	await service.manager._settled();
-	await new Promise(resolve => setTimeout(resolve, 20));
-	assert.ok(stopped >= 1);
-	assert.equal(service.manager.status().sessions, 0);
+	// tick() initiates control-stop HTTP requests outside _settled()'s tracked
+	// heartbeat work. Wait for their observable completion, not a 20 ms race.
+	// The fixture's delayed stop deliberately outlives that former sleep.
+	const cleanupDeadline = performance.now() + 2000;
+	while ((stopped < 1 || service.manager.status().sessions !== 0) && performance.now() < cleanupDeadline) {
+		await new Promise(resolve => setTimeout(resolve, 10));
+	}
+	assert.ok(stopped >= 1, 'the delayed worker stop must finish');
+	assert.equal(service.manager.status().sessions, 0, 'all revoked relay leases must settle within 2 seconds');
 });

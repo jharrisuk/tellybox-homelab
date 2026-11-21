@@ -4,8 +4,8 @@ import {mkdtempSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {parsePlaylist,isNonstop,createDispatcharr} from '../dispatcharr.mjs';
-import {parseEpg,xmltvTime,createDispatcharrGuide} from '../dispatcharr-guide.mjs';
-import {mediaFile,encodingArgs} from '../dispatcharr-player.mjs';
+import {parseEpg,xmltvTime,createDispatcharrGuide,channelView} from '../dispatcharr-guide.mjs';
+import {mediaFile,encodingArgs,probeTargets,probeNeedsMore,livePreset} from '../dispatcharr-player.mjs';
 
 const origin='http://dispatch.test:9191', a='11111111-1111-1111-1111-111111111111',b='22222222-2222-2222-2222-222222222222';
 const channels=[{id:a,name:'BBC',number:'1',epgId:'bbc',nonstop:false},{id:b,name:'24/7 Show',number:'1000',epgId:'loop',nonstop:true}];
@@ -20,6 +20,7 @@ test('channel browsing serves stale metadata immediately, coalesces refreshes an
 	await client.channels();time+=61000;
 	assert.equal((await client.channels())[0].name,'First');assert.equal((await client.channels())[0].name,'First');assert.equal(calls,2);
 	release();assert.equal((await client.channels(true))[0].name,'Updated');assert.equal(calls,2);
+	assert.equal((await client.channels(true))[0].logo,'');
 	assert.doesNotMatch(readFileSync(file+'.channels-cache.json','utf8'),/secret|token|hidden|proxy\/ts/);
 	const restored=createDispatcharr({file,origin,clock:()=>time,fetcher:async()=>{throw Error('offline');}});
 	assert.equal((await restored.channels())[0].name,'Updated');
@@ -39,6 +40,29 @@ test('playlist preserves quoted commas, numbers and groups, excludes other origi
 	assert.equal(result.length,2);assert.equal(result[0].number,'2');assert.equal(result[1].name,'One, Two');assert.equal(result[1].nonstop,true);
 	assert.equal(isNonstop('24/7 Movies'),true);assert.equal(isNonstop('Channel 2470'),false);
 });
+test('channel artwork is text-first and only exposes a same-origin Dispatcharr logo-cache path',()=>{
+	const base={...channels[0],logo:'/api/channels/logos/42/cache/'};
+	assert.equal(channelView(base).Artwork,'/api/dispatcharr/channels/'+a+'/image?v=42');
+	for(const logo of ['','https://evil.test/logo.png','/api/channels/logos/42/cache/?token=secret','/api/channels/logos/42/other/','//evil.test/logo.png']) {
+		assert.equal(channelView({...base,logo}).Artwork,undefined,logo);
+	}
+	const textOnly=channelView({...base,logo:''});
+	assert.equal(textOnly.Name,'BBC');assert.equal(textOnly.ChannelNumber,'1');assert.equal(textOnly.Artwork,undefined);
+	assert.equal(channelView(channels[0]).Artwork,undefined);
+});
+
+test('distinct news channels keep their own provider logo identity',()=>{
+	const bbc={...channels[0],name:'BBC NEWS',number:'300',logo:'/api/channels/logos/221/cache/'};
+	const gb={...channels[1],name:'GB NEWS',number:'303',logo:'/api/channels/logos/224/cache/'};
+	assert.equal(channelView(bbc).Artwork,'/api/dispatcharr/channels/'+a+'/image?v=221');
+	assert.equal(channelView(gb).Artwork,'/api/dispatcharr/channels/'+b+'/image?v=224');
+	assert.notEqual(channelView(bbc).Artwork,channelView(gb).Artwork);
+	const parsed=parsePlaylist(['#EXTM3U',
+		`#EXTINF:-1 tvg-chno="300" tvg-logo="${origin}/api/channels/logos/221/cache/" group-title="UK News",BBC NEWS`,origin+'/proxy/ts/stream/'+a,
+		`#EXTINF:-1 tvg-chno="303" tvg-logo="${origin}/api/channels/logos/224/cache/" group-title="UK News",GB NEWS`,origin+'/proxy/ts/stream/'+b].join('\n'),origin);
+	assert.deepEqual(parsed.map(c=>[c.name,c.logo]),[['BBC NEWS',origin+'/api/channels/logos/221/cache/'],['GB NEWS',origin+'/api/channels/logos/224/cache/']]);
+});
+
 test('XMLTV offsets survive UK summer time, winter time and invalid calendar values',()=>{
 	assert.equal(xmltvTime('20261022190000 +0100'),now);
 	assert.equal(xmltvTime('20261022180000 +0000'),now);
@@ -91,6 +115,31 @@ test('HLS resources cannot traverse directories; supported video remuxes and uns
 	assert.equal(encodingArgs({codec:'h264',bitrate:4000000,quality:8000000}).convert,false);
 	assert.equal(encodingArgs({codec:'hevc',quality:8000000}).convert,true);
 	assert.equal(encodingArgs({codec:'h264',bitrate:12000000,quality:4000000}).convert,true);
+});
+
+test('live capabilities can copy only a bounded compatible source and default to ultrafast',()=>{
+	const caps={videoCodecs:['h264'],audioCodecs:['aac'],maxWidth:1920,maxHeight:1080,maxBitrate:8000000,hevcMain10:false,hls:true,mpegTs:true};
+	const h264=encodingArgs({codec:'h264',pixelFormat:'yuv420p',width:1920,height:1080,bitrate:4000000,quality:8000000,capabilities:caps});
+	assert.equal(h264.convert,false);
+	assert.equal(h264.args[h264.args.indexOf('-c:v')+1],'copy');
+	assert.equal(livePreset('superfast'),'superfast');
+	assert.equal(livePreset('invalid'),'ultrafast');
+	const converted=encodingArgs({codec:'hevc',pixelFormat:'yuv420p10le',width:1920,height:1080,bitrate:4000000,quality:8000000,capabilities:caps});
+	assert.equal(converted.convert,true);
+	assert.equal(converted.args[converted.args.indexOf('-preset')+1],'ultrafast');
+	assert.equal(converted.args[converted.args.indexOf('-threads')+1],'2');
+	const main10={...caps,videoCodecs:['hevc'],hevcMain10:true,maxWidth:3840,maxHeight:2160,maxBitrate:80000000,
+		hevcMaxWidth:3840,hevcMaxHeight:2160,hevcMaxBitrate:80000000,hevcMaxFps:60,hevcMaxLevel:120,
+		hevcProfiles:['main','main10'],hevcPixelFormats:['yuv420p','yuv420p10le'],hevcEvidence:true};
+	assert.equal(encodingArgs({codec:'hevc',profile:'Main 10',level:120,pixelFormat:'yuv420p10le',width:1920,height:1080,frameRate:'25/1',bitrate:4000000,quality:8000000,capabilities:main10}).convert,false);
+	assert.equal(encodingArgs({codec:'h264',pixelFormat:'yuv420p',bitrate:4000000,quality:8000000}).convert,false,'older clients keep the legacy H.264 copy path');
+	assert.equal(encodingArgs({codec:'h264',pixelFormat:'yuv420p',bitrate:4000000,quality:8000000,capabilities:null}).convert,true,'invalid metadata fails closed');
+});
+test('probe warms with 256 KiB and only escalates to 512 KiB when needed',()=>{
+	assert.deepEqual(probeTargets(),[262144,524288]);
+	assert.equal(probeNeedsMore({streams:[{codec_type:'video'}]}),true);
+	assert.equal(probeNeedsMore({streams:[{codec_type:'video'},{codec_type:'audio'},{codec_type:'subtitle'}]}),false);
+	assert.equal(probeNeedsMore({streams:[]}),true);
 });
 
 test('expired sign-in is reported without repeated upstream refresh attempts; API key reconnect restores catalogue',async t=>{

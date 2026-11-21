@@ -20,7 +20,7 @@ const upstream = createWorkerUpstream({ origin: env.DISPATCHARR_URL || 'http://1
 const players = createWorkerPlayers({ upstream, maxSessions: Number(env.MAX_RELAY_SESSIONS || 3) });
 const worker = createRelayWorker({
 	workerId: env.RELAY_WORKER_ID || 'relay-worker',
-	version: env.RELAY_WORKER_VERSION || '0.26.9',
+	version: env.RELAY_WORKER_VERSION || '0.26.15',
 	mainControlPublicKey: readPublicKey(mainControlPem), mainMediaPublicKey: readPublicKey(mainMediaPem), workerPrivateKey: workerKey.privateKey,
 	mainHeartbeatUrl: env.RELAY_MAIN_HEARTBEAT_URL || '', dataDirectory, players, upstream,
 	maxSessions: Number(env.MAX_RELAY_SESSIONS || 3), maxFfmpegJobs: Number(env.MAX_FFMPEG_JOBS || 3),

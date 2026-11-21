@@ -15,7 +15,7 @@ const main = String(env.RELAY_MAIN_ENROL_URL || '').replace(/\/+$/, '');
 const token = env.RELAY_ENROL_TOKEN || (env.RELAY_ENROL_TOKEN_FILE ? readFileSync(env.RELAY_ENROL_TOKEN_FILE, 'utf8').trim() : '');
 if (!main || !token) throw Error('Set RELAY_MAIN_ENROL_URL (private main /internal/worker/enrol) and RELAY_ENROL_TOKEN.');
 const body = { token, workerId: env.RELAY_WORKER_ID || 'relay-worker', publicKey: worker.publicPem,
-	controlUrl: env.RELAY_CONTROL_URL || '', mediaPrefix: '/relay-media', version: env.RELAY_WORKER_VERSION || '0.26.9',
+	controlUrl: env.RELAY_CONTROL_URL || '', mediaPrefix: '/relay-media', version: env.RELAY_WORKER_VERSION || '0.26.14',
 	capabilities: ['live', 'nonstop', 'vod', 'recording', 'catchup', 'range', 'subtitle'],
 	selfTest: { ok: env.RELAY_SELF_TEST_OK === '1', detail: env.RELAY_SELF_TEST_DETAIL || 'enrolment; awaiting authenticated worker health' } };
 const response = await fetch(main, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), redirect: 'error', signal: AbortSignal.timeout(10000) });

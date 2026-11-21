@@ -60,7 +60,7 @@ function webFixture(){
 	}
 	const all=e=>[e,...e.children.flatMap(all)],body=new Element('div'),requests=[],plays=[];
 	const context={Date,encodeURIComponent,JSON,details:{open:true},guideData:{stale:false},canShare:false,
-		localStorage:{getItem:()=>null},element:(...args)=>new Element(...args),guideRange:()=>'',compactAction:()=>new Element('button'),programmeRecording:()=>null,
+		localStorage:{getItem:()=>null},element:(...args)=>new Element(...args),guideRange:()=>'',channelLogo:()=>null,compactAction:()=>new Element('button'),programmeRecording:()=>null,
 		$:()=>body,startPlayback:(...args)=>plays.push(args),api:path=>new Promise(resolve=>requests.push({path,resolve}))};
 	const source=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
 	vm.runInNewContext(source.slice(source.indexOf('function showGuideDetails('),source.indexOf("$('#refreshGuide').onclick")),context);

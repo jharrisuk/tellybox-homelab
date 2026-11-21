@@ -7,7 +7,7 @@ const day=86400000;
 // persisted entries must be refreshed once instead of waiting a full TTL.
 const CACHE_SCHEMA=2;
 const text=value=>typeof value==='string'?value.trim():'';
-export const artworkPath=value=>/^\/[a-zA-Z0-9_-]+\.(jpg|png|webp)$/.test(value||'')?value:null;
+export const artworkPath=value=>/^\/[a-zA-Z0-9_-]+\.(jpg|jpeg|png|webp)$/i.test(value||'')?value:null;
 const date=value=>/^\d{4}-\d{2}-\d{2}$/.test(value||'')&&Number.isFinite(Date.parse(value))?value:undefined;
 export function metadataView(data,type,id) {
 	if(Number(data.id)!==Number(id))throw Error('Metadata identity mismatch.');
@@ -27,6 +27,10 @@ export function metadataView(data,type,id) {
 // Cache entries contain metadata only: never provider URLs, credentials or playback identifiers.
 export function createVodMetadata({lookup,file,clock=Date.now,ttl=7*day,concurrency=3}) {
 	const cache=new Map(),pending=new Map(),queue=[];
+	// Discovery already carries a trusted public TMDB filename. Remember only
+	// those validated paths in a small FIFO so the origin route can resolve
+	// without an upstream detail request or unbounded cache growth.
+	const artworkPaths=new Map(),maxArtworkPaths=5000;
 	let active=0,timer,writing=Promise.resolve();
 	const ready=file?readFile(file,'utf8').then(raw=>{
 		for(const [key,value] of JSON.parse(raw))if(/^(movie|tv)\/\d+$/.test(key)&&value?.data&&value.schema===CACHE_SCHEMA)cache.set(key,value);
@@ -82,8 +86,32 @@ export function createVodMetadata({lookup,file,clock=Date.now,ttl=7*day,concurre
 		return items.map(apply);
 	}
 	async function cached(items) {await ready;return items.map(apply);}
-	async function artwork(type,id,kind) {
-		await ready;return artworkPath(cache.get(`${type}/${Number(id)}`)?.data?.[kind]);
+	// Synchronous availability for the bounded Home artwork warmer: an in-flight
+	// lookup, a settled reusable entry, a settled error and an untouched title are
+	// distinct, without queueing or changing any cache state.
+	function state(item) {
+		const id=key(item);if(!id)return 'none';
+		const entry=cache.get(id);if(entry&&Number(entry.retry)>clock())return entry.data?'cached':'failed';
+		if(pending.has(id))return 'pending';
+		return 'missing';
 	}
-	return {enrich,cached,artwork,status:()=>({cached:[...cache.values()].filter(e=>e.data).length,pending:pending.size})};
+	async function artwork(type,id,kind) {
+		await ready;
+		const key=`${type}/${Number(id)}`;
+		return artworkPath(cache.get(key)?.data?.[kind]||artworkPaths.get(key)?.[kind]);
+	}
+	// Discovery feeds already carry the exact public TMDB filename. Remember that
+	// path so the existing origin artwork route can resolve without an extra
+	// provider detail request. Paths live in a small FIFO, never in the metadata
+	// cache, so they cannot suppress or inflate full metadata enrichment.
+	function remember(type,id,kind,value) {
+		const path=artworkPath(value),number=Number(id);
+		if(!['movie','tv'].includes(type)||!['poster','backdrop'].includes(kind)||!Number.isSafeInteger(number)||number<=0||!path)return false;
+		const key=`${type}/${number}`,existing=artworkPaths.get(key)||{};
+		artworkPaths.delete(key);
+		artworkPaths.set(key,{...existing,[kind]:path});
+		if(artworkPaths.size>maxArtworkPaths)artworkPaths.delete(artworkPaths.keys().next().value);
+		return true;
+	}
+	return {enrich,cached,artwork,remember,state,status:()=>({cached:[...cache.values()].filter(e=>e.data).length,pending:pending.size})};
 }

@@ -2,6 +2,15 @@ import { once } from 'node:events';
 
 const cancelled = reason => reason || Object.assign(Error('Image request closed.'), { name: 'AbortError' });
 
+function sendImageError(res, status, error) {
+	if (res.headersSent) { res.destroy(); return; }
+	res.setHeader('Cache-Control', 'no-store');
+	res.removeHeader?.('ETag');
+	res.setHeader('Content-Type', 'application/json; charset=utf-8');
+	// end avoids Express generating a new validator for the error body.
+	res.status(status).end(JSON.stringify({ error }));
+}
+
 // Copy an image body without leaving a rejected web stream unobserved. A fetch
 // timeout can reject the body after headers have gone; report that once and settle
 // the response instead of letting an unhandled Readable error end the process.
@@ -27,8 +36,7 @@ export async function sendImageBody(body, res, { signal, maxBytes = 5 * 1024 * 1
 		}
 		if (aborted) {
 			if (!res.destroyed && !res.writableEnded) {
-				if (!res.headersSent) res.status(504).json({ error: 'The image request timed out.' });
-				else res.destroy();
+				sendImageError(res, 504, 'The image request timed out.');
 			}
 			if (signal?.reason?.name === 'TimeoutError') logger?.error?.(`${label} proxy timed out:`, signal.reason.name);
 			return;
@@ -38,8 +46,7 @@ export async function sendImageBody(body, res, { signal, maxBytes = 5 * 1024 * 1
 		const timedOut = error?.name === 'TimeoutError' || signal?.reason?.name === 'TimeoutError';
 		const status = error?.status || (timedOut || signal?.aborted ? 504 : 502);
 		if (!res.destroyed && !res.writableEnded) {
-			if (!res.headersSent) res.status(status).json({ error: status === 413 ? 'Image is too large.' : status === 504 ? 'The image request timed out.' : 'The image could not be loaded.' });
-			else res.destroy();
+			sendImageError(res, status, status === 413 ? 'Image is too large.' : status === 504 ? 'The image request timed out.' : 'The image could not be loaded.');
 		}
 		// Client disconnects are normal; real body failures must still be visible.
 		if (!signal?.aborted || timedOut) logger?.error?.(`${label} proxy failed:`, error?.name || 'Error');
@@ -51,9 +58,14 @@ export async function sendImageBody(body, res, { signal, maxBytes = 5 * 1024 * 1
 
 // Shared route for the artwork endpoints. Validation stays with each caller so
 // only a permitted image type and size reaches the response.
+//
+// `onSuccess` runs only after the upstream body passed the status, type and
+// declared-size checks, so a caller can attach a validator (ETag) that an
+// error response can never inherit.
 export async function proxyImage(res, {
 	url, headers = {}, maxBytes = 5 * 1024 * 1024, timeoutMs = 15000, cache = 'private, no-store',
 	allow = /^image\//i, notFound = 404, label = 'Image', logger = console, fetchImpl = fetch, fallbackType = '',
+	onSuccess = null,
 } = {}) {
 	const controller = new AbortController();
 	const timer = setTimeout(() => controller.abort(Object.assign(Error('Image request timed out.'), { name: 'TimeoutError' })), timeoutMs);
@@ -64,21 +76,22 @@ export async function proxyImage(res, {
 		const type = response.headers.get('content-type') || fallbackType;
 		if (!response.ok || !allow.test(type)) {
 			await response.body?.cancel().catch(() => {});
-			return res.sendStatus(notFound);
+			// An upstream failure is never cacheable and must not carry a validator.
+			return sendImageError(res, notFound, 'The image could not be loaded.');
 		}
 		const length = Number(response.headers.get('content-length'));
 		if (Number.isFinite(length) && length > maxBytes) {
 			await response.body?.cancel().catch(() => {});
-			return res.status(413).json({ error: 'Image is too large.' });
+			return sendImageError(res, 413, 'Image is too large.');
 		}
+		if (typeof onSuccess === 'function') onSuccess(res, response);
 		res.set('Cache-Control', cache).type(type);
 		await sendImageBody(response.body, res, { signal: controller.signal, maxBytes, label, logger });
 	} catch (error) {
 		if (res.destroyed || res.writableEnded) return;
 		const timedOut = error?.name === 'TimeoutError' || controller.signal.reason?.name === 'TimeoutError';
 		logger?.error?.(`${label} request failed:`, error?.name || 'Error');
-		if (!res.headersSent) res.status(timedOut ? 504 : 502).json({ error: timedOut ? 'The image request timed out.' : 'The image could not be loaded.' });
-		else res.destroy();
+		sendImageError(res, timedOut ? 504 : 502, timedOut ? 'The image request timed out.' : 'The image could not be loaded.');
 	} finally {
 		clearTimeout(timer);
 		res.off?.('close', close);

@@ -186,3 +186,25 @@ test('browser no-next end view updates without inventing recommendations', () =>
 	assert.ok(findNode(f.host, node => node.textContent === 'You’re up to date'));
 	assert.equal(findNode(f.host, node => node.textContent === 'More to explore'), null);
 });
+
+
+test('browser finished view shows a known next air date without claiming availability', () => {
+	const f = fixture();
+	const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+	const airDate = tomorrow.getFullYear() + '-' + String(tomorrow.getMonth() + 1).padStart(2, '0') + '-' + String(tomorrow.getDate()).padStart(2, '0');
+	f.definitions.setNext(null);
+	f.definitions.setResult({ status: 'caught-up', schedule: { status: 'scheduled', next: { season: 2, episode: 9, title: 'The Next One', airDate } } });
+	f.video.currentTime = 1500;
+	f.video.ended = true;
+	f.run('showNext()');
+	assert.equal(f.host.hidden, false);
+	assert.ok(findNode(f.host, node => node.textContent === 'S2 E9 - The Next One'));
+	assert.ok(findNode(f.host, node => node.textContent === 'Airs Tomorrow'));
+	assert.ok(findNode(f.host, node => node.textContent === 'Not yet available in Tellybox.'));
+	assert.equal(findNode(f.host, node => node.textContent === 'More to explore'), null);
+	const back = findNode(f.host, node => node.textContent === 'Back to series');
+	assert.ok(back && back.focused);
+	f.run("nextResult.schedule={status:'complete',message:'You’ve finished this series.'}; updateEndSchedule();");
+	assert.ok(findNode(f.host, node => node.textContent === 'Series complete'));
+	assert.equal(findNode(f.host, node => node.textContent === 'Airs Tomorrow'), null);
+});

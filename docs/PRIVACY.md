@@ -1,10 +1,10 @@
 # Privacy and data flow
 
-This describes Tellybox HomeLab server 0.26.0 and the official HomeLab Android apps. A self-hosted installation is operated by its owner. The owner decides who can use it and which optional services are connected.
+This describes Tellybox HomeLab server 0.26.38 and the official HomeLab Android apps. A self-hosted installation is operated by its owner. The owner decides who can use it and which optional services are connected.
 
 ## Your own server
 
-Tellybox stores installation settings, service credentials, account and device approvals, favourites, viewing progress, activity records, viewing allowances and caches on the server's configuration volume. Depending on the features used, these records can include email addresses, device names, IP addresses, the titles watched, playback positions and time watched. Administrators can see activity and manage access.
+Tellybox stores installation settings, service credentials, account and device approvals, favourites, viewing progress, activity records, viewing allowances and caches on the server's configuration volume. Depending on the features used, these records can include email addresses, device names, IP addresses, the titles watched, playback positions and time watched. Administrators can see activity and manage access. On a trusted local network or a recognised home connection, a viewer can also see aggregate activity and, where qBittorrent monitoring is configured, an aggregate qBittorrent summary without an administrator session. These show aggregate counts, bandwidth and a limited view of active plays, including each active title and viewer display name, without IP addresses, internal account IDs, raw user agents or individual torrent details.
 
 Browsers and apps keep local information needed to use the selected server, such as session credentials, preferences and downloaded media. A local browser can be recognised and linked to a person without requiring a viewing login. Local access does not mean viewing activity is anonymous to the installation's administrators.
 

@@ -11,7 +11,7 @@
 	}
 	async function catalogueStatus(){
 		try{const response=await fetch('/api/dispatcharr/catalogue');if(!response.ok)throw Error();const data=await response.json();
-			catalogue.textContent=data.indexing?'Updating the streamed catalogue…':data.error||`${Number(data.indexed).toLocaleString()} titles indexed. Refreshes automatically every hour.`;
+			catalogue.textContent=data.indexing?'Updating the streamed catalogue…':data.error||data.persistenceError||`${Number(data.indexed).toLocaleString()} titles indexed. Refreshes automatically every hour.`;
 			const index=data.seriesIndex||{};
 			if(seriesIndex)seriesIndex.textContent=index.running?`Preparing episode lists: ${Number(index.completed||0)} of ${Number(index.total||0)} series. Saved lists stay available.`:
 				index.error||`${Number(index.cached||0)} series ready to open. Local and mixed series, recently opened VOD and a selection of new shows refresh hourly.${index.updated?' Last checked '+new Date(index.updated).toLocaleString()+'.':''}`;
@@ -20,7 +20,10 @@
 		}catch{catalogue.textContent='Catalogue status is unavailable.';}
 	}
 	void catalogueStatus();
-	refresh.onclick=async()=>{refresh.disabled=true;try{const response=await fetch('/api/dispatcharr/catalogue/refresh',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});if(!response.ok)throw Error();catalogue.textContent='Updating the streamed catalogue…';setTimeout(catalogueStatus,1000);}catch{catalogue.textContent='Could not refresh the catalogue. Try again.';refresh.disabled=false;}};
+	refresh.onclick=async()=>{refresh.disabled=true;try{const response=await fetch('/api/admin/cache/refresh',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope:'index'})});
+		if(response.status===401){catalogue.textContent='Sign in to the installation console to refresh shared caches.';refresh.disabled=true;return;}
+		if(response.status===429){catalogue.textContent='Just refreshed. Try again shortly.';refresh.disabled=false;return;}
+		if(!response.ok)throw Error();catalogue.textContent='Updating the streamed catalogue…';setTimeout(catalogueStatus,1000);}catch{catalogue.textContent='Could not refresh the catalogue. Try again.';refresh.disabled=false;}};
 	fetch('/api/dispatcharr/guide-health').then(r=>r.json()).then(data=>{
 		const node=document.querySelector('#dispatcharrGuideHealth');
 		node.textContent=data.available?`${data.current} of ${data.total} channels have a current listing. Checked ${new Date(data.updated).toLocaleTimeString()}.`:'The guide could not be refreshed.';

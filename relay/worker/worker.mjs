@@ -6,6 +6,7 @@ import { mkdir, writeFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { createNonceCache, controlHeaders, resourceAllowed, verifyControlRequest, verifyMediaToken } from '../../server/relay-media/protocol.mjs';
+import { normalizeRelayQuality } from '../../server/relay-media/quality.mjs';
 
 const fail = (message, status = 500, code = 'RELAY_WORKER') => Object.assign(Error(message), { status, code });
 const RESOURCE_CLASSES = new Set(['hls', 'segment', 'file', 'subtitle']);
@@ -49,9 +50,52 @@ function sendJson(res, status, value) {
 	res.end(body);
 }
 function safeToken(value) { return typeof value === 'string' && value.length > 20 && value.length < 4096 && /^[A-Za-z0-9_.-]+$/.test(value); }
+// Diagnostics crossing the control/heartbeat boundary are an allow-listed
+// projection, not the player's object. Raw stderr, URLs, tokens and paths can
+// never be forwarded even if a future player returns them.
+function boundedText(value, limit) {
+	return typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, limit) : '';
+}
+function boundedInt(value) {
+	const number = Number(value);
+	return Number.isFinite(number) ? Math.round(number) : null;
+}
+function playerDiagnostics(session) {
+	let value;
+	try { value = session.player?.diagnostics?.(); } catch { return { text: '', lastErrorCode: '' }; }
+	if (typeof value === 'string') {
+		if (!value) return { text: '', lastErrorCode: '' };
+		try { value = JSON.parse(value); } catch { return { text: '', lastErrorCode: '' }; }
+	}
+	if (!value || typeof value !== 'object' || Array.isArray(value)) return { text: '', lastErrorCode: '' };
+	const failure = value.failure && typeof value.failure === 'object' && !Array.isArray(value.failure)
+		? { category: boundedText(value.failure.category, 40), code: boundedText(value.failure.code, 64),
+			summary: boundedText(value.failure.summary, 200), exitCode: boundedInt(value.failure.exitCode) }
+		: null;
+	const projection = {
+		method: boundedText(value.method, 16),
+		copyMode: value.copyMode === true,
+		windowStart: boundedInt(value.windowStart),
+		windowEnd: boundedInt(value.windowEnd),
+		produced: boundedInt(value.produced),
+		requested: boundedInt(value.requested),
+		exitCode: boundedInt(value.exitCode),
+		...(value.signal ? { signal: boundedText(value.signal, 32) } : {}),
+		...(failure ? { failure } : {})
+	};
+	return { text: JSON.stringify(projection).slice(0, 2048), lastErrorCode: failure?.code || '' };
+}
+function boundedMediaError(error) {
+	const text = String(error?.message || 'Relay media was interrupted.')
+		.replace(/\bhttps?:\/\/\S+/gi, '[url]')
+		.replace(/\b(access_?token|token|api_?key|password|passwd|pwd|auth|authorization|signature|sig|secret)=([^\s&,;"'<>]+)/gi, '$1=[redacted]')
+		.replace(/[ \t]+/g, ' ').trim();
+	return (text || 'Relay media was interrupted.').slice(0, 320);
+}
+function boundedCode(value) { return String(value || 'RELAY_MEDIA').replace(/[^A-Z0-9_]/gi, '').slice(0, 64) || 'RELAY_MEDIA'; }
 
 export function createRelayWorker({
-	workerId, version = '0.26.9', instance = randomUUID(), mainControlPublicKey, mainMediaPublicKey, workerPrivateKey,
+	workerId, version = '0.26.15', instance = randomUUID(), mainControlPublicKey, mainMediaPublicKey, workerPrivateKey,
 	mainHeartbeatUrl = '', mainHeartbeatKeyId = '', dataDirectory = '', players, upstream, fetcher = fetch, clock = Date.now, logger = console,
 	maxSessions = 3, maxFfmpegJobs = 3, heartbeatMs = 10000, freshnessMs = 15000, outageMs = 45000, preparedTtlMs = 30000,
 	maxBitrate = 20000000, heartbeatEnabled = true
@@ -68,10 +112,11 @@ export function createRelayWorker({
 	function mainCut() { return clock() - lastMainOk > outageMs; }
 	function leaseActive(leaseId) { return byLease.get(leaseId) || null; }
 	function sessionView(session) {
+		const diagnostics = playerDiagnostics(session);
 		return { sessionId: session.sessionId, workerSessionId: session.workerSessionId, leaseId: session.leaseId, generation: session.generation,
 			itemId: session.itemId, mode: session.mode, state: session.state, createdAt: session.createdAt, activatedAt: session.activatedAt,
 			leaseUntil: session.leaseUntil, hardEndsAt: session.hardEndsAt, bytesOutTotal: session.bytesOutTotal, resourcesServed: session.resourcesServed,
-			activeResponses: session.controllers.size };
+			activeResponses: session.controllers.size, diagnostics: diagnostics.text, lastErrorCode: session.lastErrorCode || diagnostics.lastErrorCode || '' };
 	}
 	async function stopSession(session, reason = 'stopped') {
 		if (!session || session.state === 'stopped') return { stopped: true, already: true };
@@ -120,9 +165,12 @@ export function createRelayWorker({
 		}
 		if (!isMainFresh()) throw fail('Main control is stale; the worker is refusing new playback.', 503, 'RELAY_CONTROL_STALE');
 		if (sessions.size >= maxSessions + (replacement ? 1 : 0)) throw fail('All relay media slots are busy.', 429, 'RELAY_CAPACITY');
+		const previous = byLease.get(body.leaseId);
+		const quality = normalizeRelayQuality(body.mode, body.quality, previous?.options?.quality);
 		const session = {
 			workerSessionId: randomUUID(), sessionId: payload.sessionId, leaseId: body.leaseId, generation: body.generation, itemId: body.itemId, mode: body.mode,
-			params: body.modeParameters || {}, options: { quality: body.quality, audioIndex: body.audioIndex, subtitleIndex: body.subtitleIndex,
+			params: body.modeParameters || {}, options: { quality, audioIndex: body.audioIndex, subtitleIndex: body.subtitleIndex,
+				capabilities: body.capabilities === undefined ? undefined : body.capabilities,
 				compatibility: Boolean(body.modeParameters?.compatibility), textSubtitles: Boolean(body.modeParameters?.textSubtitles),
 				preferEnglishSubtitles: Boolean(body.modeParameters?.preferEnglishSubtitles), externalSubtitle: null, position: Number(body.position) || 0 },
 			capability: body.capability, payload, externalSubtitle: typeof body.externalSubtitle === 'string' ? body.externalSubtitle.slice(0, 2 * 1024 * 1024) : '',
@@ -143,7 +191,8 @@ export function createRelayWorker({
 		}
 		const response = { workerSessionId: session.workerSessionId, sessionUrl: '/relay-media/v1/s/' + body.capability + '/index.m3u8',
 			method: meta.method || 'HLS', duration: meta.duration || 0, audio: meta.audio || [], subtitles: meta.subtitles || [],
-			subtitleIndex: meta.subtitleIndex ?? -1, position: Number(body.position) || 0, activate: 'first-get', workerId };
+			subtitleIndex: meta.subtitleIndex ?? -1, position: Number(body.position) || 0, quality, activate: 'first-get', workerId,
+			videoCodec: meta.videoCodec || '', audioCodec: meta.audioCodec || 'aac' };
 		sessions.set(session.workerSessionId, session);
 		byLease.set(session.leaseId, session);
 		idempotency.set(idempotencyKey, { state: 'prepared', at: clock(), response });
@@ -164,6 +213,7 @@ export function createRelayWorker({
 				session.options.externalSubtitle = { file, localName: 'external.vtt', index: 1000001, label: 'English · OpenSubtitles' };
 				if (session.options.subtitleIndex === undefined || session.options.subtitleIndex === null) session.options.subtitleIndex = 1000001;
 			}
+			session.options.onStopped = () => { void stopSession(session, 'producer_stopped'); };
 			const player = await effectivePlayers.start(session);
 			session.player = player;
 			session.state = 'active';
@@ -174,7 +224,7 @@ export function createRelayWorker({
 			}
 			return player;
 		})().catch(error => {
-			session.startPromise = null; session.state = 'prepared'; session.lastErrorCode = error.code || 'RELAY_PLAYER';
+			session.startPromise = null; if (session.state !== 'stopped') session.state = 'prepared'; session.lastErrorCode = error.code || 'RELAY_PLAYER';
 			throw error.status ? error : fail('This relay media could not start.', 502, 'RELAY_PLAYER');
 		});
 		return session.startPromise;
@@ -257,7 +307,11 @@ export function createRelayWorker({
 			res.writeHead(200, { 'content-type': mediaType(target.resource), 'content-length': body.length });
 			return res.end(body);
 		} catch (error) {
-			if (!res.headersSent) sendJson(res, error.status || 502, { error: error.status ? error.message : 'Relay media was interrupted.', code: error.code || 'RELAY_MEDIA' });
+			if (!res.headersSent) {
+				if (error.code === 'VOD_COMPATIBILITY_REQUIRED') res.setHeader('x-tellybox-compatibility', 'required');
+				const code = boundedCode(error.code);
+				sendJson(res, error.status || 502, { error: error.status ? boundedMediaError(error) : 'Relay media was interrupted.', code });
+			}
 			else res.destroy();
 		} finally { session.controllers.delete(controller); activeResponses.delete(controller); }
 	}
@@ -311,11 +365,15 @@ export function createRelayWorker({
 	}
 	async function heartbeat() {
 		if (!mainHeartbeatUrl || stopped) return { skipped: true };
-		const leases = [...sessions.values()].filter(session => session.state !== 'stopped').map(session => ({
-			leaseId: session.leaseId, generation: session.generation, seq: session.resourcesServed, bytesOutTotal: session.bytesOutTotal,
-			resourcesServed: session.resourcesServed, activeResponses: session.controllers.size, lastResourceAt: session.lastResourceAt,
-			resourceState: session.state, lastErrorCode: session.lastErrorCode
-		}));
+		const leases = [...sessions.values()].filter(session => session.state !== 'stopped').map(session => {
+			const diagnostics = playerDiagnostics(session);
+			return {
+				leaseId: session.leaseId, generation: session.generation, seq: session.resourcesServed, bytesOutTotal: session.bytesOutTotal,
+				resourcesServed: session.resourcesServed, activeResponses: session.controllers.size, lastResourceAt: session.lastResourceAt,
+				resourceState: session.state, lastErrorCode: session.lastErrorCode || diagnostics.lastErrorCode || '',
+				diagnostics: diagnostics.text
+			};
+		});
 		const body = { workerId, workerInstance: instanceId, version, capabilities: ['live', 'nonstop', 'vod', 'recording', 'catchup'],
 			health: { upstream: upstreamChecked ? upstreamHealthy : false, mainFresh: isMainFresh(), sessions: sessions.size, maxSessions },
 			capacity: { sessions: sessions.size, maxSessions, ffmpegJobs: sessions.size, maxFfmpegJobs }, resources: { bytesOutTotal, resourcesServed },

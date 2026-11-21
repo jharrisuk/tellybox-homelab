@@ -35,5 +35,16 @@ export function createApplyController({ directory, start, stop, ready, materiali
 			throw Object.assign(Error('New settings did not become ready. The previous configuration was restored.'), { status: 503 });
 		} finally { applying = false; }
 	}
-	return { apply, boot: () => apply(applied || defaultConfig()), status: () => ({ applying, appliedRevision: applied?.revision ?? -1, lastApplyFailed: lastFailure }) };
+	async function restart() {
+		if (applying) throw Object.assign(Error('An apply is already in progress.'), { status: 409 });
+		applying = true;
+		try {
+			await stop();
+			await launch(applied || defaultConfig());
+		} catch (error) {
+			try { await stop(); } catch {}
+			throw error;
+		} finally { applying = false; }
+	}
+	return { apply, restart, boot: () => apply(applied || defaultConfig()), status: () => ({ applying, appliedRevision: applied?.revision ?? -1, lastApplyFailed: lastFailure }) };
 }

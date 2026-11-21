@@ -59,6 +59,7 @@ test('activity separates downloads from watching and hides the download section 
 	const downloading={purpose:'download',title:'Downloading episode',bytes:50,totalBytes:100,ip:'192.0.2.1',mediaRoute:'local',updated:Date.now()};
 	const snapshot={active:[{title:'Watching episode',state:'playing'},downloading],downloads:[downloading],recent:[],browsers:[],stats:{active:1,plays:1,remoteIps:0,failed:0}};
 	const context={document,Node:Element,setInterval(){},fetch:async()=>({ok:true,json:async()=>snapshot})};
+	vm.runInNewContext(readFileSync(new URL('../public/activity-summary.js',import.meta.url),'utf8'),context);
 	vm.runInNewContext(readFileSync(new URL('../public/activity.js',import.meta.url),'utf8'),context);await tick();
 	assert.equal(nodes['#downloadingSection'].hidden,false);
 	assert.ok(!all(nodes['#watching']).some(e=>e.textContent==='Downloading episode'));

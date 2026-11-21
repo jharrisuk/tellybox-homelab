@@ -14,7 +14,7 @@ export function createRemoteControls(directory) {
 		if(viewer?.local||viewer?.home)return '';
 		const policy=status();
 		if(!policy.enabled)return 'Remote viewing is temporarily paused by the owner. Please try again later.';
-		if(!policy.vod&&/^dispatch-(movie-\d+|episode-\d+-\d+)$/.test(media.itemId||''))return 'IPTV films and series are currently available only at home.';
+		if(!policy.vod&&/^dispatch-(movie-\d+|episode-\d+-\d+|series-\d+)$/.test(media.itemId||''))return 'IPTV films and series are currently available only at home.';
 		if(!policy.nonstop&&media.nonstop)return '24/7 channels are currently available only at home.';
 		return '';
 	}

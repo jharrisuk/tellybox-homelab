@@ -6,7 +6,10 @@ const source=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
 test('web catch-up progress uses the programme duration, not the short live buffer',()=>{
 	const now=Date.now(),saved=new Map(),playing={Id:'catchup-test',Type:'Catchup',StartDate:new Date(now-300000).toISOString(),EndDate:new Date(now+300000).toISOString()};
 	const context={Date,state:{playing},casting:{active:false},video:{duration:60,ended:true},playbackPosition:()=>59,
-		localStorage:{getItem:key=>saved.get(key),setItem:(key,value)=>saved.set(key,value)}};
+		localStorage:{getItem:key=>saved.get(key),setItem:(key,value)=>saved.set(key,value)},
+		// Local/at-home viewer: the browser record is trusted. The remote-account
+		// guard is covered in web-perf-125.
+		browserProgressTrusted:()=>true};
 	vm.runInNewContext(source.slice(source.indexOf('function saveProgress()'),source.indexOf('async function report(')),context);
 	context.saveProgress();assert.equal(saved.get('jimbo-progress-catchup-test'),'59');assert.equal(saved.has('tellybox-watched-catchup-test'),false);
 	playing.StartDate=new Date(now-700000).toISOString();playing.EndDate=new Date(now-100000).toISOString();context.playbackPosition=()=>599;

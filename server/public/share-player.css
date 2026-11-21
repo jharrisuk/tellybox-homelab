@@ -27,6 +27,14 @@ select { display: block; width: 100%; margin-top: 6px; background: #1a1e19; bord
 footer { border-top: 1px solid #30372e; padding-top: 20px; margin-top: 32px; font-size: 12px; }
 @media(max-width: 600px) { main { padding: 20px 16px 32px; } header { margin-bottom: 32px; } .settings { gap: 12px; } label { flex-basis: 140px; } }
 
+/* Branded loading ident, with a still alternative for reduced motion. */
+.share-loading { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:0; background:#080a08; pointer-events:none; }
+.share-loading[hidden] { display:none; }
+.share-loading img { width:88px; height:88px; filter:drop-shadow(0 0 22px #c7ed8928); animation:tellybox-breathe 1.5s ease-in-out infinite alternate; }
+.loading-dots { color:#c7ed89; letter-spacing:9px; font-size:15px; padding-left:9px; }
+@keyframes tellybox-breathe { from { opacity:.65; filter:drop-shadow(0 0 10px #c7ed8918); } to { opacity:1; filter:drop-shadow(0 0 28px #c7ed8938); } }
+@media(prefers-reduced-motion: reduce) { .share-loading img { animation:none; } }
+
 section button { display:block; width:100%; text-align:left; margin:8px 0; padding:14px 18px; }
 
 /* Fullscreen playback: fill the screen, keep the picture centred, clear the safe areas. */

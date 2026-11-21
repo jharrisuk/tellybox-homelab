@@ -20,14 +20,14 @@ test('title matching rejects ambiguous, adult and wrong media matches',()=>{
 	assert.equal(exactChartMatch([row],'A Story','tv'),null);assert.equal(exactChartMatch([{...row,adult:true}],'A Story','movie'),null);
 });
 test('weekly, genre and provider feeds use distinct upstream filters and refresh availability',async()=>{
-	const routes=[];let status=1;const service=createTrending({call:async route=>{routes.push(route);return {results:[{id:1,mediaType:'movie'},{id:1,mediaType:'movie'},{id:2,adult:true}]};},view:i=>({...i,type:'movie'}),enrich:async items=>items.map(i=>({...i,status}))});
+	const routes=[];let status=1;const service=createTrending({call:async route=>{routes.push(route);return {results:[{id:1,mediaType:'movie',title:'Week title'},{id:1,mediaType:'movie',title:'Week title'},{id:2,adult:true,mediaType:'movie',title:'Adult'}]};},view:i=>({...i,type:'movie'}),enrich:async items=>items.map(i=>({...i,status}))});
 	const week=await service.trending('week-movie');assert.equal(week.items.length,1);assert.ok(routes[0].includes('timeWindow=week'));status=5;assert.equal((await service.trending('week-movie')).items[0].status,5);assert.equal(routes.length,1);
 	await service.trending('docs-movie');assert.ok(routes[1].includes('genre=99'));
 	await service.trending('apple-popular-movie');const params=new URL(routes[2],'https://test').searchParams;assert.equal(params.get('watchRegion'),'GB');assert.equal(params.get('watchProviders'),'350');assert.equal(params.has('watchMonetizationTypes'),false);assert.equal(params.get('sortBy'),'popularity.desc');
 	await assert.rejects(service.trending('../secret'));
 });
 test('concurrent charts coalesce and failed refresh keeps clearly marked cached data',async()=>{
-	let count=0,time=Date.now(),broken=false;const service=createTrending({now:()=>time,call:async()=>{count++;await new Promise(r=>setTimeout(r,5));if(broken)throw Error('offline');return {results:[]};},view:i=>i});
+	let count=0,time=Date.now(),broken=false;const service=createTrending({now:()=>time,call:async()=>{count++;await new Promise(r=>setTimeout(r,5));if(broken)throw Error('offline');return {results:[{id:1,mediaType:'tv',title:'Cached title'}]};},view:(i,type)=>({...i,type})});
 	await Promise.all([service.trending('week-tv'),service.trending('week-tv')]);assert.equal(count,1);broken=true;time+=3600001;assert.equal((await service.trending('week-tv')).stale,true);await new Promise(r=>setTimeout(r,10));assert.equal(count,2);await service.trending('week-tv');assert.equal(count,2);
 });
 

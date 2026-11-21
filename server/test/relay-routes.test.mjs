@@ -38,13 +38,20 @@ test('relay session never falls through to home media for share or cast; cast re
 	t.after(() => { server.closeAllConnections?.(); server.close(); control.closeAllConnections?.(); control.close(); dispatcharr.closeAllConnections?.(); dispatcharr.close(); });
 	front.use((await import('../server.mjs')).app);
 	const base = 'http://127.0.0.1:' + server.address().port;
+	const page = await fetch(base + '/');
+	const csp = page.headers.get('content-security-policy') || '';
+	assert.match(csp, /media-src .*https:\/\/watch\.example\.test/);
+	assert.match(csp, /connect-src .*https:\/\/watch\.example\.test/);
+	assert.ok(!csp.includes('*'), 'CSP must not contain a wildcard');
 	const post = (route, body) => fetch(base + route, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: base }, body: JSON.stringify(body) });
-	const play = await post('/api/play', { id: channelId, relayMedia: true, quality: 8000000, position: 30 });
+	const capabilities = { videoCodecs: ['hevc'], audioCodecs: ['aac'], maxWidth: 3840, maxHeight: 2160, maxBitrate: 80000000, maxFps: 30, hevcMaxWidth: 1920, hevcMaxHeight: 1080, hevcMaxBitrate: 8000000, hevcMaxFps: 30, hevcMain10: true, hls: true, mpegTs: true };
+	const play = await post('/api/play', { id: channelId, relayMedia: true, quality: 8000000, position: 30, capabilities });
 	assert.equal(play.status, 200, await play.clone().text());
 	const data = await play.json();
 	assert.equal(data.mediaRoute, 'relay');
 	assert.match(data.url, /\/relay-media\/v1\/s\//);
 	assert.equal(prepared.length, 1);
+	assert.deepEqual(prepared[0].capabilities, { ...capabilities, h264GeometryEvidence: true });
 	const mainStream = await fetch(base + '/stream/' + data.session + '/index.m3u8');
 	assert.equal(mainStream.status, 410, 'a relay session never serves main media bytes');
 	const cast = await post('/api/sessions/' + data.session + '/cast', {});
@@ -65,4 +72,15 @@ test('relay session never falls through to home media for share or cast; cast re
 	const oldClient = await post('/api/play', { id: channelId, quality: 8000000 });
 	assert.equal(oldClient.status, 409);
 	assert.equal((await oldClient.json()).code, 'RELAY_CLIENT_UNSUPPORTED');
+	// Actual /api/play replacement contract: the effective ceiling is normalized
+	// per mode and echoed, so an Auto client does not lose it on retry/seek.
+	for (const [quality, expected] of [[0, 20000000], [1234, 20000000], [8000000, 8000000], [4000000, 4000000], [2000000, 2000000]]) {
+		const response = await post('/api/play', { id: channelId, relayMedia: true, quality, replaceSession: data.session, position: 31 });
+		assert.equal(response.status, 200, await response.clone().text());
+		const body = await response.json();
+		assert.equal(body.quality, expected, 'replacement quality for ' + quality);
+		assert.equal(body.replaced, true);
+	}
+	const preserved = await post('/api/play', { id: channelId, relayMedia: true, replaceSession: data.session, position: 32 });
+	assert.equal((await preserved.json()).quality, 2000000, 'absent replacement preserves the current ceiling');
 });

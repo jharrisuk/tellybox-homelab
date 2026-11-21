@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,rm,readFile} from 'node:fs/promises';
+import {mkdtemp,mkdir,rm,readFile} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {vodView,mergeLibrary,mergeEpisodes,createVodLibrary,ratingValue} from '../vod-library.mjs';
@@ -26,6 +26,7 @@ test('VOD availability preserves local requests and media identity; categories, 
 		const local=[{Id:'local',Name:'Local nature',Type:'Movie',Genres:['Documentary'],ProviderIds:{Tmdb:'7'},PremiereDate:'2026-10-10',Ratings:[{source:'IMDb',value:8,max:10}]}];
 		const d={status:()=>({connected:true}),api:async route=>({results:route.includes('/series/')?[{id:2,name:'Nature show',tmdb_id:7,year:2026}]:[{id:1,name:'Nature',tmdb_id:7,genre:'Documentary',year:2026},{id:3,name:'Other nature',tmdb_id:8,genre:'Documentary',year:2026},{id:4,name:'Future',tmdb_id:9,year:2027}],next:null})};
 		const lib=createVodLibrary({file:path.join(directory,'cache.json'),dispatcharr:d,localItems:async()=>local,clock:()=>now});await lib.refresh();
+		assert.equal(typeof lib.all,'function');assert.ok((await lib.all()).length >= 3);
 		const result=await lib.availability([{id:7,type:'movie',watchId:'local',requestable:true},{id:7,type:'tv',requestable:true},{id:99,type:'movie'}]);
 		assert.equal(result[0].vodId,'dispatch-movie-1');assert.equal(result[0].watchId,'local');assert.equal(result[0].requestable,true);assert.equal(result[1].vodId,'dispatch-series-2');assert.equal(result[2].vodAvailable,undefined);
 		const list=await lib.list({type:'movies',genre:'Documentary',sort:'imdb'});assert.equal(list.total,2);assert.equal(list.items[0].Id,'local');assert.equal(list.items[1].Id,'dispatch-movie-3');
@@ -43,7 +44,8 @@ test('Discover finds local titles without Seerr sync and avoids remakes, type co
 	const directory=await mkdtemp(path.join(os.tmpdir(),'local-discover-'));t.after(()=>rm(directory,{recursive:true,force:true}));
 	const local=[{Id:'local-show',Name:'The same title',Type:'Series',ProviderIds:{Tmdb:'55'}},
 		{Id:'ambiguous-a',Type:'Series',ProviderIds:{Tmdb:'88'}},{Id:'ambiguous-b',Type:'Series',ProviderIds:{Tmdb:'88'}}];
-	const options={file:path.join(directory,'cache.json'),dispatcharr:{status:()=>({connected:false})},localItems:async()=>local};
+	const options={file:path.join(directory,'cache.json'),dispatcharr:{status:()=>({connected:false})},localItems:async()=>local,
+		localEpisodes:async id=>id==='local-show'?[{Id:'local-episode',Name:'Pilot',Type:'Episode',ParentIndexNumber:1,IndexNumber:1}]:[]};
 	const lib=createVodLibrary(options);
 	const inputs=[{id:55,type:'tv',title:'The same title',watchId:null,statusLabel:'Not requested',requestable:true},
 		{id:55,type:'movie'},{id:66,type:'tv',title:'The same title'},{id:88,type:'tv'}];
@@ -52,6 +54,23 @@ test('Discover finds local titles without Seerr sync and avoids remakes, type co
 	assert.equal(inputs[0].watchId,null);for(const row of rows.slice(1))assert.equal(row.watchId,undefined);
 	const offline=createVodLibrary({...options,localItems:async()=>{throw Error('Jellyfin unavailable');}});
 	assert.deepEqual(await offline.availability(inputs),inputs);
+});
+test('local watch lists exclude missing films and zero-episode series while keeping playable local titles',async()=>{
+	const directory=await mkdtemp(path.join(os.tmpdir(),'local-watch-'));
+	try{
+		const local=[{Id:'local-film',Name:'Local film',Type:'Movie',ProviderIds:{Tmdb:'11'}},
+			{Id:'missing-film',Name:'Missing film',Type:'Movie',IsMissing:true,ProviderIds:{Tmdb:'12'}},
+			{Id:'empty-series',Name:'Empty series',Type:'Series',ChildCount:0,ProviderIds:{Tmdb:'21'}},
+			{Id:'playable-series',Name:'Playable series',Type:'Series',ChildCount:2,ProviderIds:{Tmdb:'22'}}];
+		const lib=createVodLibrary({file:path.join(directory,'cache.json'),dispatcharr:{status:()=>({connected:false})},localItems:async()=>local,localItem:async()=>null,
+			localEpisodes:async id=>id==='playable-series'?[{Id:'local-episode',Name:'Pilot',Type:'Episode',ParentIndexNumber:1,IndexNumber:1}]:[]});
+		const movies=await lib.list({type:'movies'});assert.deepEqual(movies.items.map(i=>i.Id),['local-film']);
+		const series=await lib.list({type:'tvshows'});assert.deepEqual(series.items.map(i=>i.Id),['playable-series']);
+		const availability=await lib.availability([{id:'11',type:'movie'},{id:'21',type:'tv'},{id:'22',type:'tv'}]);
+		assert.equal(availability[0].watchId,'local-film');
+		assert.equal(availability[1].watchId,undefined);
+		assert.equal(availability[2].watchId,'playable-series');
+	}finally{await rm(directory,{recursive:true,force:true});}
 });
 test('episode merge fills gaps, keeps local copies and carries the canonical series identity',()=>{
 	const episode=(id,season,number)=>({Id:id,Name:id,Type:'Episode',ParentIndexNumber:season,IndexNumber:number});
@@ -69,6 +88,95 @@ test('catalogue paginates, persists safe views and retains its last complete ind
 		failure=true;now+=700000;await lib.refresh();const result=await lib.list({});assert.equal(result.total,2);assert.match(result.notice,/could not be refreshed/);assert.ok(!result.notice.includes('private'));assert.equal(calls,4);
 	}finally{await rm(directory,{recursive:true,force:true});}
 });
+test('catalogue follows provider pages beyond the old 300-page limit',async()=>{
+	const directory=await mkdtemp(path.join(os.tmpdir(),'vod-page-limit-'));
+	try {
+		let calls=0;
+		const d={status:()=>({connected:true}),api:async route=>{
+			calls++;
+			if(route.includes('/series/'))return {results:[],next:null};
+			const page=Number(new URL(route,'http://catalogue.test').searchParams.get('page'));
+			return {results:[{id:page,name:'Title '+page}],next:page<340?'next':null};
+		}};
+		const lib=createVodLibrary({dispatcharr:d,file:path.join(directory,'catalogue.json'),clock:()=>Date.now(),localItems:async()=>[],localItem:async()=>null,localEpisodes:async()=>[]});
+		await lib.refresh();
+		const result=await lib.list({});
+		assert.equal(result.total,340);assert.equal(result.notice,'');assert.equal(calls,341);
+	}finally{await rm(directory,{recursive:true,force:true});}
+});
+
+test('a successful fetch is not reported as stale when only the cache write fails',async()=>{
+	const directory=await mkdtemp(path.join(os.tmpdir(),'vod-save-failure-'));
+	const file=path.join(directory,'catalogue.json');
+	try {
+		await mkdir(file+'.tmp');
+		const d={status:()=>({connected:true}),api:async route=>route.includes('/series/')?{results:[],next:null}:{results:[{id:1,name:'Saved in memory'}],next:null}};
+		const lib=createVodLibrary({dispatcharr:d,file,clock:()=>Date.now(),localItems:async()=>[],localItem:async()=>null,localEpisodes:async()=>[]});
+		await lib.refresh();
+		const status=lib.status();
+		assert.equal(status.error,'');
+		assert.match(status.persistenceError,/could not be saved/);
+		const result=await lib.list({});
+		assert.equal(result.total,1);assert.equal(result.notice,'');
+		await rm(file+'.tmp',{recursive:true,force:true});
+		await lib.refresh();
+		assert.equal(lib.status().persistenceError,'');
+	}finally{await rm(directory,{recursive:true,force:true});}
+});
+
+test('a later successful catalogue fetch clears the stale warning',async()=>{
+	const directory=await mkdtemp(path.join(os.tmpdir(),'vod-retry-'));
+	try {
+		let fail=true;
+		const d={status:()=>({connected:true}),api:async route=>{
+			if(fail)throw Error('provider offline');
+			return route.includes('/series/')?{results:[],next:null}:{results:[{id:1,name:'Back again'}],next:null};
+		}};
+		const lib=createVodLibrary({dispatcharr:d,file:path.join(directory,'catalogue.json'),clock:()=>Date.now(),localItems:async()=>[]});
+		await lib.refresh();
+		assert.match((await lib.list({})).notice,/could not be refreshed/);
+		fail=false;
+		await lib.refresh();
+		const result=await lib.list({});
+		assert.equal(result.notice,'');assert.equal(result.total,1);
+	}finally{await rm(directory,{recursive:true,force:true});}
+});
+
+test('local-only views do not display or trigger the streamed catalogue warning',async()=>{
+	const directory=await mkdtemp(path.join(os.tmpdir(),'vod-local-scope-'));
+	try {
+		const local=[{Id:'local-one',Name:'Local only',Type:'Movie'}];
+		let now=Date.now(),calls=0;
+		const d={status:()=>({connected:true}),api:async()=>{calls++;throw Error('provider offline');}};
+		const lib=createVodLibrary({dispatcharr:d,file:path.join(directory,'catalogue.json'),clock:()=>now,localItems:async()=>local});
+		await lib.refresh();
+		const streamedView=await lib.list({source:'streamed'});
+		assert.match(streamedView.notice,/could not be refreshed/);
+		const afterStreamed=calls;
+		now+=120000;
+		const localView=await lib.list({source:'local'});
+		assert.equal(localView.total,1);assert.equal(localView.notice,'');assert.equal(localView.indexing,false);
+		assert.equal(calls,afterStreamed,'a local-only view must not start a streamed refresh');
+	}finally{await rm(directory,{recursive:true,force:true});}
+});
+
+test('deleting a local item clears its cached episode without setting the catalogue warning',async()=>{
+	const directory=await mkdtemp(path.join(os.tmpdir(),'vod-local-delete-'));
+	try {
+		const series={Id:'local-series',Name:'Local show',Type:'Series'};
+		const episode={Id:'local-episode',Name:'Deleted episode',Type:'Episode',SeriesId:'local-series',ParentIndexNumber:1,IndexNumber:1};
+		const d={status:()=>({connected:false})};
+		const lib=createVodLibrary({dispatcharr:d,file:path.join(directory,'catalogue.json'),clock:()=>Date.now(),
+			localItems:async()=>[series],localItem:async id=>id===series.Id?series:null,localEpisodes:async()=>[episode]});
+		assert.deepEqual((await lib.episodes(series.Id)).items.map(item=>item.Id),['local-episode']);
+		lib.removedLocal('local-episode');
+		assert.deepEqual((await lib.episodes(series.Id)).items,[]);
+		assert.equal(lib.status().error,'');
+		assert.equal(lib.status().persistenceError,'');
+		await lib.flushIndex();
+	}finally{await rm(directory,{recursive:true,force:true});}
+});
+
 test('VOD seek manifests cover the exact duration and container detection rejects arbitrary text',()=>{
 	const text=vodManifest(9.2);assert.match(text,/#EXT-X-PLAYLIST-TYPE:VOD/);assert.match(text,/#EXTINF:1.200,\nsegment000000002.ts/);assert.match(text,/#EXT-X-ENDLIST/);assert.throws(()=>vodManifest(Infinity));
 	assert.equal(sniffContainer(Buffer.from([0x1a,0x45,0xdf,0xa3])),'matroska');assert.throws(()=>sniffContainer(Buffer.from('file:///etc/passwd')));

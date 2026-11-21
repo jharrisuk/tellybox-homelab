@@ -5,11 +5,22 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createSetup } from './admin.mjs';
 import { createApplyController } from './apply.mjs';
+import { createRestartSupervisor } from './restart-supervisor.mjs';
+import { assertSetupUiBundle } from './ui-bundle.mjs';
+
+// Fail fast rather than publish a listener whose API answers while the setup page 404s.
+try { assertSetupUiBundle(); }
+catch (error) {
+	console.error(error.code === 'SETUP_UI_BUNDLE_MISSING' ? error.message : 'Tellybox setup UI bundle could not be verified. Rebuild from this source tree or restore homelab/public.');
+	process.exit(1);
+}
 
 const directory = path.resolve(process.env.HOMELAB_DATA || './private');
 let child, stopping = false;
 const status = () => ({ running: Boolean(child && child.exitCode === null && child.signalCode === null), ...controller.status() });
+const supervisor = createRestartSupervisor({ restart: () => controller.restart(), status });
 async function stop() {
+	supervisor.cancel();
 	if (!child || !child.pid || child.exitCode !== null || child.signalCode !== null) return;
 	const current = child, exited = once(current, 'exit'); current.kill('SIGTERM');
 	const timer = setTimeout(() => current.kill('SIGKILL'), 5000);
@@ -17,11 +28,16 @@ async function stop() {
 }
 const controller = createApplyController({ directory, stop,
 	start: async environment => {
+		supervisor.startup();
 		const instance = randomUUID();
 		const env = { ...process.env, ...environment, HOMELAB_INSTANCE: instance };
 		child = spawn(process.execPath, ['server.mjs'], { cwd: path.dirname(fileURLToPath(new URL('../server.mjs', import.meta.url))), env, stdio: ['ignore', 'inherit', 'inherit'] });
-		child.on('error', () => console.error('Media process could not start. Setup remains available.'));
-		child.on('exit', () => { if (!controller.status().applying && !stopping) console.error('Media process stopped. Check setup and apply again.'); });
+		child.on('error', () => { console.error('Media process could not start. Setup remains available.'); supervisor.schedule(); });
+		child.on('exit', () => {
+			if (stopping || controller.status().applying) return;
+			console.error('Media process stopped. Check setup and apply again if it does not recover.');
+			supervisor.schedule();
+		});
 		return { process: child, instance };
 	},
 	ready: async ({ process: current, instance }) => {
@@ -34,7 +50,16 @@ const controller = createApplyController({ directory, stop,
 		throw Error('Media process did not become ready.');
 	}
 });
-const setup = createSetup({ directory, apply: controller.apply, status, allowedHosts:process.env.SETUP_ALLOWED_HOSTS || '' });
+const applyWithRecovery = async config => {
+	try { return await controller.apply(config); }
+	finally {
+		// A child that exits after readiness must not leave the installation down
+		// simply because the apply call itself completed.
+		if (!status().running) supervisor.schedule();
+	}
+};
+const setup = createSetup({ directory, apply: applyWithRecovery, status, allowedHosts:process.env.SETUP_ALLOWED_HOSTS || '' });
 const listener = setup.app.listen(Number(process.env.SETUP_PORT || 8990), process.env.SETUP_BIND || '127.0.0.1', () => console.log('Tellybox setup is available on the configured private binding, port ' + (process.env.SETUP_PORT || 8990) + '. First setup code: bootstrap.json in the configuration directory (read locally; do not publish).'));
 await controller.boot().catch(() => console.error('Media is not ready. Use the setup page to configure this installation.'));
-for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, async () => { stopping = true; await stop(); listener.close(); process.exit(0); });
+if (!status().running && controller.status().appliedRevision >= 0) supervisor.schedule();
+for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, async () => { stopping = true; supervisor.dispose(); await stop(); listener.close(); process.exit(0); });

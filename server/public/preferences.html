@@ -1,15 +1,15 @@
 <!doctype html>
 <html lang="en">
-<head>
+<head><script src="/admin-nav.js"></script>
 	<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-	<meta name="theme-color" content="#101310"><title>Watching settings · Tellybox</title>
+	<meta name="theme-color" content="#101310"><title>Watching settings &middot; Tellybox</title>
 	<link rel="icon" href="/icon.svg"><link rel="stylesheet" href="/style.css">
-	<script src="/viewer-preferences.js" defer></script>
+	<script src="/navigation.js" defer></script><script src="/viewer-preferences.js" defer></script>
 </head>
 <body class="settings-page">
-	<header class="settings-header"><a class="brand" href="/"><img class="brand-logo" src="/tellybox-logo.png" alt="Tellybox"></a><a class="button quiet" href="/">Back to watching</a></header>
+	<header class="topbar"><a class="brand" href="/" aria-label="Tellybox home"><img class="brand-logo" src="/tellybox-logo.png" alt="Tellybox"></a><button class="menu-toggle" id="menuToggle" aria-controls="siteNavigation" aria-expanded="false"><span class="menu-icon" aria-hidden="true">&#9776;</span><span>Menu</span></button><div id="siteNavigation" class="navigation-panel"><nav aria-label="Primary"><a class="nav-item" href="/">Home</a><a class="nav-item" href="/discover">Discover</a><a class="nav-item nav-coming" href="/coming-soon">Coming soon</a><a class="nav-item" href="/?view=movies">Films</a><a class="nav-item" href="/?view=tvshows">Series</a><a class="nav-item" href="/?view=livetv">Live TV</a><a class="nav-item" href="/?view=nonstop">24/7</a><a class="nav-item" href="/?view=recordings">Recordings</a><a class="nav-item" href="/search">Search</a><a class="nav-item" href="/activity">Activity</a></nav><div class="account-actions"><a href="/settings" id="remoteSettings">Settings</a></div></div></header>
 	<main class="settings-shell">
-		<p class="eyebrow">MAKE YOURSELF AT HOME</p><h1>Watching settings</h1><p class="settings-intro">These preferences belong to this browser. Leave a choice alone to follow the server default; change it to save your own choice. They do not change server administration.</p>
+		<p class="eyebrow">MAKE YOURSELF AT HOME</p><h1>Watching settings</h1><p class="settings-intro">These preferences belong to this browser. Leave a choice alone to follow the server default; change it to save your own choice. They do not change server administration.</p><p class="settings-back"><a href="/">&larr; Back to watching</a></p>
 		<section class="settings-box" aria-labelledby="browserPreferences">
 			<div class="settings-heading"><div><h2 id="browserPreferences">Playback preferences</h2><p>Shared with the player in this browser. Reset any choice to follow the server again.</p></div></div>
 			<label class="preference-row"><span><strong>English subtitles</strong><small>Choose the first available English track when a title starts. You can still change it in the player.</small></span><input id="englishSubtitles" type="checkbox"></label>
@@ -24,3 +24,4 @@
 	<footer><a class="credits-link" href="/legal.html">Credits &amp; licences</a></footer>
 </body>
 </html>
+

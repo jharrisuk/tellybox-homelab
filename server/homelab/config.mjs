@@ -6,7 +6,7 @@ import { services } from './services.mjs';
 
 const fail = message => Object.assign(Error(message), { status: 400 });
 export function defaultConfig() {
-	return { version: 1, revision: 0, apps: { edition: 'public', packageName: '' }, network: { publicOrigin: '', localOrigin: '', localNetworks: [], localHosts: ['localhost', '127.0.0.1'], trustedProxies: [], homeTrustedProxy: '', homeIpEndpoint: '', clientIpHeader: 'x-forwarded-for' }, services: Object.fromEntries(services.map(s => [s.id, { enabled: false }])) };
+	return { version: 1, revision: 0, apps: { edition: 'public', packageName: '' }, network: { publicOrigin: '', localOrigin: '', assetCdnOrigin: '', localNetworks: [], localHosts: ['localhost', '127.0.0.1'], trustedProxies: [], homeTrustedProxy: '', homeIpEndpoint: '', clientIpHeader: 'x-forwarded-for' }, services: Object.fromEntries(services.map(s => [s.id, { enabled: false }])) };
 }
 export function serviceUrl(value, { optional = false, https = false, originOnly = false } = {}) {
 	if (!value && optional) return '';
@@ -37,6 +37,7 @@ export function validateConfig(input, previous = defaultConfig()) {
 	result.network = {
 		publicOrigin: serviceUrl(net.publicOrigin || '', { optional: true, https: true, originOnly: true }),
 		localOrigin: serviceUrl(net.localOrigin || '', { optional: true, originOnly: true }),
+		assetCdnOrigin: serviceUrl(net.assetCdnOrigin || '', { optional: true, https: true, originOnly: true }),
 		localNetworks: list(net.localNetworks || [], subnet, 'local network ranges'),
 		localHosts: list(net.localHosts || [], v => /^[a-zA-Z0-9.:[\]-]{1,253}$/.test(v), 'local hostnames'),
 		trustedProxies: list(net.trustedProxies || [], isIP, 'trusted proxy IP addresses'),
@@ -186,6 +187,7 @@ export function materialize(config, directory) {
 	return { HOMELAB: '1', TELLYBOX_APP_EDITION: config.apps?.edition || 'public', TELLYBOX_APP_PACKAGE: config.apps?.edition==='personal'?config.apps.packageName||'':'', DATA_DIR: data, AUTH_DIR: auth, CATALOGUE_CACHE_DIR: cache, TRENDING_CACHE_PATH: path.join(cache, 'trending-cache.json'), JELLYFIN_URL: s.jellyfin.enabled ? s.jellyfin.url : 'http://127.0.0.1:1',
 		RELAY_STATE_DIR: directory, RELAY_MEDIA_ENABLED: s.dispatcharr.enabled && s.dispatcharr.location === 'relay' ? '1' : '0',
 		DISPATCHARR_URL: s.dispatcharr.enabled ? s.dispatcharr.url : 'http://127.0.0.1:1', PUBLIC_ORIGIN: n.publicOrigin,
+		PUBLIC_ASSET_CDN_ORIGIN: n.assetCdnOrigin || '',
 		LOCAL_PLAYBACK_ORIGIN: n.localOrigin || 'http://127.0.0.1:8082', LOCAL_NETWORKS: n.localNetworks.join(','), LOCAL_HOSTS: n.localHosts.join(','),
 		TRUSTED_PROXIES: n.trustedProxies.join(','), HOME_TRUSTED_PROXY: n.homeTrustedProxy, HOME_IP_ENDPOINT: n.homeIpEndpoint,
 		CLIENT_IP_HEADER: n.clientIpHeader || 'x-forwarded-for', INTRODB_ENABLED: s.introdb.enabled ? '1' : '0' };

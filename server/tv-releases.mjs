@@ -26,9 +26,9 @@ export function recentTvEpisodes(items, now = new Date(), limit = 12) {
 		return item.Type === 'Episode' && item.SeriesId && item.SeriesName && !item.IsVirtualItem && !item.IsMissing
 			&& item.LocationType !== 'Virtual' && item.LocationType !== 'Offline'
 			&& Number.isFinite(date) && date >= since.valueOf() && date <= now.valueOf();
-	}).sort((a, b) => Date.parse(b.PremiereDate) - Date.parse(a.PremiereDate)
-		|| (b.ParentIndexNumber || 0) - (a.ParentIndexNumber || 0) || (b.IndexNumber || 0) - (a.IndexNumber || 0)
-		|| (a.Source==='streamed'?1:0)-(b.Source==='streamed'?1:0));
+	}).sort((a, b) => (a.Source === 'streamed' ? 1 : 0) - (b.Source === 'streamed' ? 1 : 0)
+		|| Date.parse(b.PremiereDate) - Date.parse(a.PremiereDate)
+		|| (b.ParentIndexNumber || 0) - (a.ParentIndexNumber || 0) || (b.IndexNumber || 0) - (a.IndexNumber || 0));
 	const shows = new Map();
 	for (const episode of episodes) { const key=episode.ReleaseSeriesKey||episode.SeriesId;if (!shows.has(key)) shows.set(key, episode); }
 	return [...shows.values()].slice(0, limit).map(({ReleaseSeriesKey,...item})=>item);

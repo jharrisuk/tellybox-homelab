@@ -1,0 +1,81 @@
+/* Release 134: optional qBittorrent monitoring and owner-only review dialogs. */
+.qb-downloads-card { max-width: 1180px; }
+.qb-toolbar {
+	display: flex; flex-wrap: wrap; gap: 12px; align-items: end;
+	margin: 18px 0 12px; padding: 14px; border: 1px solid rgba(255,255,255,.14);
+	border-radius: 16px; background: rgba(255,255,255,.035);
+}
+.qb-toolbar label { display: grid; gap: 6px; font-size: .82rem; color: var(--muted, #aab4a8); }
+.qb-toolbar select { min-height: 42px; }
+.qb-status {
+	margin: 12px 0; padding: 12px 14px; border-radius: 12px;
+	border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.04);
+	line-height: 1.45;
+}
+.qb-status[data-state="ok"] { border-color: rgba(97, 190, 124, .5); }
+.qb-status[data-state="stale"],
+.qb-status[data-state="unreachable"],
+.qb-status[data-state="timeout"],
+.qb-status[data-state="auth-failed"],
+.qb-status[data-state="backoff"] { border-color: rgba(226, 173, 77, .55); }
+.qb-status[data-state="disabled"],
+.qb-status[data-state="unconfigured"] { border-color: rgba(255,255,255,.18); }
+.qb-list { display: grid; gap: 12px; }
+.qb-row {
+	padding: 14px; border: 1px solid rgba(255,255,255,.13); border-radius: 16px;
+	background: rgba(255,255,255,.035);
+}
+.qb-row.qb-attention { border-color: rgba(226, 173, 77, .55); }
+.qb-row-head { display: flex; gap: 12px; justify-content: space-between; align-items: start; }
+.qb-row-title h2 { margin: 0 0 6px; font-size: 1.02rem; line-height: 1.35; overflow-wrap: anywhere; }
+.qb-display-hash { color: var(--muted, #aab4a8); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .75rem; }
+.qb-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.qb-badge {
+	display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 999px;
+	font-size: .72rem; line-height: 1.3; border: 1px solid rgba(255,255,255,.2); color: inherit;
+}
+.qb-badge.qb-needs-attention { border-color: rgba(226, 173, 77, .75); background: rgba(226, 173, 77, .13); }
+.qb-badge.qb-hint { border-color: rgba(226, 173, 77, .35); }
+.qb-badge.qb-muted, .qb-badge.qb-category { opacity: .78; }
+.qb-badge.qb-complete { border-color: rgba(97, 190, 124, .5); }
+.qb-progress { width: 100%; height: 10px; margin: 12px 0; accent-color: #9bd4a8; }
+.qb-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+.qb-stat { display: grid; gap: 2px; padding: 8px; border-radius: 10px; background: rgba(0,0,0,.14); }
+.qb-stat-label { font-size: .72rem; opacity: .72; }
+.qb-stat-value { font-size: .92rem; }
+.qb-note { margin: 10px 0 0; }
+.qb-row-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.qb-danger-text { color: #efb4ae; }
+.qb-dialog {
+	max-width: min(560px, calc(100vw - 24px)); width: 100%;
+	border: 1px solid rgba(255,255,255,.2); border-radius: 18px;
+	background: #151915; color: #eef3ea; padding: 0;
+}
+.qb-dialog::backdrop { background: rgba(0,0,0,.68); }
+.qb-dialog-body { display: grid; gap: 12px; padding: 18px; }
+.qb-dialog h2 { margin: 0; }
+.qb-review-summary { display: grid; gap: 8px; }
+.qb-review-summary h3 { margin: 0; line-height: 1.35; overflow-wrap: anywhere; }
+.qb-review-warning { padding: 10px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.05); line-height: 1.45; }
+.qb-review-warning.qb-warning-destructive { border-color: rgba(239, 120, 108, .7); background: rgba(239, 120, 108, .13); }
+.qb-ack { display: flex; gap: 10px; align-items: start; line-height: 1.45; padding: 10px; border-radius: 12px; border: 1px solid rgba(239, 120, 108, .45); }
+.qb-ack input { margin-top: 3px; width: 20px; height: 20px; flex: 0 0 auto; }
+.qb-dialog-actions { justify-content: flex-end; }
+.qb-error { color: #efb4ae; }
+.button.danger { background: #a9382f; border-color: #c65146; color: #fff; }
+.button.danger:disabled { opacity: .45; }
+.qb-settings-form { display: grid; gap: 12px; margin-top: 12px; }
+.qb-message { min-height: 1.2em; }
+@media (max-width: 620px) {
+	.qb-downloads-card { padding-left: 10px; padding-right: 10px; }
+	.qb-toolbar { display: grid; grid-template-columns: 1fr; }
+	.qb-toolbar select, .qb-toolbar button { width: 100%; }
+	.qb-row-head { display: grid; gap: 4px; }
+	.qb-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.qb-row-actions { display: grid; grid-template-columns: 1fr; }
+	.qb-row-actions button { width: 100%; min-height: 48px; }
+	.qb-dialog { max-width: calc(100vw - 12px); }
+	.qb-dialog-body { padding: 14px; }
+	.qb-dialog-actions { display: grid; grid-template-columns: 1fr; }
+	.qb-dialog-actions button { width: 100%; min-height: 48px; }
+}

@@ -18,6 +18,25 @@ test('VOD enrichment adds attributed metadata and preserves playback identity an
 	assert.deepEqual(item.Trailer,{Provider:'YouTube',Key:'dQw4w9WgXcQ',Name:'Official trailer',Url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ'});
 	await service.enrich([movie,movie]);assert.equal(calls,1);
 });
+test('discovery artwork paths are remembered without suppressing later metadata enrichment',async()=>{
+	let calls=0;
+	const service=createVodMetadata({lookup:async(type,id)=>{calls++;return {...data,id};}});
+	assert.equal(service.remember('movie',687163,'poster','/iOb2fjXLbpJgyQXe46n1WtGCnaa.jpg'),true);
+	assert.equal(await service.artwork('movie',687163,'poster'),'/iOb2fjXLbpJgyQXe46n1WtGCnaa.jpg');
+	assert.equal(calls,0,'remembering a path must not call the provider');
+	assert.equal((await service.enrich([{...movie,ProviderIds:{Tmdb:'687163'}}]))[0].Artwork,'/api/web/tmdb-art/movie/687163/poster');
+	assert.equal(calls,1,'the partial path cache must still allow full metadata enrichment');
+	for(const value of ['//evil.test/a.jpg','/../../a.jpg','https://evil.test/a.jpg','/a.svg'])assert.equal(service.remember('movie',687163,'poster',value),false);
+	assert.equal(service.remember('series',687163,'poster','/a.jpg'),false);
+});
+
+test('remembered artwork paths are bounded and evict oldest first',async()=>{
+	const service=createVodMetadata({lookup:async()=>{throw Error('must not lookup');}});
+	for(let id=1;id<=5001;id++)assert.equal(service.remember('movie',id,'poster','/same.jpg'),true);
+	assert.equal(await service.artwork('movie',1,'poster'),null);
+	assert.equal(await service.artwork('movie',5001,'poster'),'/same.jpg');
+});
+
 test('missing or invalid trailers do not add a watch action',async()=>{
 	const service=createVodMetadata({lookup:async()=>({...data,relatedVideos:[{type:'Trailer',site:'YouTube',key:'bad'}]})});
 	assert.equal((await service.enrich([movie]))[0].Trailer,undefined);

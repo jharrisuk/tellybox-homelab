@@ -34,9 +34,23 @@ test('real archive encoding seeks forwards and backwards without reading from th
 			const bytes=await session.read('segment'+String(n).padStart(9,'0')+'.ts');assert.ok(bytes.length>100);
 			const info=spawnSync('ffprobe',['-v','error','-show_format','-of','json','pipe:0'],{input:bytes,timeout:10000});assert.equal(info.status,0,String(info.stderr));times.push(Number(JSON.parse(info.stdout).format.start_time));
 		}
-		assert.deepEqual(opens.map(o=>(Date.parse(o.start)-base)/1000),[0,300,0]);
-		assert.deepEqual(opens.map(o=>o.minutes),[10,5,10],'Each seek requests the remaining programme, including minute-alignment pre-roll');
+		assert.deepEqual(opens.map(o=>(Date.parse(o.start)-base)/1000),[0,300,0],
+			'Each seek opens the provider at the containing minute boundary');
+		assert.deepEqual(opens.map(o=>o.minutes),[5,5,6],'Each seek requests a bounded minute window');
 		for(const [index,offset] of [0,300,20].entries())assert.ok(Math.abs(times[index]-times[0]-offset)<.1,JSON.stringify(times));
 	}finally{await session.stop();}
 	assert.equal(new Set(closed).size,opens.length);assert.equal(closed.length,opens.length);
+});
+test('a paced seek opens the provider at the requested section without pre-roll',{skip:!ffmpeg,timeout:120000},async()=>{
+	const sample=spawnSync('ffmpeg',['-v','error','-f','lavfi','-i','testsrc2=s=160x90:r=25','-f','lavfi','-i','anullsrc=r=48000:cl=stereo','-c:v','libx264','-preset','ultrafast','-c:a','aac','-g','25','-t','180','-f','mpegts','pipe:1'],{maxBuffer:32*1024*1024,timeout:30000});assert.equal(sample.status,0,String(sample.stderr));
+	const opens=[];const service=createCatchupPlayer({clock:()=>base+700000,openArchive:async(id,start,minutes)=>{opens.push({start,minutes});return {open:async()=>new Response(sample.stdout),stop:async()=>{}};}});
+	const session=await service.start(channel,item);
+	try{
+		const started=Date.now();
+		const bytes=await session.read('segment000000025.ts');
+		const elapsed=Date.now()-started;
+		assert.ok(bytes.length>100,'The requested paced seek segment must encode');
+		assert.equal((Date.parse(opens[0].start)-base)/1000,60,'The provider opens the minute containing the 100-second target');
+		assert.ok(elapsed<15000,'The seek must not wait for the minute-boundary pre-roll at 1x: '+elapsed+'ms');
+	}finally{await session.stop();}
 });

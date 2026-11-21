@@ -138,15 +138,30 @@ test('the dedicated preferences page has only viewer controls and no admin scrip
 
 function fakeNode(properties = {}) {
 	const node = {
-		id: '', href: '', textContent: '', className: '', hidden: false, children: [], attributes: {},
+		id: '', href: '', textContent: '', className: '', hidden: false, children: [], attributes: {}, parent: null, tagName: 'a',
 		classList: { add() {}, remove() {}, toggle() {} },
 		setAttribute(name, value) { this.attributes[name] = String(value); },
 		getAttribute(name) { return this.attributes[name] ?? null; },
+		removeAttribute(name) { delete this.attributes[name]; },
 		addEventListener() {},
-		append(...items) { this.children.push(...items); },
-		insertBefore(item, before) {
-			const index = this.children.indexOf(before);
-			if (index < 0) this.children.push(item); else this.children.splice(index, 0, item);
+		append(...items) {
+			for (const item of items) {
+				if (item.parent) item.parent.children = item.parent.children.filter(child => child !== item);
+				const index = this.children.indexOf(item);
+				if (index >= 0) this.children.splice(index, 1);
+				item.parent = this;
+				this.children.push(item);
+			}
+		},
+		remove() { if (this.parent) { this.parent.children = this.parent.children.filter(child => child !== this); this.parent = null; } },
+		querySelector(selector) {
+			if (selector === '[data-library="home"]') return this.children.find(child => child.attributes['data-library'] === 'home') || null;
+			return null;
+		},
+		querySelectorAll(selector) {
+			if (selector === 'a.nav-item') return this.children.filter(child => child.className.split(/\s+/).includes('nav-item'));
+			if (selector === '[data-watching-settings]') return this.children.filter(child => 'data-watching-settings' in child.attributes);
+			return [];
 		},
 		contains() { return false; },
 		...properties
@@ -154,40 +169,41 @@ function fakeNode(properties = {}) {
 	return node;
 }
 
-test('the shared topbar adds Watching settings for every viewer without duplicating it', () => {
-	const signOut = fakeNode({ id: 'signOut' });
-	const account = fakeNode({
-		children: [fakeNode({ id: 'activityLink' }), fakeNode({ id: 'remoteSettings' }), signOut],
-		querySelector(selector) {
-			if (selector === '#signOut') return this.children.find(node => node.id === 'signOut') || null;
-			if (selector === '[data-watching-settings]') return this.children.find(node => 'data-watching-settings' in node.attributes) || null;
-			return null;
-		}
-	});
-	const nav = fakeNode({
-		querySelector(selector) { return selector === '[href="/search"]' ? this.children.find(node => node.href === '/search') || null : null; }
-	});
+test('the shared topbar is one canonical line and includes the 132 Activity entry', async () => {
+	let access = { local: false, home: false, authenticated: true };
+	const settings = fakeNode({ id: 'remoteSettings', hidden: true });
+	const account = fakeNode({ children: [] });
+	const nav = fakeNode({ tagName: 'nav', children: [] });
 	const header = fakeNode();
 	const toggle = fakeNode();
 	const panel = fakeNode({
+		children: [nav, account],
 		querySelector(selector) { return selector === 'nav' ? nav : selector === '.account-actions' ? account : null; }
 	});
 	const document = {
 		activeElement: null,
-		querySelector: selector => selector === '.topbar' ? header : selector === '#menuToggle' ? toggle : selector === '#siteNavigation' ? panel : null,
+		querySelector: selector => selector === '.topbar' ? header : selector === '#menuToggle' ? toggle : selector === '#siteNavigation' ? panel : selector === '#remoteSettings' ? settings : null,
 		createElement: () => fakeNode(),
 		createComment: () => fakeNode(),
 		addEventListener() {}
 	};
 	const context = vm.createContext({
-		document, location: { pathname: '/' }, matchMedia: () => ({ matches: false, addEventListener() {} })
+		document, location: { pathname: '/', search: '' }, URLSearchParams,
+		matchMedia: () => ({ matches: false, addEventListener() {} }),
+		fetch: async () => ({ ok: true, json: async () => JSON.parse(JSON.stringify(access)) })
 	});
 	vm.runInContext(navigationSource, context);
+	await new Promise(resolve => setImmediate(resolve));
+	const hrefs = nav.children.map(node => node.href);
+	assert.deepEqual(hrefs, ['/', '/discover', '/coming-soon', '/?view=movies', '/?view=tvshows', '/?view=livetv', '/?view=nonstop', '/?view=recordings', '/search', '/activity']);
+	assert.equal(nav.children.filter(node => 'data-watching-settings' in node.attributes).length, 0, 'Watching settings moved into Settings');
+	assert.equal(account.children.length, 0, 'Activity is not a topbar account action');
+	assert.equal(settings.hidden, false);
+	assert.equal(settings.textContent, 'Settings');
+	assert.equal(settings.href, '/preferences.html', 'a remote viewer reaches viewer preferences, never admin settings');
+	assert.equal(nav.children.find(node => node.href === '/coming-soon').className, 'nav-item nav-coming');
+	access = { local: true, home: false, authenticated: true };
 	vm.runInContext(navigationSource, context);
-	const links = account.children.filter(node => 'data-watching-settings' in node.attributes);
-	assert.equal(links.length, 1, 'the link must not be duplicated');
-	assert.equal(links[0].href, '/preferences.html');
-	assert.equal(links[0].textContent, 'Watching settings');
-	assert.equal(account.children.at(-1).id, 'signOut');
-	assert.ok(nav.children.some(node => node.href === '/search'));
+	await new Promise(resolve => setImmediate(resolve));
+	assert.equal(settings.href, '/settings', 'a local viewer reaches the full Settings page');
 });

@@ -18,6 +18,50 @@ test('active file and converted downloads stay separate from watching and disapp
 	activity.flush();assert.equal(createActivity(directory).snapshot().downloads.length,0);
 });
 
+test('per-account playback history never returns another person or device', t => {
+	const directory = mkdtempSync(path.join(tmpdir(), 'jserver-history-'));
+	t.after(() => rmSync(directory, { recursive: true, force: true }));
+	const activity = createActivity(directory);
+	const film = (id, name) => ({ Id: id, Name: name, Type: 'Movie' });
+	activity.begin('a', { personId: 'a'.repeat(32), personName: 'A', deviceId: 'phone-a' }, film('film-a', 'Film A'));
+	activity.update('a', { heartbeat: true, state: 'playing', position: 120 });
+	activity.begin('b', { personId: 'b'.repeat(32), personName: 'B', deviceId: 'phone-b' }, film('film-b', 'Film B'));
+	activity.update('b', { heartbeat: true, state: 'playing', position: 90 });
+	activity.begin('local', { local: true, deviceName: 'Living room' }, film('film-local', 'Film Local'));
+	activity.update('local', { heartbeat: true, state: 'playing', position: 45 });
+	assert.deepEqual(activity.history({ personId: 'a'.repeat(32) }).map(entry => entry.itemId), ['film-a']);
+	assert.deepEqual(activity.history({ personId: 'b'.repeat(32) }).map(entry => entry.itemId), ['film-b']);
+	assert.deepEqual(activity.history({ deviceId: 'phone-a' }).map(entry => entry.itemId), ['film-a']);
+	assert.deepEqual(activity.history({ local: true }).map(entry => entry.itemId), ['film-local']);
+	assert.deepEqual(activity.history({ personId: 'c'.repeat(32) }), []);
+});
+
+test('history keeps one latest record per item, reports completion, and never copies an episode onto a series', t => {
+	const directory = mkdtempSync(path.join(tmpdir(), 'jserver-history-complete-'));
+	t.after(() => rmSync(directory, { recursive: true, force: true }));
+	const now = Date.now();
+	const playback = (id, details) => ({ id: 'event-' + Math.random(), type: 'playback', personId: 'a'.repeat(32), updated: now, time: now, ...details });
+	writeFileSync(path.join(directory, 'activity.json'), JSON.stringify([
+		playback('partial-film', { itemId: 'film-partial', state: 'ended', position: 600, duration: 7200 }),
+		playback('finished-film', { itemId: 'film-finished', state: 'ended', position: 7150, duration: 7200 }),
+		playback('episode-a', { itemId: 'episode-a', seriesId: 'series', state: 'ended', position: 900, duration: 3000, updated: now - 30000 }),
+		playback('episode-a-rewind', { itemId: 'episode-a', seriesId: 'series', state: 'ended', position: 60, duration: 3000, updated: now - 10000 }),
+		playback('episode-b', { itemId: 'episode-b', seriesId: 'series', state: 'ended', position: 1800, duration: 3000 }),
+		playback('other-person', { itemId: 'episode-x', seriesId: 'series', state: 'ended', position: 100, duration: 3000, personId: 'b'.repeat(32) }),
+	]));
+	const activity = createActivity(directory);
+	const history = activity.history({ personId: 'a'.repeat(32) });
+	const byId = new Map(history.map(entry => [entry.itemId, entry]));
+	assert.equal(byId.get('film-partial').completed, false, 'a partial stop is not completion');
+	assert.equal(byId.get('film-partial').position, 600);
+	assert.equal(byId.get('film-finished').completed, true);
+	assert.equal(byId.get('episode-a').position, 60, 'the newer rewind wins over the older later position');
+	assert.equal(byId.get('episode-b').completed, false);
+	assert.ok(!byId.has('series'), 'an episode is never collapsed onto the series id');
+	assert.ok(!byId.has('episode-x'), 'another person\'s episode is not returned');
+	assert.equal(history.filter(entry => entry.seriesId === 'series').length, 2);
+});
+
 test('viewing history persists, stops accurately and expires old records', t => {
 	const directory = mkdtempSync(path.join(tmpdir(), 'jserver-activity-'));
 	t.after(() => rmSync(directory, { recursive: true, force: true }));

@@ -54,8 +54,13 @@ export function createWorkerUpstream({ origin, key = '', fetcher = fetch }) {
 		return request('/proxy/ts/stream/' + channelId, { signal, headers: { ...headers() } });
 	}
 	async function health(signal) {
-		const response = await request('/output/m3u', { signal: signal || AbortSignal.timeout(5000) });
-		await response.body?.cancel();
+		// A one-row catalogue read proves the same origin, credential and database are ready without
+		// downloading the whole M3U output. Auth refusals and outages throw from request().
+		const response = await request('/api/channels/channels/?page_size=1', { signal: signal || AbortSignal.timeout(5000), headers: headers() });
+		let data;
+		try { data = await response.json(); } catch { data = null; }
+		await response.body?.cancel().catch(() => {});
+		if (!Array.isArray(data) && !Array.isArray(data?.results)) throw fail('Dispatcharr returned an unexpected readiness response.');
 		return true;
 	}
 	return { origin: base.origin, stream, stopStream, recordingFile, catchupSession, liveStream, health, fetcher: (url, options) => fetcher(url, { ...options, headers: { ...headers(), ...(options?.headers || {}) } }) };

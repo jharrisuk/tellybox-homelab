@@ -15,7 +15,7 @@ const text = (value, label, max = 300) => {
 export function validateWorker(input = {}) {
 	const worker = {
 		workerId: text(input.workerId || 'relay-worker', 'Worker ID', 80),
-		image: text(input.image || 'localhost/tellybox-relay-worker:0.26.9', 'Worker image', 300),
+		image: text(input.image || 'localhost/tellybox-relay-worker:0.26.13', 'Worker image', 300),
 		dataDirectory: text(input.dataDirectory || '/var/lib/tellybox-relay-worker', 'Worker data directory', 300),
 		mediaPort: port(input.mediaPort || 18086, 'Media port'),
 		controlPort: port(input.controlPort || 18087, 'Control port'),
@@ -198,7 +198,7 @@ echo "Private main control mapping ${mainPort} added for the approved relay work
 `;
 }
 
-export function workerDeployment({ worker, mainMediaPublicKeyFile, mainControlPublicKey = '', mainMediaPublicKey = '', workerVersion = '0.26.9' } = {}) {
+export function workerDeployment({ worker, mainMediaPublicKeyFile, mainControlPublicKey = '', mainMediaPublicKey = '', workerVersion = '0.26.13' } = {}) {
 	const w = validateWorker({ ...worker, mainControlKeyFile: worker?.mainControlKeyFile || '/data/main-control-public.pem' });
 	const writePem = (name, pem) => pem ? `cat > ${w.dataDirectory}/${name} <<'TELLYBOX_PUBLIC_KEY'\n${pem}TELLYBOX_PUBLIC_KEY\nchmod 600 ${w.dataDirectory}/${name}\n` : '';
 	const keySetup = writePem('main-media-public.pem', mainMediaPublicKey) + writePem('main-control-public.pem', mainControlPublicKey)

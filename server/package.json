@@ -1,15 +1,16 @@
 {
-	"name": "tellybox-homelab",
-	"version": "0.26.10",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"start": "node homelab/launch.mjs",
-		"test": "node --test test/*.test.mjs"
-	},
-	"dependencies": {
-		"express": "5.1.0",
-		"hls.js": "1.6.13",
-		"sax": "1.4.1"
-	}
+  "name": "tellybox-homelab",
+  "version": "0.26.55",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node homelab/launch.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check:fullscreen": "node test/web-fullscreen-browser.mjs"
+  },
+  "dependencies": {
+    "express": "5.1.0",
+    "hls.js": "1.6.13",
+    "sax": "1.4.1"
+  }
 }

@@ -6,12 +6,10 @@ fetch('/api/capabilities').then(response=>response.json()).then(async data=>{
 		const response=await fetch('/api/auth/status',{cache:'no-store',signal:AbortSignal.timeout(5000)});
 		if(!response.ok)throw Error('Connection unavailable');
 		const access=await response.json();
-		// Setup accepts explicitly configured private IPs, not discovery aliases such as .local.
-		const origin=access.local||access.home?access.localPlayback?.origin||(access.local?location.origin:null):null;
-		if(origin){
-			const url=new URL(origin);
-			if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('Invalid installation address');
-			url.protocol='http:';url.port='8990';url.pathname='/';url.search='';url.hash='';
+		// The server supplies this only for a local or trusted home request. Never derive it from the browser address.
+		if((access.local||access.home)&&access.installation?.origin){
+			const url=new URL(access.installation.origin);
+			if(!['http:','https:'].includes(url.protocol)||url.username||url.password||url.search||url.hash||(url.pathname!=='/'&&url.pathname!==''))throw Error('Invalid installation address');
 			setupUrl=url.href;
 			const link=document.getElementById('installationSettingsLink');
 			if(link){link.href=setupUrl;document.getElementById('installationSettings').hidden=false;}
@@ -23,8 +21,8 @@ fetch('/api/capabilities').then(response=>response.json()).then(async data=>{
 		const note=document.createElement('p');note.className='muted';
 		note.append('Manage this connection in ');
 		if(setupUrl){
-			const link=document.createElement('a');link.href=setupUrl;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Installation settings';note.append(link,'.');
-		} else note.append('Installation settings on your home network (port 8990).');
+			const link=document.createElement('a');link.href=setupUrl;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Installation settings';note.append(link,'. An installation administrator password is required.');
+		} else note.append('Installation settings on your home network (port 8990). An installation administrator password is required.');
 		form.before(note);
 	}
 	const toggle=document.getElementById('subtitleLookupEnabled');if(toggle)toggle.disabled=true;

@@ -12,6 +12,7 @@ function input(labelText, value, type, hint, key) {
 	const label = el('label', labelText), control = el('input'); control.type = type === 'secret' ? 'password' : type === 'boolean' ? 'checkbox' : type;
 	if (type === 'boolean') control.checked = value === true; else control.value = value || '';
 	if (key) control.dataset.key = key;
+	control.setAttribute('form', 'configuration');
 	if (type === 'secret') control.autocomplete = 'new-password';
 	label.append(control); if (hint) label.append(el('small', hint)); return label;
 }
@@ -37,7 +38,7 @@ function dispatcharrLocation(data) {
 function applyDispatcharrLocation(card, spec, data, fields) {
 	const auto = relayAutoAddresses(), urlLabel = fieldLabel(fields, 'url'), relayMetadata = fields.querySelector('[data-key="relayMetadataUrl"]'),
 		relayUrl = fields.querySelector('[data-key="relayUrl"]'), relayMetadataLabel = fieldLabel(fields, 'relayMetadataUrl'), relayUrlLabel = fieldLabel(fields, 'relayUrl');
-	const select = el('select'); select.dataset.location = spec.id;
+	const select = el('select'); select.dataset.location = spec.id; select.setAttribute('form', 'configuration');
 	for (const [value, label] of [['onThisServer', 'On this server'], ['relay', 'On relay'], ['anotherServer', 'Another server']]) {
 		const option = el('option', label); option.value = value;
 		if (value === 'relay' && !relayMediaInfo.approved) option.disabled = true;
@@ -48,8 +49,8 @@ function applyDispatcharrLocation(card, spec, data, fields) {
 	if (!relayMetadata.value && (auto.metadata || data.url)) relayMetadata.value = auto.metadata || data.url;
 	if (!relayUrl.value && auto.worker) relayUrl.value = auto.worker;
 	const advanced = el('details', '', 'advanced-address'), advancedTitle = el('summary', 'Advanced: nonstandard ports only');
-	const metadataPort = el('input'); metadataPort.type = 'number'; metadataPort.min = '1'; metadataPort.max = '65535'; metadataPort.value = urlPort(relayMetadata.value, '9191');
-	const workerPort = el('input'); workerPort.type = 'number'; workerPort.min = '1'; workerPort.max = '65535'; workerPort.value = urlPort(relayUrl.value, '9191');
+	const metadataPort = el('input'); metadataPort.type = 'number'; metadataPort.min = '1'; metadataPort.max = '65535'; metadataPort.value = urlPort(relayMetadata.value, '9191'); metadataPort.setAttribute('form', 'configuration');
+	const workerPort = el('input'); workerPort.type = 'number'; workerPort.min = '1'; workerPort.max = '65535'; workerPort.value = urlPort(relayUrl.value, '9191'); workerPort.setAttribute('form', 'configuration');
 	const metadataPortLabel = el('label', 'Relay metadata port'); metadataPortLabel.append(metadataPort);
 	const workerPortLabel = el('label', 'Worker Dispatcharr port'); workerPortLabel.append(workerPort);
 	const advancedBody = el('div'); advancedBody.append(el('p', 'Leave these at the checked defaults unless the relay uses nonstandard ports. No address entry is needed.'), metadataPortLabel, workerPortLabel); advanced.append(advancedTitle, advancedBody);
@@ -80,6 +81,10 @@ function showAppEdition() {
 		: 'Official HomeLab apps ask for your server address. App updates come directly from the Tellybox publisher.';
 }
 $('#appEdition').onchange = () => { showAppEdition(); markDirty(); };
+$('#integrations').addEventListener('input', markDirty);
+$('#integrations').addEventListener('change', markDirty);
+$('#optionalGroups').addEventListener('input', markDirty);
+$('#optionalGroups').addEventListener('change', markDirty);
 function renderService(spec,embedded=false) {
 	const data = model.services[spec.id], card = el(embedded?'div':'details', '', embedded?'notification-custom':'service service-row'); card.dataset.service = spec.id;
 	const heading = el('summary', '', 'service-row-heading'), title = el('span', '', 'service-row-title');
@@ -115,7 +120,7 @@ function renderService(spec,embedded=false) {
 		const label = input(f.label, data[f.key], f.type, saved ? 'Saved securely. Leave blank to keep it.' : hint, f.key);
 		if (f.jsonFile) {
 			const secret = label.querySelector('input'); secret.hidden = true;
-			const file = el('input'); file.type = 'file'; file.accept = '.json,application/json';
+			const file = el('input'); file.type = 'file'; file.accept = '.json,application/json'; file.setAttribute('form', 'configuration');
 			file.onchange = async () => { try { if (file.files[0].size > 16000) throw Error('Choose the service-account JSON file.'); secret.value = JSON.stringify(JSON.parse(await file.files[0].text())); markDirty(); } catch (e) { file.value = ''; secret.value = ''; message(e.message); } }; label.append(file);
 		}
 		fields.append(label);
@@ -137,20 +142,29 @@ async function load() {
 	relayInfo = await request('relay').catch(() => ({}));
 	relayMediaInfo = await request('relay-media').catch(() => ({}));
 	const expanded = new Set([...document.querySelectorAll('.service-row[open]')].map(card => card.dataset.service));
-	$('#signIn').hidden = true; $('#settings').hidden = false; $('#integrations').replaceChildren();
+	$('#signIn').hidden = true; $('#settings').hidden = false; $('#integrations').replaceChildren(); $('#optionalGroups').replaceChildren();
 	$('#runtime').textContent = data.runtime.running ? `Media is running · settings revision ${data.runtime.appliedRevision}` : 'Media is stopped. Save and apply your configuration to start it.';
 	$('#saveStatus').textContent = model.revision === data.runtime.appliedRevision ? 'Saved settings are applied.' : 'Saved settings are waiting to be applied.';
 	$('#appEdition').value = model.apps?.edition || 'public'; $('#appPackage').value = model.apps?.packageName || ''; showAppEdition();
 	const ordinary=specs.filter(s=>!['firebase','pushGateway'].includes(s.id));
-	for (const group of [...new Set(ordinary.map(s => s.group))]) {
-		const section = el('section'), list = el('div', '', 'integration-list'); section.append(el('h2', group), list);
-		for (const spec of ordinary.filter(s => s.group === group)) { const card = renderService(spec); card.open = expanded.has(spec.id); list.append(card); }
-		$('#integrations').append(section);
+	const groups = [...new Set(ordinary.map(s => s.group))];
+	const sections = [
+		{ destination: 'integrations', groups: ['Your media', 'Playback extras', 'Remote access'] },
+		{ destination: 'optionalGroups', groups: ['Discovery & requests'] }
+	];
+	const known = new Set(sections.flatMap(section => section.groups));
+	sections[0].groups.push(...groups.filter(group => !known.has(group)));
+	for (const section of sections) {
+		const list = el('div', '', 'integration-list');
+		for (const group of section.groups) for (const spec of ordinary.filter(s => s.group === group)) {
+			const card = renderService(spec); card.open = expanded.has(spec.id); list.append(card);
+		}
+		$('#' + section.destination).append(list);
 	}
 	$('#notificationMode').value=notificationMode(model.services);
 	$('#customNotifications').replaceChildren(renderService(specs.find(s=>s.id==='firebase'),true));showNotificationMode();
 	$('#networkFields').replaceChildren();
-	const networkFields = { publicOrigin: ['Public HTTPS address', 'https://watch.example.com — optional'], localOrigin: ['Local playback address', 'The LAN address clients can reach, including port'], localNetworks: ['Trusted home networks', 'Comma-separated CIDRs, for example 192.168.10.0/24. These get login-free local access.'], localHosts: ['Local hostnames', 'Comma-separated IPs or hostnames used to open the local site'], trustedProxies: ['Trusted relay IPs', 'Exact private IPs only. Never trust every proxy.'], homeTrustedProxy: ['Home recognition proxy', 'Optional: an IP from the trusted relay list'], clientIpHeader: ['Relay client IP header', 'x-forwarded-for, x-real-ip or cf-connecting-ip'], homeIpEndpoint: ['Home public-IP check', 'Optional HTTPS endpoint returning your home public IP'] };
+	const networkFields = { publicOrigin: ['Public HTTPS address', 'https://watch.example.com - optional'], localOrigin: ['Local playback address', 'The LAN address clients can reach, including port'], assetCdnOrigin: ['Public CSS and branding CDN', 'Optional HTTPS origin for public stylesheets and static branding. Leave blank to serve from this server.'], localNetworks: ['Trusted home networks', 'Comma-separated CIDRs, for example 192.168.10.0/24. These get login-free local access.'], localHosts: ['Local hostnames', 'Comma-separated IPs or hostnames used to open the local site'], trustedProxies: ['Trusted relay IPs', 'Exact private IPs only. Never trust every proxy.'], homeTrustedProxy: ['Home recognition proxy', 'Optional: an IP from the trusted relay list'], clientIpHeader: ['Relay client IP header', 'x-forwarded-for, x-real-ip or cf-connecting-ip'], homeIpEndpoint: ['Home public-IP check', 'Optional HTTPS endpoint returning your home public IP'] };
 	for (const [key, [name, hint]] of Object.entries(networkFields)) $('#networkFields').append(input(name, Array.isArray(model.network[key]) ? model.network[key].join(', ') : model.network[key], 'text', hint, key));
 	if(data.connection?.cidr) {
 		const box=el('div'), allow=el('button','Allow local viewing from this connection');allow.type='button';
@@ -167,9 +181,68 @@ async function load() {
 	void showRelayHealth();
 	void showRelayMedia().catch(e => { $('#relayMediaStatus').textContent = e.message; });
 	void showHomeAssistant().catch(e => { $('#homeAssistantStatus').textContent = e.message; });
+	void loadQbittorrent();
 	if (location.hash === '#relayPanel') $('#relayPanel').scrollIntoView({ block: 'start' });
 	if (location.hash === '#homeAssistantPanel') $('#homeAssistantPanel').scrollIntoView({ block: 'start' });
 }
+function qbittorrentBody() {
+	const form = $('#qbittorrentForm'), data = Object.fromEntries(new FormData(form));
+	return {
+		url: String(data.url || '').trim(),
+		username: String(data.username || '').trim(),
+		password: typeof data.password === 'string' ? data.password : '',
+		enabled: form.elements.enabled.checked,
+		pollSeconds: Number(data.pollSeconds),
+		stalledMinutes: Number(data.stalledMinutes)
+	};
+}
+function showQbittorrent(data) {
+	const form = $('#qbittorrentForm');
+	form.elements.url.value = data.url || '';
+	form.elements.username.value = data.username || '';
+	form.elements.password.value = '';
+	form.elements.pollSeconds.value = String(data.pollSeconds || 20);
+	form.elements.stalledMinutes.value = String(data.stalledMinutes || 30);
+	form.elements.enabled.checked = data.enabled === true;
+	const badge = !data.configured ? ['Not configured', false] : data.enabled ? ['Enabled', true] : ['Disabled', false];
+	$('#qbittorrentState').textContent = badge[0]; $('#qbittorrentPanel').dataset.enabled = String(badge[1]);
+	const state = !data.configured ? 'Not configured.' : data.enabled ? 'Monitoring is on.' : 'Saved, but monitoring is off.';
+	const detail = data.configured
+		? 'Saved connection details are read by Tellybox immediately; no media restart is needed.'
+		: 'Add the WebUI address, username and password, then save. Leave monitoring off until the connection test succeeds.';
+	$('#qbittorrentStatus').replaceChildren(el('strong', state, 'relay-state'), el('p', detail));
+}
+async function loadQbittorrent() {
+	try { showQbittorrent(await request('qbittorrent')); }
+	catch (e) { $('#qbittorrentStatus').textContent = e.message; }
+}
+$('#qbittorrentForm').onsubmit = async event => {
+	event.preventDefault();
+	const messageNode = $('#qbittorrentMessage');
+	messageNode.textContent = '';
+	try {
+		const data = await request('qbittorrent', qbittorrentBody());
+		showQbittorrent(data);
+		messageNode.textContent = data.enabled ? 'Saved. Monitoring is on.' : 'Saved. Monitoring is off, so no request will be made.';
+	} catch (e) { messageNode.textContent = e.message; }
+};
+$('#qbittorrentTest').onclick = async () => {
+	const button = $('#qbittorrentTest'), messageNode = $('#qbittorrentMessage');
+	button.disabled = true; messageNode.textContent = 'Testing the saved connection...';
+	try {
+		const result = await request('qbittorrent/test', qbittorrentBody());
+		messageNode.textContent = result.message;
+	} catch (e) { messageNode.textContent = e.message; }
+	finally { button.disabled = false; }
+};
+$('#qbittorrentRemove').onclick = async () => {
+	if (!confirm('Remove the saved qBittorrent connection? Monitoring stops and the saved sign-in is deleted. No torrent or file is changed.')) return;
+	const messageNode = $('#qbittorrentMessage');
+	try {
+		showQbittorrent(await request('qbittorrent/disconnect', {}));
+		messageNode.textContent = 'Saved connection removed. No qBittorrent request will be made.';
+	} catch (e) { messageNode.textContent = e.message; }
+};
 function collect() {
 	const value = structuredClone(model);
 	value.apps = { edition: $('#appEdition').value, packageName: $('#appEdition').value === 'personal' ? $('#appPackage').value.trim() : '' };
@@ -227,8 +300,10 @@ function showHomeAssistantToken(result) {
 	$('#homeAssistantToken').focus();
 	$('#homeAssistantToken').select();
 }
-async function showHomeAssistant() {
+async function showHomeAssistant({ tokenCreated = false } = {}) {
 	const state = await request('home-assistant'), created = state.createdAt ? new Date(state.createdAt).toLocaleString() : '';
+	const badge = !state.configured ? ['Not set up', false] : tokenCreated ? ['Token created', true] : ['Connected', true];
+	$('#homeAssistantState').textContent = badge[0]; $('#homeAssistantPanel').dataset.enabled = String(badge[1]);
 	$('#homeAssistantStatus').textContent = state.configured
 		? `Token created ${created}${state.rotatedAt ? ` · last rotated ${new Date(state.rotatedAt).toLocaleString()}` : ''}.`
 		: 'Not connected. Create a token, then add the Tellybox integration in Home Assistant.';
@@ -243,7 +318,7 @@ $('#homeAssistantCreate').onclick = async () => {
 		const result = await request('home-assistant', { action: 'create' });
 		showHomeAssistantToken(result);
 		$('#homeAssistantMessage').textContent = 'Token created. Copy it now; it is not shown again.';
-		await showHomeAssistant();
+		await showHomeAssistant({ tokenCreated: true });
 	} catch (e) { $('#homeAssistantMessage').textContent = e.message; }
 };
 $('#homeAssistantRotate').onclick = async () => {
@@ -252,7 +327,7 @@ $('#homeAssistantRotate').onclick = async () => {
 		const result = await request('home-assistant', { action: 'rotate' });
 		showHomeAssistantToken(result);
 		$('#homeAssistantMessage').textContent = 'Token rotated. Update Home Assistant with the new token.';
-		await showHomeAssistant();
+		await showHomeAssistant({ tokenCreated: true });
 	} catch (e) { $('#homeAssistantMessage').textContent = e.message; }
 };
 $('#homeAssistantRevoke').onclick = async () => {
@@ -355,5 +430,6 @@ $('#relayMediaDeploy').onclick = async () => {
 		$('#relayMediaMessage').textContent = 'Review these scripts before running anything. Nothing was installed or changed.';
 	} catch (e) { $('#relayMediaMessage').textContent = e.message; }
 };
+
 window.addEventListener('beforeunload', event => { if (dirty) event.preventDefault(); });
 try { const status = await request('status'); $('#bootstrapLabel').hidden = status.claimed; $('#loginTitle').textContent = status.claimed ? 'Open installation settings' : 'Claim this installation'; await load(); } catch (e) { if (!e.message.includes('Sign in')) message(e.message); }

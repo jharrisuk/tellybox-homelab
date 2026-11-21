@@ -7,6 +7,7 @@ import express from 'express';
 import { installAuth } from '../auth.mjs';
 import { createActivity } from '../activity.mjs';
 import { createPlaybackDefaults } from '../playback-defaults.mjs';
+import { createPausedTimeout } from '../paused-timeout.mjs';
 
 const defaults = { englishSubtitles: false, autoNext: false, skipIntros: false };
 
@@ -63,6 +64,20 @@ async function fixture(t, directory, extra = {}) {
 	});
 	return { request, base };
 }
+
+test('paused-stream timeout exposes the admin control without exposing storage', async t => {
+	const directory = mkdtempSync(path.join(tmpdir(), 'tellybox-paused-auth-'));
+	t.after(() => rmSync(directory, { recursive: true, force: true }));
+	const store = createPausedTimeout(directory);
+	const { request } = await fixture(t, directory, { pausedTimeout: store });
+	assert.equal(JSON.stringify(await (await request('local', '/api/capabilities')).json()).includes('paused-timeout.json'), false);
+	assert.equal((await request('remote', '/api/auth/paused-timeout')).status, 403);
+	assert.equal((await request('remote', '/api/auth/paused-timeout', { minutes: 0 })).status, 403);
+	assert.deepEqual(await (await request('local', '/api/auth/paused-timeout')).json(), { minutes: 10 });
+	assert.deepEqual(await (await request('local', '/api/auth/paused-timeout', { minutes: 0 })).json(), { minutes: 0 });
+	assert.equal((await request('local', '/api/auth/paused-timeout', { minutes: 1441 })).status, 400);
+	assert.equal((await request('local', '/api/auth/paused-timeout', { minutes: 1.5 })).status, 400);
+});
 
 test('viewer capabilities expose only the three defaults while writes require the existing admin boundary', async t => {
 	const directory = mkdtempSync(path.join(tmpdir(), 'tellybox-playback-auth-'));
