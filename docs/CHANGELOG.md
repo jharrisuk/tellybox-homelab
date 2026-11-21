@@ -60,6 +60,25 @@ Web only.
 - Turning maintenance on now ends only the sessions the chosen scope covers:
   a remote-only activation no longer interrupts local playback.
 
+## Android 0.26.35 (build 89) - 21 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+Apps only.
+
+### Downloads
+
+- The download index is no longer read on the main thread. Resuming the app,
+  the acknowledgement checks, the three-second downloads refresh and the
+  "remove watched downloads" action now read it on one background thread and
+  post the result back.
+- The boot receiver does the same, using a background broadcast slot and always
+  finishing, so a large download list no longer risks a startup ANR on slower TV
+  hardware.
+- What is acknowledged, deleted or resumed is unchanged; the exact-once
+  ownership rules and the visible wording are untouched.
+
 ## Android 0.26.34 (build 88) - 21 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home
