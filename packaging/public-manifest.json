@@ -54,8 +54,8 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 27215,
-			"sha256": "46ca4c3d7c815db2a6fa138ed8cb0cb07ec53c63ec6024599867babb9f0d6a83"
+			"bytes": 27207,
+			"sha256": "489e49a7d76ebf8bb61bb943f7a44604803a210d7622511bbe66a4140c89b669"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
@@ -98,7 +98,7 @@
 			"sha256": "672b6dcdced3efb5bd80157da15506c29d445a3774e2b0c53c9e524d0779cadc"
 		},
 		{
-			"path": "docs/site/images/home-assistant-dashboard.png",
+			"path": "docs/site/images/home-assistant-panel.png",
 			"bytes": 86845,
 			"sha256": "c38a6e75c2e3bae26d86cb9313ce1496c06fdb8ed5b7254b1b74fe6c0f503dda"
 		},
@@ -114,8 +114,8 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 50262,
-			"sha256": "9fcb1a5831df51ccabc663ed1050c6d44d12a482db6f3d2803d2cf38e4add0b2"
+			"bytes": 50254,
+			"sha256": "757d266e8f85747ccf81a45fe70e07f14a29088e52add280f991d85d5fa2bce9"
 		},
 		{
 			"path": "docs/story.html",

@@ -32,7 +32,7 @@ const homeAssistant = `<section id="home-assistant">
 			<p class="ha-meta">Custom HACS repository · Home Assistant 2026.10.0 or newer · No cloud account required</p>
 		</div>
 		<figure class="ha-shot">
-			<a href="./images/home-assistant-dashboard.png" target="_blank" rel="noopener"><img src="./images/home-assistant-dashboard.png" alt="Actual Tellybox Home Assistant panel showing status, viewers, paused sessions, upload rate and cap, host uptime, memory and disk space" loading="lazy" width="509" height="373"></a>
+			<a href="./images/home-assistant-panel.png" target="_blank" rel="noopener"><img src="./images/home-assistant-panel.png" alt="Actual Tellybox Home Assistant panel showing status, viewers, paused sessions, upload rate and cap, host uptime, memory and disk space" loading="lazy" width="509" height="373"></a>
 			<figcaption>The actual panel: status, viewers, paused sessions, upload, capacity, memory and disk in one card.</figcaption>
 		</figure>
 	</div>
