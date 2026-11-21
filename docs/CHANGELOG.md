@@ -60,6 +60,22 @@ Web only.
 - Turning maintenance on now ends only the sessions the chosen scope covers:
   a remote-only activation no longer interrupts local playback.
 
+## Android 0.26.36 (build 90) - 21 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+Apps only.
+
+### Notifications
+
+- The gateway push device key and any pending removal tokens are now encrypted
+  with the device Keystore, matching how the sign-in token is already stored.
+  Existing values are migrated once, in place.
+- If that key can no longer be decrypted, the app treats the device as no longer
+  registered, clears the unusable secret and allows re-registration, rather than
+  failing silently.
+
 ## Android 0.26.35 (build 89) - 21 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home
