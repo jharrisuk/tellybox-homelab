@@ -2,6 +2,22 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Server 0.26.56 - 21 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+Web only.
+
+### Accounts
+
+- The Email accounts list now shows watch time per account on the row itself:
+  total watched, and today's time against any daily limit.
+- A Sort control offers Status, Most watched, Recently seen and Name, so a
+  household with several accounts can find the heavy viewer or the quiet one
+  without opening Activity.
+- Rows keep their existing height; the usage is one line, not another panel.
+
 ## Server 0.26.55 - 21 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

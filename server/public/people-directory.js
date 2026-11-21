@@ -44,6 +44,7 @@ for (const tab of document.querySelectorAll('[data-access-tab]')) tab.onclick = 
 document.querySelector('#accessSearch').oninput = filterAccessRows;
 document.querySelector('#accountStatus').onchange = filterAccessRows;
 document.querySelector('#refreshPeople').onclick = () => { void load(); };
+	document.querySelector('#accountSort')?.addEventListener('change', () => { void loadPeople(peopleDirectory); });
 
 function peopleDialog(title) {
 	const dialog = peopleElement('dialog', null, 'device-dialog account-dialog');
@@ -169,12 +170,65 @@ function manageHomeBrowser(browser) {
 		} catch (error) { message.textContent = error.message; save.disabled = remove.disabled = false; }
 	}; dialog.showModal();
 }
+
+// Watch time already exists per account in the activity snapshot. It is shown
+// here so an administrator can see who is heavy, who is near a daily limit and
+// who has gone quiet without opening the Activity page.
+let usageByPerson = new Map();
+function formatWatched(seconds) {
+	const total = Math.max(0, Math.floor(Number(seconds) || 0));
+	const hours = Math.floor(total / 3600), minutes = Math.round((total % 3600) / 60);
+	if (hours && minutes) return hours + 'h ' + minutes + 'm';
+	if (hours) return hours + 'h';
+	if (minutes) return minutes + 'm';
+	return total > 0 ? '<1m' : '0m';
+}
+async function loadUsage() {
+	try {
+		const response = await fetch('/api/activity', { cache: 'no-store' });
+		if (!response.ok) return new Map();
+		const data = await response.json(), map = new Map();
+		for (const user of data?.viewing?.users || []) {
+			if (!user || typeof user !== 'object') continue;
+			if (user.id) map.set(String(user.id).toLowerCase(), user);
+			if (user.name) map.set('email:' + String(user.name).toLowerCase(), user);
+		}
+		return map;
+	} catch { return new Map(); }
+}
+function usageFor(person) {
+	return usageByPerson.get(String(person.id || '').toLowerCase())
+		|| usageByPerson.get('email:' + String(person.email || '').toLowerCase()) || null;
+}
+function watchedLine(person) {
+	const usage = usageFor(person);
+	if (!usage) return null;
+	const bits = [];
+	const total = Number(usage.seconds);
+	if (Number.isFinite(total) && total > 0) bits.push(formatWatched(total) + ' total');
+	const today = Number(usage.dailySeconds);
+	if (Number.isFinite(today)) {
+		const limit = Number(usage.dailyLimitSeconds);
+		bits.push(formatWatched(today) + ' today' + (Number.isFinite(limit) && limit > 0 ? ' of ' + formatWatched(limit) : ''));
+	}
+	return bits.length ? 'Watched ' + bits.join(' · ') : null;
+}
 async function loadPeople(directory) {
 	try {
 		peopleDirectory = directory || await authRequest('/api/people');
+		usageByPerson = await loadUsage();
 		const host = document.querySelector('#webPeople'); host.replaceChildren();
 		const rank = { pending: 0, approved: 1, revoked: 2 };
-		for (const person of [...peopleDirectory.people].sort((a, b) => (rank[a.status] ?? 3) - (rank[b.status] ?? 3) || a.email.localeCompare(b.email))) {
+		const mode = document.querySelector('#accountSort')?.value || 'status';
+		const watched = person => { const usage = usageFor(person); return usage ? (Number(usage.dailySeconds) || Number(usage.seconds) || 0) : -1; };
+		const seen = person => { const usage = usageFor(person); const value = Number(usage?.lastLogin); return Number.isFinite(value) ? value : 0; };
+		const order = {
+			status: (a, b) => (rank[a.status] ?? 3) - (rank[b.status] ?? 3) || a.email.localeCompare(b.email),
+			name: (a, b) => a.email.localeCompare(b.email),
+			usage: (a, b) => watched(b) - watched(a) || a.email.localeCompare(b.email),
+			seen: (a, b) => seen(b) - seen(a) || a.email.localeCompare(b.email)
+		}[mode] || ((a, b) => a.email.localeCompare(b.email));
+		for (const person of [...peopleDirectory.people].sort(order)) {
 			const row = peopleElement('article', null, 'access-row');
 			const linked = accountDevices(person);
 			row.dataset.accessSearch = [person.email, ...linked.map(device => device.name)].join(' ').toLowerCase(); row.dataset.accountStatus = person.status;
@@ -182,6 +236,8 @@ async function loadPeople(directory) {
 			const count = accountDevices(person).length, browsers = peopleDirectory.localBrowsers.filter(b => b.personId === person.id).length;
 			identity.append(peopleElement('p', `${count} linked ${count === 1 ? 'device' : 'devices'}${browsers ? ` · ${browsers} home ${browsers === 1 ? 'browser' : 'browsers'}` : ''}`, 'auth-note'));
 			if (person.status === 'approved' && person.approvalEmailStatus === 'failed') identity.append(peopleElement('p', 'Approval email needs retrying', 'access-warning'));
+			const watchedText = watchedLine(person);
+			if (watchedText) identity.append(peopleElement('p', watchedText, 'auth-note account-usage'));
 			row.append(identity, peopleElement('span', peopleStatus(person), 'access-badge ' + person.status), peopleButton(person.status === 'pending' ? 'Review request' : 'Manage', () => managePerson(person), person.status === 'pending'));
 			if (linked.length) {
 				const list = peopleElement('div', null, 'account-devices');

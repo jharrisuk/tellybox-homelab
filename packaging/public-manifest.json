@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.55",
+	"serverVersion": "0.26.56",
 	"files": [
 		{
 			"path": ".env.example",
@@ -59,8 +59,8 @@
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 49400,
-			"sha256": "72283224ef9ddad49d8c136d26b80b0e5b0adeca1450c1b29878aa4e9740c98b"
+			"bytes": 49953,
+			"sha256": "84cb1bff764003945accddc46b437ec5b052c5300d50281c04959096cafd354c"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -660,12 +660,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "f0612fd54019eaae8c76317a58085ac6f22974bc0e162d5e7f93c3515167c122"
+			"sha256": "d111d52e7f4b58dbb9cd02a831397932c736e030e702dd8604ddd6b05e5cc32b"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "626aaa3e8da5f4791110fbb23ce73fcb925502274eff329a0e2030db005a4f06"
+			"sha256": "0297db9b1e8844e4c55b3d056356ee8c56976749410219194a55b8fcc0c49e41"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -889,8 +889,8 @@
 		},
 		{
 			"path": "server/public/people-directory.js",
-			"bytes": 15355,
-			"sha256": "e235d1eb7e2fb3d81cde06d12505da8e9848459ae6857f0a2f09b563fe8828e6"
+			"bytes": 18115,
+			"sha256": "63e8fcadf1bac540a9f56e433fc6a78a18fc77500b0339a95547ece9cfb224aa"
 		},
 		{
 			"path": "server/public/people.js",
@@ -969,8 +969,8 @@
 		},
 		{
 			"path": "server/public/settings.html",
-			"bytes": 26314,
-			"sha256": "accbe110807536a3e02f1638eb058ab025badb05ab01780da5d52dc019a1317e"
+			"bytes": 26526,
+			"sha256": "fd396d94522add97931e580caeced5e88528180e65755ded844f1a8db5c30077"
 		},
 		{
 			"path": "server/public/settings.js",
