@@ -54,8 +54,8 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 27189,
-			"sha256": "c7af408d140b286ce39bd8d93c74f1bb034479416b3ab3d7edec6765a1d38b77"
+			"bytes": 27215,
+			"sha256": "46ca4c3d7c815db2a6fa138ed8cb0cb07ec53c63ec6024599867babb9f0d6a83"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
@@ -99,8 +99,8 @@
 		},
 		{
 			"path": "docs/site/images/home-assistant-dashboard.png",
-			"bytes": 104763,
-			"sha256": "aa3b38eb8e0b9b42c38dfb4d42dd8b1ca2c7638542035c80fa2539628904ae55"
+			"bytes": 86845,
+			"sha256": "c38a6e75c2e3bae26d86cb9313ce1496c06fdb8ed5b7254b1b74fe6c0f503dda"
 		},
 		{
 			"path": "docs/site/images/setup-relay-status.png",
@@ -114,8 +114,8 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 50236,
-			"sha256": "8ed71e344ea9bcb5dedfa706ed60a7fcba21a146ed1cc8edac8bd80fd90be536"
+			"bytes": 50262,
+			"sha256": "9fcb1a5831df51ccabc663ed1050c6d44d12a482db6f3d2803d2cf38e4add0b2"
 		},
 		{
 			"path": "docs/story.html",
