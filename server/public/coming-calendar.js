@@ -1,9 +1,12 @@
 window.jserverCalendar = {
-	days(schedule, now = new Date()) {
+	days(schedule, now = new Date(), { past = 0, upcoming = 7 } = {}) {
 		const key = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-		const days = Array.from({ length: 7 }, (_, offset) => {
+		const todayKey = key(now);
+		const days = Array.from({ length: past + upcoming }, (_, index) => {
+			const offset = index - past;
 			const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
-			return { key: key(date), date, items: [] };
+			const dayKey = key(date);
+			return { key: dayKey, date, past: offset < 0, today: dayKey === todayKey, items: [] };
 		});
 		for (const item of [...schedule.tv, ...schedule.movies]) {
 			const entries = item.type === 'tv' && item.episodes?.length ? item.episodes.map(episode => ({

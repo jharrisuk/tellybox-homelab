@@ -1,6 +1,8 @@
 const $ = selector => document.querySelector(selector);
 const state = { tv: [], movies: [], unavailable: [], type: 'tv', expanded: false, featured: 0, loaded: false };
 const compact = matchMedia('(max-width: 850px)');
+// Mirror of the server's recent window (insights.mjs RECENT_RELEASE_DAYS).
+const RECENT_CALENDAR_DAYS = 14;
 
 function element(tag, className = '', text = '') {
 	const node = document.createElement(tag);
@@ -18,6 +20,18 @@ async function api(url) {
 	return response.json();
 }
 function pool() { return state.type === 'tv' ? state.tv : state.movies; }
+// Items that are already in the library open there. Everything else keeps the
+// existing details panel.
+function libraryTarget(item) {
+	const id = item?.library?.id;
+	return id ? '/?item=' + encodeURIComponent(id) : null;
+}
+function isLibraryItem(item) { return Boolean(libraryTarget(item)); }
+function activate(item) {
+	const target = libraryTarget(item);
+	if (target) { location.assign(target); return; }
+	openDetails(item);
+}
 function urlFor(item = null, type = state.type) {
 	const url = new URL(location.href);
 	url.searchParams.set('type', type);
@@ -36,25 +50,43 @@ function setType(type, replace = true) {
 	render();
 }
 
+function calendarDay(day) {
+	const section = element('section', 'calendar-day' + (day.past ? ' recent' : ''));
+	section.setAttribute('aria-label', day.date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }));
+	const date = element('div', 'calendar-date');
+	date.append(element('strong', '', day.today ? 'Today' : day.date.toLocaleDateString(undefined, { weekday: 'short' })), element('span', '', day.date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })));
+	const items = element('div', 'calendar-day-items');
+	for (const item of day.items) {
+		const button = element('button', 'calendar-item');
+		button.type = 'button';
+		if (isLibraryItem(item)) button.setAttribute('aria-label', `${item.title} - open in library`);
+		button.append(element('strong', '', item.title), element('span', '', item.type === 'tv' ? item.episode : item.dateLabel));
+		button.onclick = () => activate(item);
+		items.append(button);
+	}
+	if (!day.items.length) items.append(element('span', 'calendar-empty', 'Nothing scheduled'));
+	section.append(date, items);
+	return section;
+}
+
+function calendarGroup(label, days) {
+	const group = element('section', 'calendar-group');
+	group.append(element('h3', '', label));
+	const grid = element('div', 'calendar-days');
+	grid.replaceChildren(...days.map(calendarDay));
+	group.append(grid);
+	return group;
+}
+
 function renderCalendar() {
-	const days = jserverCalendar.days(state);
-	$('#calendarDays').replaceChildren(...days.map((day, index) => {
-		const section = element('section', 'calendar-day');
-		section.setAttribute('aria-label', day.date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }));
-		const date = element('div', 'calendar-date');
-		date.append(element('strong', '', index === 0 ? 'Today' : day.date.toLocaleDateString(undefined, { weekday: 'short' })), element('span', '', day.date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })));
-		const items = element('div', 'calendar-day-items');
-		for (const item of day.items) {
-			const button = element('button', 'calendar-item');
-			button.type = 'button';
-			button.append(element('strong', '', item.title), element('span', '', item.type === 'tv' ? item.episode : item.dateLabel));
-			button.onclick = () => openDetails(item);
-			items.append(button);
-		}
-		if (!day.items.length) items.append(element('span', 'calendar-empty', 'Nothing scheduled'));
-		section.append(date, items);
-		return section;
-	}));
+	const days = jserverCalendar.days(state, new Date(), { past: RECENT_CALENDAR_DAYS });
+	// Empty past days are noise: show only the days on which something landed.
+	const recent = days.filter(day => day.past && day.items.length);
+	const upcoming = days.filter(day => !day.past);
+	const groups = [];
+	if (recent.length) groups.push(calendarGroup('Recently released', recent));
+	groups.push(calendarGroup('Next 7 days', upcoming));
+	$('#calendarDays').replaceChildren(...groups);
 	$('#calendarSummary').textContent = state.unavailable.length ? 'Some listings are temporarily unavailable.' : 'Scheduled releases - arrival may vary';
 }
 
@@ -68,13 +100,14 @@ function renderHero() {
 	image.hidden = !item.poster;
 	if (item.poster) image.src = item.poster;
 	image.onerror = () => { image.hidden = true; };
-	$('#comingHeroEyebrow').textContent = item.type === 'tv' ? 'NEXT EPISODE' : 'A FILM TO LOOK FORWARD TO';
+	$('#comingHeroEyebrow').textContent = item.released ? 'RECENTLY RELEASED' : item.type === 'tv' ? 'NEXT EPISODE' : 'A FILM TO LOOK FORWARD TO';
 	$('#comingHeroTitle').textContent = item.title;
 	$('#comingHeroDescription').textContent = item.overview || 'Already on our list. Keep an eye out for it here.';
 	const meta = $('#comingHeroMeta'); meta.replaceChildren(element('strong', 'coming-date', `${item.dateLabel} - ${jserverUI.comingDate(item)}`));
 	if (item.episode) meta.append(element('span', 'coming-episode', `${item.episode} - ${item.episodeTitle}`));
 	if (item.ratings?.length) meta.append(jserverUI.ratings(item.ratings, { compact: true }));
-	$('#comingHeroAction').onclick = () => openDetails(item);
+	$('#comingHeroAction').textContent = isLibraryItem(item) ? 'Open in library' : 'View details';
+	$('#comingHeroAction').onclick = () => activate(item);
 	$('#comingHeroNext').hidden = items.length < 2;
 	$('#comingHeroNext').onclick = () => { state.featured = (state.featured + 1) % items.length; renderHero(); };
 }
@@ -82,15 +115,16 @@ function renderHero() {
 function renderGrid() {
 	const items = pool(), preview = compact.matches ? 4 : 8;
 	$('#comingGrid').replaceChildren(...items.slice(0, state.expanded ? items.length : preview).map(item => {
-		const button = element('button', 'coming-card');
+		const button = element('button', 'coming-card' + (isLibraryItem(item) ? ' in-library' : ''));
 		button.type = 'button';
+		if (isLibraryItem(item)) button.setAttribute('aria-label', `${item.title} - open in library`);
 		if (item.poster) { const image = element('img'); image.src = item.poster; image.alt = ''; image.loading = 'lazy'; image.onerror = () => image.remove(); button.append(image); }
 		const text = element('div', 'coming-card-text');
 		text.append(element('strong', '', item.title), element('span', 'coming-date', `${item.dateLabel} - ${jserverUI.comingDate(item)}`));
 		if (item.episode) text.append(element('small', '', `${item.episode} - ${item.episodeTitle}`));
 		if (item.type === 'movie') text.append(jserverUI.ratings(item.ratings, { compact: true }));
 		button.append(text);
-		button.onclick = () => openDetails(item);
+		button.onclick = () => activate(item);
 		return button;
 	}));
 	const unavailable = state.unavailable.includes(state.type === 'tv' ? 'tv' : 'films');
@@ -110,12 +144,12 @@ function render() {
 function detailsMarkup(item) {
 	const body = element('div', 'detail-content coming-details');
 	const title = element('h2', '', item.title); title.id = 'comingDetailsTitle';
-	body.append(element('p', 'eyebrow', 'COMING SOON'), title,
+	body.append(element('p', 'eyebrow', item.released ? 'RECENTLY RELEASED' : 'COMING SOON'), title,
 		element('p', 'coming-date', `${item.dateLabel} - ${jserverUI.comingDate(item)}`),
 		element('p', 'overview', item.overview || 'Already on our list.'));
 	if (item.type === 'movie') body.append(jserverUI.ratings(item.ratings, { links: true }));
 	if (item.episodes?.length) {
-		body.append(element('h3', '', 'Next episodes'));
+		body.append(element('h3', '', item.released ? 'Recent episodes' : 'Episodes'));
 		const schedule = element('div', 'upcoming-schedule');
 		for (const episode of item.episodes) {
 			const row = element('div', 'upcoming-episode');
@@ -129,8 +163,9 @@ function detailsMarkup(item) {
 		? 'Broadcast times use your time zone. Episodes appear here after they have been added to the collection.'
 		: 'This is a release date, not a promise of when it will be watchable here. Cinema releases can arrive at home later.'));
 	if (item.id) {
-		const link = element('a', 'button secondary', item.type === 'tv' ? 'View show & available episodes' : 'View film & availability');
-		link.href = `/discover?type=${encodeURIComponent(item.type)}&title=${encodeURIComponent(item.id)}`;
+		const library = libraryTarget(item);
+		const link = element('a', 'button secondary', library ? 'Open in library' : item.type === 'tv' ? 'View show & available episodes' : 'View film & availability');
+		link.href = library || `/discover?type=${encodeURIComponent(item.type)}&title=${encodeURIComponent(item.id)}`;
 		body.append(link);
 	}
 	return body;

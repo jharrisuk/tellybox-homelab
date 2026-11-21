@@ -6,8 +6,11 @@
 .coming-page .calendar-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
 .coming-page .calendar-heading h2 { margin: 0; font-size: 17px; }
 .coming-page .calendar-heading span { color: var(--muted); font-size: 12px; }
+.coming-page .calendar-groups { display: flex; flex-direction: column; gap: 16px; }
+.coming-page .calendar-group h3 { margin: 0 0 8px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
 .coming-page .calendar-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
 .coming-page .calendar-day { display: block; padding: 11px; border: 1px solid var(--line); border-radius: 10px; background: #151a14; }
+.coming-page .calendar-day.recent { border-style: dashed; background: #12160f; }
 .coming-page .calendar-date { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; }
 .coming-page .calendar-date strong { color: var(--green); font-size: 12px; }
 .coming-page .calendar-date span { color: var(--muted); font-size: 10px; }

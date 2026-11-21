@@ -2,6 +2,22 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Server 0.26.60 - 21 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Coming soon
+
+- The calendar now covers the last 14 days as well as the 90 ahead, so recent
+  releases no longer disappear the day after they land.
+- Recently released titles are labelled as released instead of looking like a
+  scheduling mistake.
+- A title that is already in your library now opens there when clicked. Titles
+  you do not have keep the existing details panel.
+- Ownership is matched by TMDB id against the catalogue already in memory; no
+  extra provider request is made, and a catalogue lookup failure simply leaves
+  the titles without library links.
 ## Server 0.26.59 - 21 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.59",
+	"serverVersion": "0.26.60",
 	"files": [
 		{
 			"path": ".env.example",
@@ -59,8 +59,8 @@
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 54871,
-			"sha256": "a2ee216155d470890fcad67b833922b4be0da75594ccd8a8d60d220f275e4122"
+			"bytes": 55578,
+			"sha256": "ac17b2dca8a687ee9e550c949cd189ddd79aea3d4dcc7a178905a96f71379d83"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -609,8 +609,8 @@
 		},
 		{
 			"path": "server/insights.mjs",
-			"bytes": 6273,
-			"sha256": "9129ef708f10d8620366ad25102cb61811da7a98570f04c38d05bdc31a3ef4f2"
+			"bytes": 9879,
+			"sha256": "40e4d1ba2c0292173ca33149243a5a7135b10b5b4a889f4dde8f77f2d30e32ef"
 		},
 		{
 			"path": "server/json-store.mjs",
@@ -660,12 +660,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "bdc8873fac48770e2e88932a587c69b0acd8f6040b4756a9ff004ed4558ac053"
+			"sha256": "7942e0bbc1bba22794acbfc79fab708d121cafbb9011c9eb4820cd61008044e2"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "be13454dd37af461fca5d9cb4a60266e9e7e29d56fda136597094dab57a132d7"
+			"sha256": "5f5d8ca4eeae08c5bf7f25d0f1c8aa88ad146bef0245dd2c65e3b4bf8f8a6dcf"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -784,23 +784,23 @@
 		},
 		{
 			"path": "server/public/coming-calendar.js",
-			"bytes": 1262,
-			"sha256": "b59a7266920c06c82a5407ecb881dab333a95a46d62939c9f56e01052943754b"
+			"bytes": 1441,
+			"sha256": "6c6893128c6c7d117beb78a450b752e700e7a7e848e9abebb4d7f93da4141394"
 		},
 		{
 			"path": "server/public/coming-soon.css",
-			"bytes": 3720,
-			"sha256": "882fae309a14290167a497cad00af0f7990598d240c8d00f3cb21f0f3a6856e9"
+			"bytes": 4024,
+			"sha256": "87808ecb1f2d5e558976acfd29ac2d30efb6458994bdb8b7826fe2052fe23b78"
 		},
 		{
 			"path": "server/public/coming-soon.html",
-			"bytes": 4328,
-			"sha256": "9d4aa2fa4898ef5e5594f77f6a0d2bfb46800416ec30f798a7618070e2c81414"
+			"bytes": 4376,
+			"sha256": "cf119938121c394c1a9054d0d3ae3fce96be9a5f3f1f9ad1e9aab9b07501a600"
 		},
 		{
 			"path": "server/public/coming-soon.js",
-			"bytes": 9738,
-			"sha256": "ec9f8ffc966837fbe1348a5519fef8e4a376ccd0eacd7ec29c352e5e5a808e57"
+			"bytes": 11465,
+			"sha256": "ed51b30a1efc29476e0da61f50f7ce8452fa0ab7fccffb63c216e36ca32c8094"
 		},
 		{
 			"path": "server/public/connection-status.js",
@@ -1149,8 +1149,8 @@
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 189062,
-			"sha256": "b32db87f37123198a59b82e3f33257761ca7ad190647613b41391ac359611052"
+			"bytes": 189603,
+			"sha256": "2239221f7875ee656438e6abbedffc8042815debacd98181e56d380f0471a632"
 		},
 		{
 			"path": "server/session-limits.mjs",
@@ -1459,8 +1459,13 @@
 		},
 		{
 			"path": "server/test/coming-calendar.test.mjs",
-			"bytes": 1745,
-			"sha256": "dbeb10805460d220d28ee545c0f37bf57eaa06dafa2677d49c6a700079d510ab"
+			"bytes": 2956,
+			"sha256": "fb89240653993857d295eb97baf267903b8f585b9102c55cde6d915e517d2e8f"
+		},
+		{
+			"path": "server/test/coming-soon-q65.test.mjs",
+			"bytes": 5338,
+			"sha256": "48bc3f59060c1456f09fd490901ad55021aae922ea20b21d044f7e891113b8d9"
 		},
 		{
 			"path": "server/test/connection-status.test.mjs",
@@ -1979,8 +1984,8 @@
 		},
 		{
 			"path": "server/test/insights.test.mjs",
-			"bytes": 4927,
-			"sha256": "a4236b20ff82dd59fa029921745e8315d48d99ca1300b36a8246c38a5438aea8"
+			"bytes": 10403,
+			"sha256": "3afa89cbf7513fbdf548fea37b5cae81f8ace0ec9e89d54aa4e884dcf8626b9c"
 		},
 		{
 			"path": "server/test/installation-link-137.test.mjs",

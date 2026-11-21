@@ -367,7 +367,20 @@ app.use((req, res, next) => {
 	next();
 });
 
-const insights = insightsFromFile(path.join(path.dirname(configPath), 'insights.json'));
+// Coming soon links an announcement back to the copy already in the library.
+// The match is made from the catalogue object the server already keeps in
+// memory (vodLibrary); no extra request is made from the route and the browser
+// still calls only /api/coming-soon.
+const insights = insightsFromFile(path.join(path.dirname(configPath), 'insights.json'), {
+	library: async items => {
+		const matched = await vodLibrary.availability(items);
+		const index = new Map();
+		for (const item of matched) {
+			if (item?.watchId) index.set(`${item.type === 'tv' ? 'tv' : 'movie'}:${item.id}`, item.watchId);
+		}
+		return index;
+	}
+});
 installTvControl(app, { auth, sessions });
 // Only the signed-in caller's own allowance. No person, device or other account details.
 app.get('/api/viewing-status', (req, res) => {

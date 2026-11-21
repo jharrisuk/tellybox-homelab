@@ -32,6 +32,100 @@ test('TV groups the next missing monitored episodes and ignores old, downloaded 
 	assert.doesNotMatch(JSON.stringify(result), /secret|apiKey|seriesId/);
 });
 
+test('films include a bounded recent window and mark already released titles', () => {
+	const result = upcomingMovies([
+		movie(11, { digitalRelease: '2026-10-15' }),
+		movie(12, { status: 'released', digitalRelease: '2026-09-18' }),
+		movie(13, { digitalRelease: '2026-11-01' })
+	], now);
+	assert.deepEqual(result.map(i => i.id), [11, 13]);
+	assert.equal(result[0].released, true);
+	assert.equal(result[0].dateLabel, 'Released');
+	assert.equal(result[1].released, false);
+	assert.equal(result[1].dateLabel, 'Digital release');
+	const monthAgo = upcomingMovies([movie(12, { status: 'released', digitalRelease: '2026-09-18' })], now);
+	assert.deepEqual(monthAgo, [], 'a film released thirty days ago is outside the window');
+});
+
+test('owned films join the recent window and carry their library id when matched', () => {
+	const result = upcomingMovies([
+		movie(21, { hasFile: true, digitalRelease: '2026-10-13' }),
+		movie(22, { hasFile: true, digitalRelease: '2020-01-01' }),
+		movie(23, { hasFile: true, digitalRelease: '2026-11-20' })
+	], now, new Map([['movie:21', 'library-film-21']]));
+	assert.deepEqual(result.map(i => i.id), [21], 'only the owned film released in the window is shown');
+	assert.equal(result[0].released, true);
+	assert.equal(result[0].dateLabel, 'Released');
+	assert.deepEqual(result[0].library, { id: 'library-film-21', type: 'movie' });
+	assert.doesNotMatch(JSON.stringify(result), /hasFile/, 'ownership is an input signal, not a leaked field');
+});
+
+test('series include episodes aired in the recent window and flag them as released', () => {
+	const series = { title: 'Recent show', monitored: true, tmdbId: 61, apiKey: 'secret' };
+	const episode = (seriesId, tmdbId, title, airDateUtc, extra = {}) => ({ seriesId, series: { ...series, tmdbId, title }, title, seasonNumber: 1, episodeNumber: 2, monitored: true, hasFile: false, airDateUtc, ...extra });
+	const result = upcomingSeries([
+		episode(1, 61, 'Aired recently', '2026-10-13T20:00:00Z', { hasFile: true }),
+		episode(2, 62, 'Aired a month ago', '2026-09-18T20:00:00Z'),
+		episode(3, 63, 'Airs later', '2026-11-01T20:00:00Z'),
+		episode(4, 64, 'Aired before the return', '2026-10-14T20:00:00Z'),
+		episode(4, 64, 'Returns', '2026-10-25T20:00:00Z', { episodeNumber: 7 })
+	], now, new Map([['tv:61', 'library-series-61']]));
+	assert.deepEqual(result.map(i => i.id), [61, 64, 63]);
+	const byId = new Map(result.map(i => [i.id, i]));
+	const aired = byId.get(61);
+	assert.equal(aired.released, true);
+	assert.equal(aired.dateLabel, 'Aired');
+	assert.deepEqual(aired.library, { id: 'library-series-61', type: 'series' });
+	const running = byId.get(64);
+	assert.equal(running.released, false, 'a running show stays in the forward list');
+	assert.equal(running.dateLabel, 'Next episode airs');
+	assert.deepEqual(running.episodes.map(e => e.title), ['Aired before the return', 'Returns'], 'aired episodes remain visible to the calendar');
+	assert.equal(byId.get(63).released, false);
+	assert.equal(byId.get(63).dateLabel, 'Next episode airs');
+});
+
+test('a running series keeps its next episode when the recent window is full', () => {
+	const series = { title: 'Daily show', monitored: true, tmdbId: 71 };
+	const episodes = [];
+	for (let date = 5; date <= 10; date++) {
+		episodes.push({ seriesId: 9, series, title: `Old ${date}`, seasonNumber: 1, episodeNumber: date, monitored: true, hasFile: true, airDateUtc: `2026-10-${String(date).padStart(2, '0')}T20:00:00Z` });
+	}
+	episodes.push({ seriesId: 9, series, title: 'The next one', seasonNumber: 1, episodeNumber: 11, monitored: true, hasFile: false, airDateUtc: '2026-10-30T20:00:00Z' });
+	const [item] = upcomingSeries(episodes, now);
+	assert.equal(item.released, false);
+	assert.equal(item.dateLabel, 'Next episode airs');
+	assert.deepEqual(item.episodes.map(e => e.title), ['Old 9', 'Old 10', 'The next one'], 'the next episode is never crowded out');
+});
+
+test('createInsights merges library matches from the injected catalogue lookup', async () => {
+	let libraryCalls = 0;
+	const insights = createInsights({
+		clock: () => now,
+		config: () => ({ radarr: { url: 'http://radarr.test', key: 'secret' }, sonarr: { url: 'http://sonarr.test', key: 'other' } }),
+		fetcher: async url => url.hostname === 'radarr.test'
+			? Response.json([movie(1, { digitalRelease: '2026-10-15' })])
+			: Response.json([{ seriesId: 2, series: { title: 'Show', monitored: true, tmdbId: 2 }, title: 'Episode', seasonNumber: 1, episodeNumber: 1, monitored: true, hasFile: false, airDateUtc: '2026-10-13T20:00:00Z' }]),
+		library: async items => { libraryCalls++; return new Map(items.map(i => [`${i.type}:${i.id}`, 'jelly-' + i.id])); }
+	});
+	const schedule = await insights.upcoming();
+	assert.equal(libraryCalls, 1);
+	assert.deepEqual(schedule.movies[0].library, { id: 'jelly-1', type: 'movie' });
+	assert.deepEqual(schedule.tv[0].library, { id: 'jelly-2', type: 'series' });
+	assert.doesNotMatch(JSON.stringify(schedule), /secret|http:\/\//);
+});
+
+test('createInsights keeps the schedule when the library lookup fails', async () => {
+	const insights = createInsights({
+		clock: () => now,
+		config: () => ({ radarr: { url: 'http://radarr.test', key: 'secret' } }),
+		fetcher: async () => Response.json([movie(1, { digitalRelease: '2026-10-15' })]),
+		library: async () => { throw new Error('catalogue offline'); }
+	});
+	const schedule = await insights.upcoming();
+	assert.equal(schedule.movies.length, 1);
+	assert.equal(schedule.movies[0].library, undefined);
+});
+
 test('ratings retain named sources and scales while rejecting missing, invalid and out-of-range values', () => {
 	const ratings = movieRatings({ tmdbId: 1, imdbId: 'tt123', ratings: { imdb: { value: 7.3, votes: 1234 }, tmdb: { value: 0 }, rottenTomatoes: { value: 73 }, trakt: { value: 14 } } });
 	assert.deepEqual(ratings.map(r => [r.source, r.value, r.max]), [['IMDb', 7.3, 10], ['Rotten Tomatoes', 73, 100]]);

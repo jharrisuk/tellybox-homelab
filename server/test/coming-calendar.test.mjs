@@ -33,3 +33,26 @@ test('calendar includes each episode, preserves film release dates and excludes 
 	assert.equal(days.reduce((count, day) => count + day.items.length, 0), 3);
 	assert.equal(schedule.tv[0].episode, undefined);
 });
+
+test('calendar can add the recent past and marks released days without changing the default week', () => {
+	const schedule = {
+		tv: [{ type: 'tv', title: 'Just aired', episodes: [
+			{ season: 1, number: 4, title: 'Aired', date: new Date(2026, 9, 15, 1).toISOString() }
+		] }],
+		movies: [{ type: 'movie', title: 'Released film', date: '2026-10-14T00:00:00Z' }]
+	};
+	const days = calendar.days(schedule, new Date(2026, 9, 18, 12), { past: 14 });
+	assert.equal(days.length, 21, 'fourteen recent days plus the next seven');
+	assert.equal(days[0].key, '2026-10-04');
+	assert.equal(days[0].past, true);
+	assert.equal(days[13].past, true);
+	assert.equal(days[14].today, true, 'today is not mistaken for the first rendered day');
+	assert.equal(days[14].past, false);
+	assert.equal(days[20].key, '2026-10-24');
+	const aired = days.find(day => day.key === '2026-10-15');
+	assert.equal(aired.items.length, 1);
+	assert.equal(aired.items[0].title, 'Just aired');
+	const releasedFilm = days.find(day => day.key === '2026-10-14');
+	assert.equal(releasedFilm.items[0].title, 'Released film');
+	assert.equal(calendar.days({ tv: [], movies: [] }, new Date(2026, 9, 18, 12)).length, 7, 'the default stays a single week');
+});

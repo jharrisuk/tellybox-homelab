@@ -1,5 +1,12 @@
 import { readFileSync } from 'node:fs';
 
+const DAY = 86400000;
+// Bound on how far back "Coming soon" looks. It is deliberately small so the
+// release calendar can show what has just arrived as well as what is next.
+export const RECENT_RELEASE_DAYS = 14;
+// The forward bound is unchanged: three months of announcements.
+export const UPCOMING_RELEASE_DAYS = 90;
+
 export function score(source, value, max = 10, votes = 0, url = null) {
 	if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0 || value > max) return null;
 	return { source, value: Math.round(value * 10) / 10, max, votes: Number.isSafeInteger(votes) && votes > 0 ? votes : 0, url };
@@ -25,44 +32,99 @@ function poster(images = []) {
 	} catch { return null; }
 }
 
-export function upcomingMovies(movies, now = Date.now()) {
-	const end = now + 90 * 86400000;
-	const start = new Date(now).setUTCHours(0, 0, 0, 0);
-	return movies.filter(m => m.monitored && !m.hasFile).flatMap(m => {
+function libraryKey(type, id) { return `${type === 'tv' ? 'tv' : 'movie'}:${id}`; }
+
+// `matches` is a Map (or plain object) of "movie:<tmdb>" / "tv:<tmdb>" to the
+// id of the same title in the local library. It is built from catalogue data
+// that the server already holds; no extra lookup happens here.
+export function attachLibrary(items, matches) {
+	if (!matches || !items?.length) return items;
+	const lookup = key => matches instanceof Map ? matches.get(key) : matches[key];
+	return items.map(item => {
+		const id = item?.id === null || item?.id === undefined ? null : lookup(libraryKey(item.type, item.id));
+		if (!id) return item;
+		return { ...item, library: { id: String(id), type: item.type === 'tv' ? 'series' : 'movie' } };
+	});
+}
+
+function startOfUtcDay(now) { return new Date(now).setUTCHours(0, 0, 0, 0); }
+
+function isReleased(time, now) {
+	if (!Number.isFinite(time)) return false;
+	// Film dates are whole UTC days. Treat anything before the current UTC day
+	// as released so a film dated today still reads as "arriving today".
+	return time < startOfUtcDay(now);
+}
+
+export function upcomingMovies(movies, now = Date.now(), matches = null) {
+	const end = now + UPCOMING_RELEASE_DAYS * DAY;
+	const start = now - RECENT_RELEASE_DAYS * DAY;
+	const items = movies.filter(m => m.monitored).flatMap(m => {
 		const releases = [['digitalRelease', 'Digital release'], ['physicalRelease', 'Disc release']]
 			.map(([key, label]) => ({ date: m[key], time: Date.parse(m[key]), label }))
 			.filter(r => r.time >= start && r.time <= end).sort((a, b) => a.time - b.time);
 		let release = releases[0];
 		const cinema = Date.parse(m.inCinemas);
-		if (!release && cinema >= start && cinema <= end && m.status !== 'released') release = { date: m.inCinemas, label: 'Cinema release' };
-		if (!release && !['announced', 'inCinemas'].includes(m.status)) return [];
-		if (!release && [m.digitalRelease, m.physicalRelease, m.inCinemas].some(d => Date.parse(d) > end)) return [];
+		if (!release && cinema >= start && cinema <= end && m.status !== 'released') release = { date: m.inCinemas, time: cinema, label: 'Cinema release' };
+		if (!release) {
+			// An owned film only belongs here when it has a dated release inside
+			// the window; otherwise every old film in the library would appear.
+			if (m.hasFile) return [];
+			if (!['announced', 'inCinemas'].includes(m.status)) return [];
+			if ([m.digitalRelease, m.physicalRelease, m.inCinemas].some(d => Date.parse(d) > end)) return [];
+		}
+		const released = Boolean(release && isReleased(release.time, now));
+		// An owned film joins only the recent part of the window. Its future
+		// announcements are not useful to a viewer who can already watch it.
+		if (m.hasFile && !released) return [];
 		return [{ type: 'movie', id: m.tmdbId, title: m.title, overview: m.overview || '', poster: poster(m.images),
-			date: release?.date || null, dateLabel: release?.label || 'Home release date to be announced', ratings: movieRatings(m) }];
+			date: release?.date || null, dateLabel: released ? 'Released' : release?.label || 'Home release date to be announced',
+			released, ratings: movieRatings(m) }];
 	}).sort((a, b) => (Date.parse(a.date) || Infinity) - (Date.parse(b.date) || Infinity));
+	return attachLibrary(items, matches);
 }
 
-export function upcomingSeries(episodes, now = Date.now()) {
-	const series = new Map();
-	const sorted = episodes.filter(e => e.monitored && e.series?.monitored && !e.hasFile && e.seasonNumber > 0
-		&& Date.parse(e.airDateUtc) >= now && Date.parse(e.airDateUtc) <= now + 90 * 86400000)
+export function upcomingSeries(episodes, now = Date.now(), matches = null) {
+	const end = now + UPCOMING_RELEASE_DAYS * DAY;
+	const start = now - RECENT_RELEASE_DAYS * DAY;
+	const grouped = new Map();
+	const sorted = episodes.filter(e => e.monitored && e.series?.monitored && e.seasonNumber > 0
+		// Aired episodes are allowed even when they are already in the library so
+		// the recent window can link back to the owned copy. Future episodes stay
+		// limited to the ones still missing.
+		&& (!e.hasFile || Date.parse(e.airDateUtc) < now)
+		&& Date.parse(e.airDateUtc) >= start && Date.parse(e.airDateUtc) <= end)
 		.sort((a, b) => Date.parse(a.airDateUtc) - Date.parse(b.airDateUtc));
 	for (const episode of sorted) {
-		let item = series.get(episode.seriesId);
-		if (!item) {
-			const s = episode.series;
-			item = { type: 'tv', id: s.tmdbId || null, title: s.title, overview: s.overview || '', poster: poster(s.images),
-				date: episode.airDateUtc, dateLabel: episode.episodeNumber === 1 ? `Season ${episode.seasonNumber} begins` : 'Next episode airs',
-				episode: `S${String(episode.seasonNumber).padStart(2, '0')} · E${String(episode.episodeNumber).padStart(2, '0')}`,
-				episodeTitle: episode.title, episodes: [], ratings: [] };
-			series.set(episode.seriesId, item);
-		}
-		if (item.episodes.length < 5) item.episodes.push({ title: episode.title, season: episode.seasonNumber, number: episode.episodeNumber, date: episode.airDateUtc });
+		const list = grouped.get(episode.seriesId);
+		if (list) list.push(episode);
+		else grouped.set(episode.seriesId, [episode]);
 	}
-	return [...series.values()];
+	const items = [...grouped.values()].map(upcoming => {
+		const series = upcoming[0].series;
+		// Prefer the next episode when the show is still running; otherwise show
+		// the most recent episode that has already aired.
+		const next = upcoming.find(e => Date.parse(e.airDateUtc) >= now);
+		const chosen = next || upcoming[upcoming.length - 1];
+		const future = upcoming.filter(e => Date.parse(e.airDateUtc) >= now);
+		const aired = upcoming.filter(e => Date.parse(e.airDateUtc) < now);
+		// Keep the next five episodes and the two most recently aired ones. The
+		// calendar expands this list, so a running show then appears in both
+		// "Recently released" and "Next 7 days" without a second series item.
+		const listed = (future.length ? [...future.slice(0, 5), ...aired.slice(-2)] : aired.slice(-5))
+			.sort((a, b) => Date.parse(a.airDateUtc) - Date.parse(b.airDateUtc));
+		return { type: 'tv', id: series.tmdbId || null, title: series.title, overview: series.overview || '', poster: poster(series.images),
+			date: chosen.airDateUtc,
+			dateLabel: next ? (chosen.episodeNumber === 1 ? `Season ${chosen.seasonNumber} begins` : 'Next episode airs') : 'Aired',
+			released: !next && isReleased(Date.parse(chosen.airDateUtc), now),
+			episode: `S${String(chosen.seasonNumber).padStart(2, '0')} · E${String(chosen.episodeNumber).padStart(2, '0')}`,
+			episodeTitle: chosen.title, ratings: [],
+			episodes: listed.map(e => ({ title: e.title, season: e.seasonNumber, number: e.episodeNumber, date: e.airDateUtc })) };
+	});
+	return attachLibrary(items, matches);
 }
 
-export function createInsights({ config, fetcher = fetch, clock = Date.now }) {
+export function createInsights({ config, fetcher = fetch, clock = Date.now, library = null }) {
 	const cache = new Map();
 	async function cached(key, loader) {
 		let entry = cache.get(key);
@@ -90,13 +152,20 @@ export function createInsights({ config, fetcher = fetch, clock = Date.now }) {
 		const scores = await ratings();
 		return items.map(i => ({ ...i, ratings: i.type === 'movie' && scores.get(String(i.id))?.length ? scores.get(String(i.id)) : i.ratings || [] }));
 	}
+	async function libraryMatches(items) {
+		if (!library || !items.length) return null;
+		try { return await library(items); } catch { return null; }
+	}
 	async function upcoming() {
 		const now = clock();
 		const [films, episodes] = await Promise.all([
 			movies(),
-			cached('calendar', () => get('sonarr', `calendar?start=${new Date(now).toISOString().slice(0, 10)}&end=${new Date(now + 90 * 86400000).toISOString().slice(0, 10)}&includeSeries=true&unmonitored=false`))
+			cached('calendar', () => get('sonarr', `calendar?start=${new Date(now - RECENT_RELEASE_DAYS * DAY).toISOString().slice(0, 10)}&end=${new Date(now + UPCOMING_RELEASE_DAYS * DAY).toISOString().slice(0, 10)}&includeSeries=true&unmonitored=false`))
 		]);
-		return { tv: upcomingSeries(episodes || [], now), movies: upcomingMovies(films || [], now),
+		const tv = upcomingSeries(episodes || [], now);
+		const movieItems = upcomingMovies(films || [], now);
+		const matches = await libraryMatches([...tv, ...movieItems]);
+		return { tv: attachLibrary(tv, matches), movies: attachLibrary(movieItems, matches),
 			unavailable: [...(films ? [] : ['films']), ...(episodes ? [] : ['tv'])], checkedAt: new Date(now).toISOString() };
 	}
 	async function recentEpisodeDates() {
@@ -107,6 +176,6 @@ export function createInsights({ config, fetcher = fetch, clock = Date.now }) {
 	return { ratings, enrich, upcoming, recentEpisodeDates };
 }
 
-export function insightsFromFile(configPath) {
-	return createInsights({ config: () => { try { return JSON.parse(readFileSync(configPath, 'utf8')); } catch { return null; } } });
+export function insightsFromFile(configPath, options = {}) {
+	return createInsights({ ...options, config: () => { try { return JSON.parse(readFileSync(configPath, 'utf8')); } catch { return null; } } });
 }
