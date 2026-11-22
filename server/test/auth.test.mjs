@@ -202,7 +202,9 @@ test('home public-IP bypass trusts only the designated HTTPS proxy and never gra
 	assert.equal(status.home, true);
 	assert.equal(status.local, false);
 	assert.equal(status.authenticated, false);
-	for (const route of ['/settings', '/api/activity', '/api/auth/tunnel']) assert.equal((await request('remote', route, undefined, undefined, headers)).status, 403);
+	for (const route of ['/settings', '/api/auth/tunnel']) assert.equal((await request('remote', route, undefined, undefined, headers)).status, 403);
+	// The read-only Activity view is available at home through the trusted entry.
+	assert.equal((await request('remote', '/api/activity', undefined, undefined, headers)).status, 200);
 	assert.equal((await request('remote', '/api/auth/password', { password: 'synthetic-should-not-work' }, undefined, { ...headers, Origin: options.publicOrigin })).status, 403);
 	for (const changes of [{ 'CF-Connecting-IP': '203.0.113.51' }, { 'CF-Connecting-IP': '203.0.113.50, 127.0.0.1' }, { 'X-Forwarded-Proto': 'http' }]) {
 		assert.equal((await request('remote', '/api/items', undefined, undefined, { ...headers, ...changes })).status, 401);
@@ -382,7 +384,7 @@ test('migration trusts both named home proxies while rejecting other VPN peers a
 	for(const peer of ['127.0.0.1','127.0.0.2']){
 		assert.equal((await request(peer,'/api/items')).status,200);
 		const status=JSON.parse((await request(peer,'/api/auth/status')).body);assert.equal(status.home,true);assert.equal(status.local,false);
-		assert.equal((await request(peer,'/api/activity')).status,403);
+		assert.equal((await request(peer,'/api/activity')).status,200);
 		assert.equal((await request(peer,'/settings')).status,403);
 		for(const headers of [{'CF-Connecting-IP':'203.0.113.51'},{'X-Forwarded-Proto':'http'},{'Host':'wrong.example.test'},{'CF-Connecting-IP':'203.0.113.50,127.0.0.1'}])assert.equal((await request(peer,'/api/items',headers)).status,401);
 	}

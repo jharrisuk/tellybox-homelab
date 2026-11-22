@@ -116,14 +116,14 @@ async function fixture(t, { email = false } = {}) {
 	// below asserts the real source uses the same predicate and error strings.
 	app.get('/api/activity/summary', (req, res) => {
 		res.set('Cache-Control', 'no-store');
-		if (!auth.isOwnerAdmin(req)) {
+		if (!auth.isOwnerAdmin(req) && !auth.isHome(req)) {
 			return res.status(403).json({ error: SUMMARY_ERROR });
 		}
 		res.json({ readOnly: true, stats: { active: 0, downloads: 0, plays: 0, failed: 0, remoteIps: 0 }, active: [], downloadCount: 0 });
 	});
 	app.get('/api/activity/streams', async (req, res) => {
 		res.set('Cache-Control', 'no-store');
-		if (!auth.isOwnerAdmin(req)) {
+		if (!auth.isOwnerAdmin(req) && !auth.isHome(req)) {
 			return res.status(403).json({ error: STREAMS_ERROR });
 		}
 		res.json({ state: 'ok', streams: [] });
@@ -311,20 +311,26 @@ test('a signed-in person without an admin-app link stays a viewer on every surfa
 	await assertRow(request, { cookie }, GUARD_DENIED);
 });
 
-test('home/LAN presence alone is not an administrator on any of the five surfaces', async t => {
+test('home can read Activity but not the torrent queue or settings', async t => {
 	const { raw } = await fixture(t);
 	const homeHeaders = { Host: 'remote.test', 'X-Forwarded-Proto': 'https', 'CF-Connecting-IP': HOME_IP };
 	// Prove the classifier really says home:true, local:false for this socket,
-	// so the refusals below are the home branch and not a missing classifier.
+	// so the allowances below are the home branch and not a missing classifier.
 	const status = await raw('remote', '/api/auth/status', { headers: homeHeaders });
 	assert.equal(status.status, 200);
 	const state = JSON.parse(status.text);
 	assert.equal(state.home, true);
 	assert.equal(state.local, false);
 	assert.equal(state.admin, false, 'being at home is not an administrator role');
-	for (const route of ROUTES) {
+	// The local entry already shows the read-only Activity view to a home
+	// browser without a sign-in; the trusted public entry gives the same answer.
+	for (const route of ['/activity', '/api/activity/summary', '/api/activity/streams']) {
 		const response = await raw('remote', route, { headers: homeHeaders });
-		assert.equal(response.status, 403, route + ' must refuse a home-only viewer');
+		assert.equal(response.status, 200, route + ' must be readable at home');
+	}
+	// The torrent queue and downloads stay administrator-only.
+	for (const route of ['/api/activity/downloads', '/api/qbittorrent/summary']) {
+		assert.equal((await raw('remote', route, { headers: homeHeaders })).status, 403, route + ' must stay administrator-only');
 	}
 	// Without the relay-verified client address the same proxy request is only
 	// an unauthenticated remote caller.
@@ -348,7 +354,7 @@ test('all five surfaces share the one shipped predicate and the full log stays s
 	const streamsStart = serverSource.indexOf("app.get('/api/activity/streams'");
 	assert.ok(streamsStart >= 0, 'server.mjs registers the streams route');
 	const streamsBlock = serverSource.slice(streamsStart, streamsStart + 500);
-	assert.match(streamsBlock, /if\(!auth\.isOwnerAdmin\(req\)\)/);
+	assert.match(streamsBlock, /if\(!auth\.isOwnerAdmin\(req\) && !auth\.isHome\(req\)\)/);
 	assert.ok(streamsBlock.includes(STREAMS_ERROR), 'the mirrored streams error matches the real route');
 
 	// The qBittorrent read-only routes are wired to the same predicate.
@@ -358,9 +364,9 @@ test('all five surfaces share the one shipped predicate and the full log stays s
 	assert.match(wiring[0], /allowDownloads:req=>auth\.isOwnerAdmin\(req\)/);
 
 	// The Activity page uses the same predicate inside installAuth.
-	const page = /app\.get\(\['\/activity', '\/activity\.html'\],[\s\S]{0,300}?\}\);/.exec(authSource);
+	const page = /app\.get\(\['\/activity', '\/activity\.html'\],[\s\S]{0,600}?\}\);/.exec(authSource);
 	assert.ok(page, 'auth.mjs registers the Activity page');
-	assert.match(page[0], /if \(!ownerAdmin\(req\)\)/);
+	assert.match(page[0], /if \(!ownerAdmin\(req\) && !home\(req\)\)/);
 
 	// One definition: local OR approved admin app OR owner session OR a person
 	// linked to an approved admin app. Home presence is deliberately absent.
@@ -376,7 +382,7 @@ test('all five surfaces share the one shipped predicate and the full log stays s
 	assert.match(personAdmin[0], /device\.role === 'admin'/);
 	assert.match(personAdmin[0], /people\.device\(device\.id\)\.personId === session\.personId/);
 
-	// The full log is NOT widened to the owner predicate: it keeps the stricter
-	// local/admin-app gate (an owner password cookie alone must not read it).
-	assert.match(authSource, /app\.get\('\/api\/activity', apps\.requireAdmin/, 'the full log keeps apps.requireAdmin');
+	// The full log follows the same policy as the Activity page: the household at
+	// home may read it; everyone else still needs an administrator.
+	assert.match(authSource, /const activityReader = \(req, res, next\) => home\(req\) \? next\(\) : apps\.requireAdmin\(req, res, next\)/, 'the full log is readable at home, otherwise admin');
 });

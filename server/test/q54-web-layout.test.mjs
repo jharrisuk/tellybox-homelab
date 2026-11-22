@@ -54,22 +54,29 @@ test('guide re-renders slice the listings already fetched and never request more
 	assert.match(body, /restore\.focus\(\{ preventScroll: true \}\)/, 'keyboard focus survives a re-render');
 });
 
-test('coming soon keeps the calendar primary and collapses the duplicate grid behind a disclosure', () => {
-	assert.ok(coming.indexOf('id="comingCalendar"') < coming.indexOf('id="comingBrowse"'), 'the calendar comes first');
-	assert.match(coming, /<details class="coming-browse" id="comingBrowse">/);
-	assert.match(coming, /<summary class="button quiet">Browse all upcoming<\/summary>/);
-	const details = coming.slice(coming.indexOf('<details class="coming-browse"'), coming.indexOf('</details>'));
-	assert.match(details, /id="comingFilters"/);
-	assert.match(details, /id="comingGrid"/);
-	assert.match(details, /id="comingMore"/);
-	assert.ok(coming.indexOf('id="comingStatus"') < coming.indexOf('<details class="coming-browse"'), 'loading and error status stay visible outside the closed disclosure');
+test('coming soon keeps the calendar primary and shows browse without a disclosure', () => {
+	assert.ok(coming.indexOf('id="comingSport"') < coming.indexOf('id="comingCalendar"'), 'sport is a first-class panel above the calendar');
+	assert.ok(coming.indexOf('id="comingCalendar"') < coming.indexOf('id="comingBrowse"'), 'the calendar comes before browse');
+	assert.match(coming, /<section class="coming-browse" id="comingBrowse" aria-label="Browse all upcoming">/);
+	assert.doesNotMatch(coming, /<details|<summary/, 'the collapsed disclosure is gone');
+	const browse = coming.slice(coming.indexOf('<section class="coming-browse"'), coming.indexOf('</section>', coming.indexOf('<section class="coming-browse"')));
+	assert.match(browse, /id="comingFilters"/);
+	assert.match(browse, /id="comingGrid"/);
+	assert.match(browse, /id="comingMore"/);
+	assert.ok(coming.indexOf('id="comingStatus"') < coming.indexOf('<section class="coming-browse"'), 'loading and error status stay visible outside browse');
 });
 
-test('the disclosure is keyboard accessible and remembers nothing across loads', () => {
-	assert.doesNotMatch(coming, /<details[^>]*\bopen\b/, 'the disclosure starts closed on every load');
-	assert.doesNotMatch(comingJs, /localStorage|sessionStorage/, 'no disclosure state is persisted');
-	assert.doesNotMatch(coming, /<summary[^>]*tabindex="-1"/, 'the summary stays in the tab order');
-	assert.match(comingCss, /\.coming-page \.coming-browse > summary:focus-visible\s*\{[^}]*outline/, 'the summary gets the standard keyboard focus outline');
+test('browse and the sport toggle are keyboard accessible; only the UK preference is persisted', () => {
+	assert.doesNotMatch(coming, /<details/, 'nothing hides behind a disclosure on load');
+	assert.doesNotMatch(comingJs, /sessionStorage/);
+	assert.equal((comingJs.match(/localStorage/g) || []).length, 2, 'localStorage is used only for the UK football preference');
+	assert.match(comingJs, /localStorage\.getItem\(UK_PREF_KEY\)/);
+	assert.match(comingJs, /localStorage\.setItem\(UK_PREF_KEY, state\.ukOnly \? '1' : '0'\)/);
+	assert.doesNotMatch(comingJs, /localStorage[^;\n]*(expanded|browse)/i, 'browse expansion is not persisted');
+	assert.match(coming, /data-coming="tv" type="button" aria-pressed="true"/, 'browse segments are pressed-state buttons');
+	assert.match(coming, /<button class="uk-toggle" id="ukOnlyToggle" type="button" aria-pressed="true">/, 'the UK toggle is a pressed-state button');
+	assert.match(comingCss, /\.coming-page \.sport-fixture:focus-visible\s*\{[^}]*outline/, 'fixture cards get the standard keyboard focus outline');
+	assert.match(comingCss, /\.coming-page \.uk-toggle\[aria-pressed="true"\]/, 'the toggle state is visible, not colour-only text');
 });
 
 test('both changes keep the text-node-only rendering rule', () => {

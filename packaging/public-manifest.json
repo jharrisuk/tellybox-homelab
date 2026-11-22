@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.63",
+	"serverVersion": "0.26.68",
 	"files": [
 		{
 			"path": ".env.example",
@@ -54,18 +54,18 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 27207,
-			"sha256": "489e49a7d76ebf8bb61bb943f7a44604803a210d7622511bbe66a4140c89b669"
+			"bytes": 27301,
+			"sha256": "5e788606d704fcbd351881c8b5d5c8cb8bb05ea48ce195176126e0a608c8ffb1"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 57258,
-			"sha256": "c58b3ae48665845f75ed940261adb17f05beb1b9d57be14279ffe6d8fa03c992"
+			"bytes": 61276,
+			"sha256": "2fe8070509c351a861f707d308c7ac349bde3f66695901f50d4ff28ed19d4875"
 		},
 		{
 			"path": "docs/guide-extra.css",
-			"bytes": 6030,
-			"sha256": "26ea110e58161cc01cfb0b281d00346d6cbfe409775878c0197813b12bbe692b"
+			"bytes": 6300,
+			"sha256": "9e743f20940133313b31d9f4116d2732fa7306a48c0056713d53a28a8d450fb3"
 		},
 		{
 			"path": "docs/guide.js",
@@ -89,8 +89,8 @@
 		},
 		{
 			"path": "docs/site/guide.css",
-			"bytes": 17046,
-			"sha256": "c389baf877fa1c014cf847d12962d464be1b79bb39e16e9e5cc4d5b91adc185a"
+			"bytes": 17400,
+			"sha256": "fecd3efb2a6eb9d99f91c112782c9c29e0a80acca02e8ceadd9875ec2e6cd2f2"
 		},
 		{
 			"path": "docs/site/guide.js",
@@ -114,13 +114,13 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 50254,
-			"sha256": "757d266e8f85747ccf81a45fe70e07f14a29088e52add280f991d85d5fa2bce9"
+			"bytes": 50692,
+			"sha256": "dd8da42570d192bb127f1aefdd9f75756c081de8be3c44de034f2e685ba171a8"
 		},
 		{
 			"path": "docs/story.html",
-			"bytes": 922,
-			"sha256": "2129844a9768a04910f55bfff8ffa88b8cd8fc498684b2da2a61ac4664d6229f"
+			"bytes": 907,
+			"sha256": "e48e04e273612289494bd531519c9b7b4333876ade543c68588d96e3c90b74c1"
 		},
 		{
 			"path": "integrations/home-assistant/custom_components/tellybox/__init__.py",
@@ -289,8 +289,8 @@
 		},
 		{
 			"path": "server/account-limits.mjs",
-			"bytes": 7982,
-			"sha256": "2c6e7decf46f03bc230ec6032f650d5108341700595b34f45caca7f0c5691363"
+			"bytes": 8636,
+			"sha256": "2680457cb47656a5d141eb9908348da241bbb8aaac9f29f6058168c42082e802"
 		},
 		{
 			"path": "server/activity.mjs",
@@ -304,8 +304,8 @@
 		},
 		{
 			"path": "server/app-access.mjs",
-			"bytes": 11462,
-			"sha256": "66aaf60bc1e06bde86273a1c26f7e69caae5d7c242464865b2774ca6d2531dd7"
+			"bytes": 14581,
+			"sha256": "0bf7fbb79afe6d227872976843b77515143b901c87b6f77a485243a57caff9ed"
 		},
 		{
 			"path": "server/app-updates.mjs",
@@ -329,8 +329,8 @@
 		},
 		{
 			"path": "server/auth.mjs",
-			"bytes": 30534,
-			"sha256": "98c8da80540ce7ff38ce7af9e0d64bc89a8f9992f3e6d9edf342f5a322dcf75b"
+			"bytes": 35861,
+			"sha256": "fef78719cf5bf3c279360288adafb6f1a6c8aa3381ef872bdadb7fd1362f4e84"
 		},
 		{
 			"path": "server/broadcast-resume.mjs",
@@ -364,8 +364,8 @@
 		},
 		{
 			"path": "server/client-identity.mjs",
-			"bytes": 4444,
-			"sha256": "e783ecef4f1f0e6c811eb56e256c1ae6378fc9794459cb979e4233230ca826ca"
+			"bytes": 4969,
+			"sha256": "76015c10b8ada3a2b3dc1c92b6c20e064488338c01dcc3d628a46c7faf8cc1b2"
 		},
 		{
 			"path": "server/coming-library.mjs",
@@ -376,6 +376,11 @@
 			"path": "server/csp.mjs",
 			"bytes": 1798,
 			"sha256": "35577f42fa09bc4803073e6a1a37efb6836c2ea2fc99cb8628eb60443d1195c1"
+		},
+		{
+			"path": "server/device-link.mjs",
+			"bytes": 10490,
+			"sha256": "9bc2ad20a70d5fd2e499435793b70487c38863e99f64f8954f694cea33e94b24"
 		},
 		{
 			"path": "server/direct-session.mjs",
@@ -394,8 +399,8 @@
 		},
 		{
 			"path": "server/dispatcharr-guide.mjs",
-			"bytes": 8128,
-			"sha256": "541a0a1cedf2e9a87f92383662e75726e1190014067b0f41c0a52a2653ec85e2"
+			"bytes": 8878,
+			"sha256": "f61f7e012aca97a29e3fc9a65685f67ae342edeec7e55a041299ac6260344834"
 		},
 		{
 			"path": "server/dispatcharr-player.mjs",
@@ -441,6 +446,11 @@
 			"path": "server/global-search.mjs",
 			"bytes": 2470,
 			"sha256": "347f2d294711a5d8b8de056abf4036b70c448df08afb357993a07ccdf679aaa5"
+		},
+		{
+			"path": "server/guide-archive.mjs",
+			"bytes": 7386,
+			"sha256": "e37eed6cd46a482b863d8c5aa15735d4fb91e6825d0d7d1ddc52bc9ddd4ae28f"
 		},
 		{
 			"path": "server/home-artwork.mjs",
@@ -534,8 +544,8 @@
 		},
 		{
 			"path": "server/homelab/public/setup.css",
-			"bytes": 11015,
-			"sha256": "471bece04f7b332e1dc62fc1567c22b5acb9f929bde6b04ee109f3912e73f79d"
+			"bytes": 11099,
+			"sha256": "8247247c4b3b148a360749a092d35af3dcc18b9f7fb63bea4eca04c1faabca4b"
 		},
 		{
 			"path": "server/homelab/public/setup.js",
@@ -594,8 +604,8 @@
 		},
 		{
 			"path": "server/homelab/services.mjs",
-			"bytes": 12675,
-			"sha256": "627943fb3ca49a94299dd307aae8c31006b50474181953a8e424a09d86d21b49"
+			"bytes": 12616,
+			"sha256": "87d978b33ca069f6696c46d4a2d85d4b43f2edddf8bf6b6e342bf9b6819fbce2"
 		},
 		{
 			"path": "server/homelab/setup-hosts.mjs",
@@ -614,8 +624,13 @@
 		},
 		{
 			"path": "server/insights.mjs",
-			"bytes": 10700,
-			"sha256": "6442303da35b0edad90691dae933b313c32921f3e5fe4b4ef621835f3139bdc0"
+			"bytes": 10691,
+			"sha256": "d865c27f8fb315610f37a1e03cfa817496ff99c78ae84319528118d2cf9cefe4"
+		},
+		{
+			"path": "server/jellyfin-admin.mjs",
+			"bytes": 5386,
+			"sha256": "3a17da028fca69223328712cae07afd47dcd8949bc0e37b0c503b5814bcaa8f5"
 		},
 		{
 			"path": "server/json-store.mjs",
@@ -665,12 +680,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "c323b642bacb2e7a4d2441cd0d4d48f19203d4ff1784915eab2f40085baf36c5"
+			"sha256": "7e092dc4dd369be886a06ab46d5be0bbc76889c8e112700eb526d763287d78c5"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "fc97de00840119cfcc59d8dbfc6323172c92c075094b4484268dae26438e50e0"
+			"sha256": "e4487ff356dc0d494c3377bb35b8c7eb4ebbb64a6f3ba10ed1fb524a52bf491f"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -718,14 +733,19 @@
 			"sha256": "d074cf658706159820eae9487ced2057461897d724792b8e68ef8a2921091c46"
 		},
 		{
+			"path": "server/public/account-devices.js",
+			"bytes": 4905,
+			"sha256": "62900befd69540f90a3ec4ac1b04a6f38240af4d4d58e087a439016b992a4f8f"
+		},
+		{
 			"path": "server/public/activity-summary.js",
 			"bytes": 19656,
 			"sha256": "c3e96cb8b99e7b32d7a65d730721ebf928a2ebf150d7aeed5fcad2b88178a02f"
 		},
 		{
 			"path": "server/public/activity.html",
-			"bytes": 9140,
-			"sha256": "4650d0ddae2c63e3a4330bac093d9e2f2209b4e6dace5f1fe9a17402bd3a8e18"
+			"bytes": 9143,
+			"sha256": "e44969a176103bc456540dbca1b29f864245fe88abd9dccf2fe83f354ec1c8ec"
 		},
 		{
 			"path": "server/public/activity.js",
@@ -744,8 +764,8 @@
 		},
 		{
 			"path": "server/public/app.js",
-			"bytes": 247154,
-			"sha256": "c92d5058d48043bbd8aa5c25a7e618f7502eda539d4ec1a0c73b276cf100505f"
+			"bytes": 248492,
+			"sha256": "cb6d439a8fedf003bdec39b88f900db4e9f55779051e933c863d69dc074d4f85"
 		},
 		{
 			"path": "server/public/apps.html",
@@ -754,8 +774,8 @@
 		},
 		{
 			"path": "server/public/apps.js",
-			"bytes": 12650,
-			"sha256": "35a5c3e62d552e4c2fed70cfbbed07f9725d1981280b15615368e019d384ec32"
+			"bytes": 13518,
+			"sha256": "36c91219f43e9dfcebb3e38f9f797fd624fa8ce98bf810043bce1a36f6d3d9a1"
 		},
 		{
 			"path": "server/public/artwork-fallback.js",
@@ -789,28 +809,28 @@
 		},
 		{
 			"path": "server/public/coming-calendar.js",
-			"bytes": 1913,
-			"sha256": "bca39e237a717f5454c406d042d6abfdb366a0a1e6ed24aa1802df931eebcc9b"
+			"bytes": 2522,
+			"sha256": "951b73dcbafbf7866b5c075a701e4bdf0938dfd4f5c7129c3688c05cf2d5883b"
 		},
 		{
 			"path": "server/public/coming-soon.css",
-			"bytes": 4024,
-			"sha256": "87808ecb1f2d5e558976acfd29ac2d30efb6458994bdb8b7826fe2052fe23b78"
+			"bytes": 8575,
+			"sha256": "1b57d2d3e87d61f5ec5af0514c60acab3355c392784839f60d67465d3a56539e"
 		},
 		{
 			"path": "server/public/coming-soon.html",
-			"bytes": 4376,
-			"sha256": "cf119938121c394c1a9054d0d3ae3fce96be9a5f3f1f9ad1e9aab9b07501a600"
+			"bytes": 5257,
+			"sha256": "9c8758b8812c4576d91da96e79ef10855b8188fab15af0034914c27bcc1c049a"
 		},
 		{
 			"path": "server/public/coming-soon.js",
-			"bytes": 11497,
-			"sha256": "204043d8f05c60656c86f370173c4b1dbac6daf8632b943940e058ab711e651e"
+			"bytes": 19146,
+			"sha256": "715e136e6bef124cbfc2139eec4a635660717af252793b137159073180e63637"
 		},
 		{
 			"path": "server/public/connection-status.js",
-			"bytes": 3137,
-			"sha256": "dd112b32c2503534f878b2347191e9091a8304c50b888774ddca504c238d7dc9"
+			"bytes": 3313,
+			"sha256": "fbe909d074faf81ffbb894a7c18c53851834451a60b026ce2afb06825b41374a"
 		},
 		{
 			"path": "server/public/discover.css",
@@ -819,13 +839,13 @@
 		},
 		{
 			"path": "server/public/discover.html",
-			"bytes": 4923,
-			"sha256": "a391f28c61d228727a92d64219f96d07475c09712378983b54d65483dc082b70"
+			"bytes": 4901,
+			"sha256": "8c75b1b8caf278d85c86a55277fe049fbc94d7302ec6c432cd0a0618c090f4e7"
 		},
 		{
 			"path": "server/public/discover.js",
-			"bytes": 32864,
-			"sha256": "668ccd7f4816fa7c51b2ec77f6ba2bee68fc7a933e7303e356c4261502754ac0"
+			"bytes": 32886,
+			"sha256": "653a825008f587804bea299f2ee6134f879d96f935e50ecc2cabaa7a1af004f1"
 		},
 		{
 			"path": "server/public/dispatcharr-settings.js",
@@ -849,8 +869,8 @@
 		},
 		{
 			"path": "server/public/index.html",
-			"bytes": 13473,
-			"sha256": "9bf62d0cd3c549d7d02be4157b5ebcce8304d3424503be4f6ece69d97f26f992"
+			"bytes": 13484,
+			"sha256": "05f31248209bc41d74a36575a31b836cb3ab8bff17d0edf8ccf3c338194d7622"
 		},
 		{
 			"path": "server/public/installation-settings.js",
@@ -874,8 +894,8 @@
 		},
 		{
 			"path": "server/public/login.html",
-			"bytes": 2308,
-			"sha256": "19b8112a70986bf5b8ac315f99eed6d6b45a49bbe04285078415dcee913a276b"
+			"bytes": 2286,
+			"sha256": "e73336013131ab449ad18d3b73fd6326f862679c704b55303f325f004224ebc1"
 		},
 		{
 			"path": "server/public/maintenance-settings.js",
@@ -894,13 +914,13 @@
 		},
 		{
 			"path": "server/public/people-directory.js",
-			"bytes": 18115,
-			"sha256": "63e8fcadf1bac540a9f56e433fc6a78a18fc77500b0339a95547ece9cfb224aa"
+			"bytes": 20872,
+			"sha256": "0e77064ca7dc5a3ecc84d5ffbc6c1b732c23a7092c028e4bd5e3c0727b5d6c52"
 		},
 		{
 			"path": "server/public/people.js",
-			"bytes": 5312,
-			"sha256": "1505801696ecb7b3e9dfd6dab37c03fbc36757ecfd653f24c3d40824ddcbb322"
+			"bytes": 10621,
+			"sha256": "d29fb1a53e337ac4e79b7bb408aa5c78b0d21c2f50d4971b86f2e5b3bd161846"
 		},
 		{
 			"path": "server/public/playback-defaults-settings.js",
@@ -919,8 +939,18 @@
 		},
 		{
 			"path": "server/public/preferences.html",
-			"bytes": 3882,
-			"sha256": "6ead65e05406cfca982f840f65b4078e5ed262bd3c31ce85127d71e0db40079a"
+			"bytes": 4928,
+			"sha256": "5d1392781d8a0f6b75b9fe14649067218d739b86975cbc715c885ec627f42eb1"
+		},
+		{
+			"path": "server/public/purge.html",
+			"bytes": 2082,
+			"sha256": "8e5e98168974ead30d58702ffebdff2e7571276855edee68ee07e979c0fd61ad"
+		},
+		{
+			"path": "server/public/purge.js",
+			"bytes": 3997,
+			"sha256": "78b8a364c532c95588e918c2b7338b37c2ffb0eed2865fa0e2cea210fb11fcc3"
 		},
 		{
 			"path": "server/public/qbittorrent-downloads.js",
@@ -974,8 +1004,8 @@
 		},
 		{
 			"path": "server/public/settings.html",
-			"bytes": 26526,
-			"sha256": "fd396d94522add97931e580caeced5e88528180e65755ded844f1a8db5c30077"
+			"bytes": 27129,
+			"sha256": "30bd5f71a6112c92263a6a7cbbec0cea73aeb6367dc95ed4177ddc6666236aa6"
 		},
 		{
 			"path": "server/public/settings.js",
@@ -1009,8 +1039,8 @@
 		},
 		{
 			"path": "server/public/style.css",
-			"bytes": 90266,
-			"sha256": "03b7f8e22e4eccab0602e3d36871d92b603bc3078a86f58dffb55f0d918e53cc"
+			"bytes": 90823,
+			"sha256": "ada58b10eb72a4a25558c36d4f6d9dedd6c258cc7fc33ab033c701ed5e9039b4"
 		},
 		{
 			"path": "server/public/subtitle-settings.js",
@@ -1154,8 +1184,8 @@
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 189841,
-			"sha256": "130a9010531658cc99d956046ae39e209a7d1189acb81cd2a7ad163929bdb31f"
+			"bytes": 194925,
+			"sha256": "d330864e88faced20f5e8afcb32f997698a99cc51a215fe271d507b7c332e86d"
 		},
 		{
 			"path": "server/session-limits.mjs",
@@ -1171,6 +1201,11 @@
 			"path": "server/similar-titles.mjs",
 			"bytes": 12170,
 			"sha256": "2eaa6b7b9773dee177eef1440f91d45c268bd42681f828d4cb4d043f52dace28"
+		},
+		{
+			"path": "server/sport-listings.mjs",
+			"bytes": 18171,
+			"sha256": "8c7a92c1326438a123b9cb8cbbda41c7b7ff634145fca16761565ded8e7ee340"
 		},
 		{
 			"path": "server/subtitle-choice.mjs",
@@ -1334,8 +1369,8 @@
 		},
 		{
 			"path": "server/test/auth.test.mjs",
-			"bytes": 33082,
-			"sha256": "3cf8da8dd90ef8c2b65ff6edd4ed9ba00d4867b78de34d51b2ad242c5b8978ff"
+			"bytes": 33247,
+			"sha256": "ad18b5af4749d1fc60960d33a8e7ab32ada471a33bdc70773cf824ebf128a90b"
 		},
 		{
 			"path": "server/test/broadcast-resume.test.mjs",
@@ -1384,8 +1419,8 @@
 		},
 		{
 			"path": "server/test/catalogue-identity-136.test.mjs",
-			"bytes": 7431,
-			"sha256": "447146345f6904d4649ff31e2617071cc804a73e7f7486d4b1e90976afc213b0"
+			"bytes": 9905,
+			"sha256": "b38aa2efd3a8f4980c6c6dddfe85ba4af8fd5e76af9de1e851104994437df4aa"
 		},
 		{
 			"path": "server/test/catalogue-index-133.test.mjs",
@@ -1464,23 +1499,33 @@
 		},
 		{
 			"path": "server/test/coming-calendar.test.mjs",
-			"bytes": 3836,
-			"sha256": "8bb203acb2575e0ab3b13b3ced0ac7cd3f8b0d03d68ca6ad592215d2aea7ca60"
+			"bytes": 5365,
+			"sha256": "96bfa8137c52522955f43549558814300aed895a0c15c6d7b35975c742140bf3"
 		},
 		{
 			"path": "server/test/coming-episode-q66.test.mjs",
 			"bytes": 4472,
-			"sha256": "b173770877aef594cb93c8ce45e177956201500d27e11b67a9c0f1a767f90fbb"
+			"sha256": "564e11f84e0fbb2891839cf684d46a2f00bb81e349389838b6060de6dae33bf4"
 		},
 		{
 			"path": "server/test/coming-soon-q65.test.mjs",
-			"bytes": 5338,
-			"sha256": "48bc3f59060c1456f09fd490901ad55021aae922ea20b21d044f7e891113b8d9"
+			"bytes": 5656,
+			"sha256": "5be0823e377dfc6a0e0a6903f8876398c6c724b49f59900899db376229050c6e"
+		},
+		{
+			"path": "server/test/coming-sport-q71.test.mjs",
+			"bytes": 6382,
+			"sha256": "69aee8c0a1e9d6d841105f5e738d37d16e447afc2ba114849929e4ec35d59d72"
+		},
+		{
+			"path": "server/test/coming-sport-q77.test.mjs",
+			"bytes": 14507,
+			"sha256": "fa399745f94b64c206e5d25fe987bdd874521565cd47d92c5445712bcab90b08"
 		},
 		{
 			"path": "server/test/connection-status.test.mjs",
-			"bytes": 2212,
-			"sha256": "1bc6b10d9588ffff1bc2c9d4b2a6afd63d59734368004910c1deadbb4ce349cf"
+			"bytes": 2225,
+			"sha256": "7e530fc020ecd9e193d12fad249e35bbc5d15d056a939cf727da80db3bc3b5c0"
 		},
 		{
 			"path": "server/test/consolidation-121-td-availability.test.mjs",
@@ -1551,6 +1596,11 @@
 			"path": "server/test/csp-124.test.mjs",
 			"bytes": 1485,
 			"sha256": "86be6bbc44f955222aebc43c2d9a784e4701dbccd0d12149f8a352385692add3"
+		},
+		{
+			"path": "server/test/device-link-q70.test.mjs",
+			"bytes": 38284,
+			"sha256": "3a8d0c6e1b29d30260218e45c8bf61344b124ddb8c5ea2ccc4c691e81b6af358"
 		},
 		{
 			"path": "server/test/direct-seek.test.mjs",
@@ -1713,6 +1763,11 @@
 			"sha256": "ee34859fd26f33ee32cbcf7120a6e382edaaa09a010fdd468c06e8c3a5090554"
 		},
 		{
+			"path": "server/test/fixtures/live-footballontv.html",
+			"bytes": 665482,
+			"sha256": "f6fc91666a10da1d3be95df42ce6a0381a4e4db744d001d50d8adb2f22d10dcb"
+		},
+		{
 			"path": "server/test/fullscreen-artifacts/main-landscape.png",
 			"bytes": 9616,
 			"sha256": "07f43677f98a96c3d47f24cf360a5ccde4b14dbdd0f6ace79dab856aab5c27fa"
@@ -1736,6 +1791,11 @@
 			"path": "server/test/global-search.test.mjs",
 			"bytes": 4300,
 			"sha256": "d87e3d9b27ba43315cac8051dce5264a40413016c9a573b240698670105eedfe"
+		},
+		{
+			"path": "server/test/guide-archive-q72.test.mjs",
+			"bytes": 8167,
+			"sha256": "0425920d04e1be4603199c069a92e9e28bc5f31728a87251693413e09d452abf"
 		},
 		{
 			"path": "server/test/home-admission-deadline-125.test.mjs",
@@ -1994,8 +2054,8 @@
 		},
 		{
 			"path": "server/test/insights.test.mjs",
-			"bytes": 10403,
-			"sha256": "3afa89cbf7513fbdf548fea37b5cae81f8ace0ec9e89d54aa4e884dcf8626b9c"
+			"bytes": 10404,
+			"sha256": "17657417aed58cdc863992f6783206ad4e170f67bdca066e0acac2616cae674e"
 		},
 		{
 			"path": "server/test/installation-link-137.test.mjs",
@@ -2011,6 +2071,11 @@
 			"path": "server/test/integrations-summary-ui-137.test.mjs",
 			"bytes": 6096,
 			"sha256": "7c2059e84deb948ebe17c1ec9859fd525815f9aa30b83c84b07250ec3188598b"
+		},
+		{
+			"path": "server/test/jellyfin-admin-q83.test.mjs",
+			"bytes": 4755,
+			"sha256": "683c4c463f0dcbb8564e98dc2d1952524eac8358b88de75048d7418dac46f1b7"
 		},
 		{
 			"path": "server/test/library-image-125-wiring.test.mjs",
@@ -2234,8 +2299,8 @@
 		},
 		{
 			"path": "server/test/q39-admin-gate-matrix.test.mjs",
-			"bytes": 20871,
-			"sha256": "1438f24bd35811c10085c83267ddeac8c10d44211ccb8b5b78c28aa2b2306cf2"
+			"bytes": 21476,
+			"sha256": "c3f34b2071f04753bad0aa078deb34ff42ae81963d29429fda983d5d6b41b842"
 		},
 		{
 			"path": "server/test/q39-admin-gate-server.test.mjs",
@@ -2284,8 +2349,8 @@
 		},
 		{
 			"path": "server/test/q54-web-layout.test.mjs",
-			"bytes": 10065,
-			"sha256": "53c39eb38904ed28d40e37173b9451525964be0cb6b160781cd3c6c6a34eed6e"
+			"bytes": 10902,
+			"sha256": "6ad9ac3bbad3becfde587a67dfec4ab20bfe084ac178c6743ada30cf9804d902"
 		},
 		{
 			"path": "server/test/qbittorrent-134-protocol.test.mjs",
@@ -2553,6 +2618,11 @@
 			"sha256": "6ed8713b31df7fa973160a875fd799b8391b7d0640f98bc5ed21626fc3489701"
 		},
 		{
+			"path": "server/test/sport-listings-q71.test.mjs",
+			"bytes": 18069,
+			"sha256": "4e973e5caa0402434f5bf3602003cd7c6000add5294c155717a08b3fc261c56a"
+		},
+		{
 			"path": "server/test/start-over.test.mjs",
 			"bytes": 6646,
 			"sha256": "ef4513c5ac66dddcbbdd3de84970ff309a499b1fe0685fb76c3c4e0e9008cc5e"
@@ -2599,8 +2669,8 @@
 		},
 		{
 			"path": "server/test/stream-monitor-ui-132.test.mjs",
-			"bytes": 23700,
-			"sha256": "d7c2c5e0cf15096cbbd85e1a61dbead1f53b8a9c12b4f2754d8568895386ca18"
+			"bytes": 23703,
+			"sha256": "71a1000ed742199aad8d24ed0043962d41deee73aaa178b90db4ad31bd8b651d"
 		},
 		{
 			"path": "server/test/stream.test.mjs",
@@ -2889,8 +2959,8 @@
 		},
 		{
 			"path": "server/vod-library.mjs",
-			"bytes": 46029,
-			"sha256": "36638ccc512fbf3803a3dcaf7596d0e5652241c26be1c7dfe55790ec6a69c7f7"
+			"bytes": 46420,
+			"sha256": "ff5565a124da7967ad9891485f47ef6ec0db1591195aa7339621d3c3643567bd"
 		},
 		{
 			"path": "server/vod-metadata.mjs",

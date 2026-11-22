@@ -48,12 +48,12 @@
 				<div class="settings-heading"><div><p class="eyebrow">AWAY FROM HOME</p><h2 id="remoteTitle">Remote viewing</h2></div><button id="remoteToggle" class="button secondary" disabled>Checking...</button></div>
 				<p id="remoteState" role="status">Checking remote access...</p>
 				<label class="preference-row"><span><strong>IPTV films &amp; series</strong><small>Allow remote streaming from the IPTV catalogue.</small></span><input id="remoteVod" type="checkbox" disabled></label>
-				<label class="preference-row"><span><strong>IPTV 24/7 channels</strong><small>Allow remote viewing of always-on channels.</small></span><input id="remoteNonstop" type="checkbox" disabled></label>
+				<label class="preference-row"><span><strong>IPTV 24/7 channels</strong><small>Allow remote viewing of 24/7 channels.</small></span><input id="remoteNonstop" type="checkbox" disabled></label>
 				<p class="auth-note">Changes apply to current streams. Pausing also stops remote downloads. Home viewing stays available.</p>
 				<p id="remoteMessage" role="status"></p>
 			</section>
 			<section class="settings-box" aria-labelledby="apkHeading">
-				<div class="settings-heading"><h2 id="apkHeading">Get the apps</h2><button id="refreshApks" class="button secondary">Refresh</button></div>
+				<div class="settings-heading"><h2 id="apkHeading">Get the apps</h2><button id="refreshApks" class="button secondary">Refresh apps</button></div>
 				<p id="apkMessage" role="status">Checking the latest downloads...</p>
 				<div class="apk-downloads">
 					<div><a id="phoneApk" class="button secondary" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/></svg>Download for Android phone</a><p id="phoneApkVersion"></p></div>
@@ -62,7 +62,7 @@
 			</section>
 		</section>
 		<section id="settingsPanelPeople" data-settings="people" role="tabpanel" aria-labelledby="settingsTabPeople" tabindex="0" hidden>
-			<div class="settings-heading"><div><h2>People &amp; devices</h2><p>Access, favourites and viewing limits.</p></div><button class="button secondary" id="refreshPeople">Refresh</button></div>
+			<div class="settings-heading"><div><h2>People &amp; devices</h2><p>Access, favourites and viewing limits.</p></div><button class="button secondary" id="refreshPeople">Refresh people</button></div>
 			<nav class="access-tabs" aria-label="People and device lists">
 				<button class="chip active" data-access-tab="accounts" aria-pressed="true">Accounts <span class="access-count" hidden></span></button>
 				<button class="chip" data-access-tab="devices" aria-pressed="false">Unlinked devices <span class="access-count" hidden></span></button>
@@ -85,7 +85,7 @@
 			</section>
 			<details class="settings-box access-security"><summary>Sign-in protection</summary>
 			<section class="settings-box" aria-labelledby="signInHeading">
-				<div class="settings-heading"><h3 id="signInHeading">Sign-in protection</h3><button class="button secondary" id="refreshSignIns">Refresh</button></div>
+				<div class="settings-heading"><h3 id="signInHeading">Sign-in protection</h3><button class="button secondary" id="refreshSignIns">Refresh sign-ins</button></div>
 				<p id="signInMessage" role="status">Loading sign-in activity...</p>
 				<div id="signInSummary" class="signin-summary"></div><div id="signInConnections"></div>
 				<details id="signInHistory"><summary>Recent failed sign-ins &amp; overrides</summary><div id="signInEvents" class="signin-events"></div></details>
@@ -94,7 +94,7 @@
 			<details class="settings-box"><summary>Email sign-in</summary>
 				<form id="emailSettings"><label class="auth-field">Sender email<input name="from" type="email" required autocomplete="off"></label><label class="auth-field">Resend API key<input name="key" type="password" autocomplete="new-password" placeholder="Leave blank to keep the saved key"></label><label class="preference-row"><span>Use email codes for remote guests</span><input name="enabled" type="checkbox"></label><p>Requires a verified sender domain. Enabling this replaces shared-password sign-in.</p><button class="button primary">Save email settings</button></form><p id="emailMessage" role="status"></p>
 			</details>
-			<details class="settings-box"><summary>Who can do what?</summary><p><strong>Viewer:</strong> watch and request films and shows. Downloads need to be enabled for their account.</p><p><strong>Admin:</strong> also approve devices, manage settings and see activity. Only give this to someone you trust to manage Tellybox.</p><p>Pending requests expire after 24 hours. Approved devices have access for a year. Revoking access stops online access; existing offline downloads remain on the device.</p></details>
+			<details class="settings-box"><summary>Who can do what?</summary><p><strong>Viewer:</strong> watch and request films and shows. Downloads need to be enabled for their account.</p><p><strong>Admin:</strong> also approve devices, manage settings and see activity. Only give this to someone you trust to manage Tellybox.</p><p><strong>Link codes:</strong> a phone or TV can show an 8-character code. Open the account, use Link device and enter the code. Each account has a phone and TV allowance, adjustable under Allowances. Manual approval and linking still work as before.</p><p>Pending requests expire after 24 hours. Approved devices have access for a year. Revoking access stops online access; existing offline downloads remain on the device.</p></details>
 			<details class="settings-box"><summary>Browser access & remote password</summary>
 				<p>Guests sign in away from home. Approved apps keep their own device access; local web access needs no login.</p>
 				<p id="passwordState" class="auth-note">Checking password settings...</p>
@@ -113,7 +113,7 @@
 				<div id="settingsWatchingNow" class="activity-list"><p class="auth-note">Loading activity...</p></div>
 				<p id="settingsActivityMessage" class="auth-note" role="status"></p>
 			</section>
-			<div class="settings-box"><h2>Make watching yours</h2><p>These preferences belong to this browser. Leave a choice alone to follow the server default; change it to save your own choice here.</p>
+			<div class="settings-box"><h2>Make watching yours</h2><p>These preferences belong to this browser. Leave a choice alone to follow the server default; change it to save your own.</p>
 				<label class="preference-row"><span><strong>English subtitles</strong><small>Choose the first available English track when a title starts. You can still change it in the player.</small></span><input id="englishSubtitles" type="checkbox"></label>
 				<div class="preference-actions"><small class="preference-state" data-preference-state="englishSubtitles">Checking the server default...</small><button class="button quiet" type="button" data-preference-reset="englishSubtitles" hidden>Use server defaults</button></div>
 				<label class="preference-row"><span><strong>Play the next episode</strong><small>Show a cancelable 10-second countdown when an episode is ending.</small></span><input id="autoNext" type="checkbox"></label>
@@ -132,7 +132,7 @@
 				<button id="maintenanceToggle" class="button primary" type="button">Turn maintenance on</button>
 			</section>
 			<div id="installationSettings" class="settings-box" hidden>
-				<div class="settings-heading"><div><h2>Installation settings</h2><p>Manage services, notifications and your relay.</p></div><a id="installationSettingsLink" class="button secondary" target="_blank" rel="noopener noreferrer">Open installation settings &nearr;</a></div>
+				<div class="settings-heading"><div><h2>Installation settings</h2><p>Manage services, notifications and your relay.</p></div><a id="installationSettingsLink" class="button secondary" target="_blank" rel="noopener noreferrer" aria-label="Installation settings (opens in new tab)">Open installation settings &nearr;</a></div>
 				<p class="auth-note">Opens on your home network. Your installation administrator password is required.</p>
 			</div>
 			<section class="settings-box" id="qbittorrentSettings" aria-labelledby="qbittorrentSettingsHeading">
@@ -183,7 +183,7 @@
 				<p class="auth-note">Only the installation owner can start this. Heavy refreshes wait while someone is watching or downloading.</p>
 			</div>
 			<section class="settings-box" id="usbExportBox" hidden>
-				<div class="settings-heading"><div><p class="eyebrow">LOCAL FILES</p><h2>Export to USB</h2><p>Copy original local films, episodes and completed recordings to a USB drive plugged into the media host.</p></div><button id="refreshExport" class="button secondary" type="button">Refresh</button></div>
+				<div class="settings-heading"><div><p class="eyebrow">LOCAL FILES</p><h2>Export to USB</h2><p>Copy original local films, episodes and completed recordings to a USB drive plugged into the media host.</p></div><button id="refreshExport" class="button secondary" type="button">Refresh export list</button></div>
 				<p id="exportStatus" role="status">Checking USB export...</p>
 				<label class="preference-row"><span><strong>USB drive</strong><small>Only removable drives detected on the media host are shown. Nothing is copied until you start.</small></span><select id="exportVolume" aria-label="USB drive"></select></label>
 				<label class="auth-field">Search local files<input id="exportSearch" type="search" placeholder="Film, series, episode or recording" autocomplete="off"></label>
@@ -199,13 +199,14 @@
 				<p id="exportProgress" role="status"></p>
 				<p class="auth-note">Originals are never deleted or changed. Existing files on the USB drive are never overwritten. Sidecar subtitles are copied when available. Unmount the drive from the media host before unplugging it.</p>
 			</section>
+			<div class="settings-box"><div class="settings-heading"><div><p class="eyebrow">LOCAL ADMINISTRATOR</p><h2>Delete media</h2><p>Permanently remove a local film, episode, season or series from Jellyfin and from disk. This cannot be undone.</p></div><a class="button secondary" href="/purge">Open delete media</a></div></div>
 			<section class="settings-box server-health" aria-labelledby="serverHealthTitle">
 				<div class="settings-heading"><div><p class="eyebrow">YOUR HOME SERVER</p><h2 id="serverHealthTitle">How things are running</h2></div><button id="refreshHealth" class="button secondary" type="button">Refresh stats</button></div>
 				<p id="healthStatus" role="status">Open this section to load server readings.</p>
 				<div id="healthMetrics" class="health-grid"></div>
 				<h3 class="health-storage-title">Storage</h3><div id="healthDisks" class="health-disks"></div>
 				<details class="health-more"><summary>A little more detail</summary><dl id="healthDetails"></dl></details>
-				<p class="auth-note">CPU, memory and disks describe the Ubuntu machine. Host readings update once a minute; this page refreshes every 30 seconds while visible. Free disk space excludes space reserved by the filesystem.</p>
+				<p class="auth-note">CPU, memory and disks describe the Ubuntu machine. Host readings update every minute; this page every 30 seconds. Free space excludes reserved space.</p>
 			</section>
 			<div class="settings-box"><h2>Your address</h2><p id="tunnelState" role="status">Checking...</p><a id="tunnelLink" target="_blank" rel="noopener noreferrer" hidden></a><p id="tunnelNote" class="auth-note"></p></div>
 			<div class="settings-box"><h2>Leave room for everything else</h2><p>One shared upload allowance for remote streams, casting and downloads. Local playback is unrestricted.</p>

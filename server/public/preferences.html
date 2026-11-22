@@ -4,12 +4,12 @@
 	<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 	<meta name="theme-color" content="#101310"><title>Watching settings &middot; Tellybox</title>
 	<link rel="icon" href="/icon.svg"><link rel="stylesheet" href="/style.css">
-	<script src="/navigation.js" defer></script><script src="/viewer-preferences.js" defer></script>
+	<script src="/navigation.js" defer></script><script src="/viewer-preferences.js" defer></script><script src="/account-devices.js" defer></script>
 </head>
 <body class="settings-page">
 	<header class="topbar"><a class="brand" href="/" aria-label="Tellybox home"><img class="brand-logo" src="/tellybox-logo.png" alt="Tellybox"></a><button class="menu-toggle" id="menuToggle" aria-controls="siteNavigation" aria-expanded="false"><span class="menu-icon" aria-hidden="true">&#9776;</span><span>Menu</span></button><div id="siteNavigation" class="navigation-panel"><nav aria-label="Primary"><a class="nav-item" href="/">Home</a><a class="nav-item" href="/discover">Discover</a><a class="nav-item nav-coming" href="/coming-soon">Coming soon</a><a class="nav-item" href="/?view=movies">Films</a><a class="nav-item" href="/?view=tvshows">Series</a><a class="nav-item" href="/?view=livetv">Live TV</a><a class="nav-item" href="/?view=nonstop">24/7</a><a class="nav-item" href="/?view=recordings">Recordings</a><a class="nav-item" href="/search">Search</a><a class="nav-item" href="/activity">Activity</a></nav><div class="account-actions"><a href="/settings" id="remoteSettings">Settings</a></div></div></header>
 	<main class="settings-shell">
-		<p class="eyebrow">MAKE YOURSELF AT HOME</p><h1>Watching settings</h1><p class="settings-intro">These preferences belong to this browser. Leave a choice alone to follow the server default; change it to save your own choice. They do not change server administration.</p><p class="settings-back"><a href="/">&larr; Back to watching</a></p>
+		<p class="eyebrow">MAKE YOURSELF AT HOME</p><h1>Watching settings</h1><p class="settings-intro">These preferences belong to this browser. Leave a choice alone to follow the server default; change it to save your own.</p><p class="settings-back"><a href="/">&larr; Back to watching</a></p>
 		<section class="settings-box" aria-labelledby="browserPreferences">
 			<div class="settings-heading"><div><h2 id="browserPreferences">Playback preferences</h2><p>Shared with the player in this browser. Reset any choice to follow the server again.</p></div></div>
 			<label class="preference-row"><span><strong>English subtitles</strong><small>Choose the first available English track when a title starts. You can still change it in the player.</small></span><input id="englishSubtitles" type="checkbox"></label>
@@ -18,6 +18,18 @@
 			<div class="preference-actions"><small class="preference-state" data-preference-state="autoNext">Checking the server default...</small><button class="button quiet" type="button" data-preference-reset="autoNext" hidden>Use server defaults</button></div>
 			<label class="preference-row"><span><strong>Always skip intros</strong><small>Only confirmed episode intros. Recaps, credits and the manual Skip button are unchanged.</small></span><input id="skipIntros" type="checkbox"></label>
 			<div class="preference-actions"><small class="preference-state" data-preference-state="skipIntros">Checking the server default...</small><button class="button quiet" type="button" data-preference-reset="skipIntros" hidden>Use server defaults</button></div>
+		</section>
+		<section class="settings-box" id="accountDevices" aria-labelledby="accountDevicesHeading" hidden>
+			<div class="settings-heading"><div><h2 id="accountDevicesHeading">Your account &amp; devices</h2><p id="accountSummary"></p></div></div>
+			<p class="auth-note" id="deviceAllowanceSummary"></p>
+			<p class="auth-note" id="accountUsageSummary"></p>
+			<div id="accountDeviceList" class="access-list"></div>
+			<form id="linkDeviceForm">
+				<label class="auth-field" for="linkDeviceCode">Link device code<input id="linkDeviceCode" name="code" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" required></label>
+				<button class="button primary" type="submit">Link device</button>
+			</form>
+			<p id="linkDeviceMessage" role="status"></p>
+			<p class="auth-note">On the phone or TV, open Tellybox and choose to link it to an account, then enter the code it shows here. Codes expire after 10 minutes and work once. Removing a device frees its slot; ask an administrator to change your allowances.</p>
 		</section>
 		<p class="auth-note">You can change these choices again from this page. Server access and installation settings stay with the administrator.</p>
 	</main>

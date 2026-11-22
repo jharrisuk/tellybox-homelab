@@ -75,7 +75,7 @@ function findButton(root, text) {
 	return found;
 }
 
-test('past days are grouped as Recently released and library titles open in the library', async () => {
+test('past days keep their weekday column and library titles open in the library', async () => {
 	const schedule = {
 		tv: [],
 		movies: [
@@ -86,15 +86,17 @@ test('past days are grouped as Recently released and library titles open in the 
 	};
 	const { selectorNode, navigations } = await mount(schedule);
 	const calendar = selectorNode('#calendarDays');
-	const groups = calendar.children;
-	assert.deepEqual(groups.map(group => group.children[0].textContent), ['Recently released', 'Next 7 days']);
-	const recentButton = findButton(groups[0].children[1], 'Library film');
+	const grid = calendar.children[0];
+	const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+	assert.deepEqual(Array.from(grid.children.slice(0, 7), cell => cell.textContent), weekdays, 'columns are labelled Monday first');
+	assert.equal(grid.children.length % 7, 0, 'the header plus whole weeks');
+	const recentButton = findButton(grid, 'Library film');
 	assert.ok(recentButton);
 	recentButton.onclick();
 	assert.deepEqual(navigations, ['/?item=jf-film-1'], 'a matched title opens the existing library item route');
 	assert.equal(selectorNode('#comingDetails').open, false, 'the details panel is not used for a library title');
 
-	const upcomingButton = findButton(groups[1].children[1], 'Later film');
+	const upcomingButton = findButton(grid, 'Later film');
 	assert.ok(upcomingButton);
 	upcomingButton.onclick();
 	assert.equal(selectorNode('#comingDetails').open, true, 'an unmatched title keeps the details panel');
@@ -114,7 +116,9 @@ test('the calendar marks exactly one day as Today when recent days are shown', a
 	const schedule = { tv: [], movies: [{ type: 'movie', id: 3, title: 'Recent film', dateLabel: 'Released', released: true, date: day(-3), ratings: [] }], unavailable: [] };
 	const { selectorNode } = await mount(schedule);
 	const calendar = selectorNode('#calendarDays');
-	assert.equal(calendar.children[0].children[0].textContent, 'Recently released');
+	const grid = calendar.children[0];
+	assert.deepEqual(Array.from(grid.children.slice(0, 7), cell => cell.textContent), ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+	assert.equal(grid.children.length % 7, 0, 'the header plus whole weeks keeps Mondays above Mondays');
 	const labels = [];
 	walk(calendar, node => { if (node.tag === 'strong' && node.textContent === 'Today') labels.push(node); });
 	assert.equal(labels.length, 1, 'today is not mistaken for the first rendered day');

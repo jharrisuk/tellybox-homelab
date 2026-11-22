@@ -57,6 +57,33 @@ test('calendar can add the recent past and marks released days without changing 
 	assert.equal(calendar.days({ tv: [], movies: [] }, new Date(2026, 9, 18, 12)).length, 7, 'the default stays a single week');
 });
 
+test('calendar lays the window out in Monday-first weeks with a stable column per weekday', () => {
+	const days = calendar.days({ tv: [], movies: [] }, new Date(2026, 10, 21, 12), { past: 7 });
+	assert.equal(days.length, 14);
+	const rows = calendar.weeks(days);
+	assert.equal(rows.length, 3, 'a mid-week start still spans three calendar rows');
+	for (const row of rows) assert.equal(row.length, 7, 'every row is a full week');
+	rows.forEach(row => row.forEach((day, column) => {
+		if (!day) return;
+		assert.equal(day.weekday, column, `${day.key} sits in its weekday column`);
+		assert.equal(day.date.getDay(), (column + 1) % 7);
+	}));
+	assert.deepEqual(Array.from(rows, row => Array.from(row, day => day && day.key)), [
+		[null, null, null, null, null, '2026-11-14', '2026-11-15'],
+		['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21', '2026-11-22'],
+		['2026-11-23', '2026-11-24', '2026-11-25', '2026-11-26', '2026-11-27', null, null]
+	]);
+	const mondays = Array.from(rows, row => row[0] && row[0].key).filter(Boolean);
+	assert.deepEqual(mondays, ['2026-11-16', '2026-11-23'], 'a Monday is always in the first column');
+});
+
+test('a Monday-first week needs no padding', () => {
+	const days = calendar.days({ tv: [], movies: [] }, new Date(2026, 10, 16, 12));
+	const rows = calendar.weeks(days);
+	assert.equal(rows.length, 1);
+	assert.deepEqual(Array.from(rows[0], day => day && day.key), ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21', '2026-11-22']);
+});
+
 test('only the episode the card represents keeps the library link', () => {
 	const first = new Date(2026, 9, 19, 1).toISOString();
 	const second = new Date(2026, 9, 20, 1).toISOString();

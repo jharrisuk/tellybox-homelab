@@ -89,6 +89,9 @@ select:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
 @media(max-width:700px) { .dispatcharr-status { padding: 16px; } }
 @media(max-width:420px) { .dispatcharr-metrics { grid-template-columns: minmax(0, 1fr); } .dispatcharr-metrics dd { text-align: left; } }
 
+/* Mirror the guide wrapping in the live setup UI. */
+p, li { text-wrap: pretty; }
+
 html { scroll-behavior: smooth; }
 main > section { margin: 64px 0; scroll-margin-top: 25px; }
 img, figure, svg, table { max-width: 100%; }
@@ -189,3 +192,10 @@ td { color: var(--muted); }
 	.ha-actions a { width: 100%; }
 	.ha-setup { padding: 16px 18px; }
 }
+
+/* Orphan control: redistribute words, never shrink type. */
+p, li, figcaption, .intro, .ha-lede, .ha-meta, .guide-note p,
+.service-row-description, .service-summary, .dispatcharr-intro, .dispatcharr-note {
+	text-wrap: pretty;
+}
+h2, h3, summary { text-wrap: balance; }

@@ -17,7 +17,7 @@ export const services = [
 		id: 'dispatcharr', name: 'Dispatcharr', group: 'Your media', icon: 'tv',
 		locations: ['onThisServer', 'relay', 'anotherServer'],
 		sameServerUrl: 'http://host.docker.internal:9191',
-		summary: 'Bring live TV, a programme guide and your streamed catalogue together.',
+		summary: 'Live TV, a programme guide and streamed catalogue together.',
 		description: 'Dispatcharr manages your IPTV sources. Tellybox connects directly for live channels, a separate 24/7 area, on-demand films and series, and supported recording and catch-up features.',
 		enables: ['Live TV and programme guide', '24/7 channels', 'Streamed films and series', 'Recordings and catch-up where available'],
 		requires: 'A running Dispatcharr server with channels, guide data and any VOD accounts already configured. Use a personal API key for the catalogue and recording controls.',
@@ -58,7 +58,7 @@ export const services = [
 	{
 		id: 'radarr', name: 'Radarr', group: 'Discovery & requests', icon: 'film',
 		sameServerUrl: 'http://host.docker.internal:7878',
-		summary: 'Add upcoming films and the ratings already in your Radarr library.',
+		summary: 'Upcoming films, plus ratings from your Radarr library.',
 		description: 'Tellybox reads monitored films, release dates and available ratings. Seerr handles requests for new local films through its own Radarr configuration.',
 		enables: ['Upcoming films', 'Additional film ratings when supplied'],
 		requires: 'Your Radarr address and API key from Settings → General.',
@@ -91,7 +91,7 @@ export const services = [
 	{
 		id: 'resend', name: 'Resend', group: 'Remote access', icon: 'mail',
 		summary: 'Send email sign-in codes to approved remote viewers.',
-		description: 'Resend delivers approval messages and short-lived login codes. Local web viewing remains login-free; remote approval is managed in Tellybox.',
+		description: 'Resend delivers approval messages and short-lived sign-in codes. Local web viewing remains login-free; remote approval is managed in Tellybox.',
 		enables: ['Remote email sign-in', 'Approval emails'],
 		requires: 'A Resend API key, a verified sender domain and a sender address on that domain. Configure a public HTTPS address first.',
 		without: 'Local viewing and approved app access remain available. Email login is unavailable.',
@@ -123,8 +123,8 @@ export const services = [
 ];
 
 export const infrastructure = [
-	{ name: 'Tailscale', summary: 'A private connection between your home server and an optional public relay.', requires: 'Your own Tailscale account and approval of both machines.', note: 'No exit node or subnet router is needed. Tailscale does not make a public website by itself.', docs: 'https://tailscale.com/docs/install/linux' },
-	{ name: 'Caddy', summary: 'The relay’s HTTPS front door, forwarding requests to Tellybox over the private connection.', requires: 'A hostname pointed at the relay and web ports allowed by its firewall.', note: 'Management stays separate from the public viewing route. Existing Caddy sites must be preserved.', docs: 'https://caddyserver.com/docs/automatic-https' },
+	{ name: 'Tailscale', summary: 'A private link from your home server to an optional public relay.', requires: 'Your own Tailscale account and approval of both machines.', note: 'No exit node or subnet router is needed. Tailscale does not make a public website by itself.', docs: 'https://tailscale.com/docs/install/linux' },
+	{ name: 'Caddy', summary: 'The relay’s HTTPS front door, forwarding requests to Tellybox.', requires: 'A hostname pointed at the relay and web ports allowed by its firewall.', note: 'Management stays separate from the public viewing route. Existing Caddy sites must be preserved.', docs: 'https://caddyserver.com/docs/automatic-https' },
 ];
 
 export const presets = [

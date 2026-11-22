@@ -43,6 +43,7 @@ import { subtitleChoice, englishSubtitle } from './subtitle-choice.mjs';
 import { createSubtitleLookup, downloadedSubtitleIndex } from './subtitle-lookup.mjs';
 import { createDispatcharr, findChannelForArtwork, channelLogoUrl } from './dispatcharr.mjs';
 import { createDispatcharrGuide, channelView } from './dispatcharr-guide.mjs';
+import { createSportListings } from './sport-listings.mjs';
 import {createCatchup} from './catchup.mjs';
 import {createBroadcastResume} from './broadcast-resume.mjs';
 import {createCatchupPlayer} from './catchup-player.mjs';
@@ -79,15 +80,30 @@ import { createMaintenance, MAINTENANCE_MESSAGE } from './maintenance.mjs';
 import { createArtworkOrigin } from './artwork-origin.mjs';
 import { isLocalOrHome, rewriteArtworkResponse } from './artwork-routing.mjs';
 import { createLibraryImageHandler } from './library-image.mjs';
-import { createHomeArtwork, homeArtworkCandidates } from './home-artwork.mjs';
+import { createJellyfinAdmin } from './jellyfin-admin.mjs';import { createHomeArtwork, homeArtworkCandidates } from './home-artwork.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const upstream = new URL(process.env.JELLYFIN_URL || 'http://127.0.0.1:1');
 const configPath = path.join(process.env.DATA_DIR || path.join(root, 'data'), 'connection.json');
+// Media deletion uses the installation's Jellyfin administrator key, not the
+// viewer token. It lives in the homelab configuration, one level above the
+// media connection file. Missing or invalid fails closed.
+const jellyfinAdmin = createJellyfinAdmin({
+	configPath: process.env.HOMELAB === '1' ? path.join(path.dirname(path.dirname(configPath)), 'configuration.json') : ''
+});
 const features = loadCapabilities(path.dirname(configPath));
 const dispatcharr = optionalDispatcharr(createDispatcharr({ file:path.join(process.env.AUTH_DIR || path.join(root, 'auth-data'), 'dispatcharr.json'), origin:process.env.DISPATCHARR_URL || 'http://127.0.0.1:1' }), features);
 const providerArtwork = createProviderImageCache();
-const dispatcharrGuide = features.live ? createDispatcharrGuide(dispatcharr,fetch,Date.now,path.join(process.env.CATALOGUE_CACHE_DIR || process.env.AUTH_DIR || path.join(root,'auth-data'),'dispatcharr-guide.json')) : Object.assign(async () => ({channels:[],available:false,stale:false}), {archive:async () => ({channels:[],available:false})});
+const guideCacheDir = process.env.CATALOGUE_CACHE_DIR || process.env.AUTH_DIR || path.join(root,'auth-data');
+const dispatcharrGuide = features.live ? createDispatcharrGuide(dispatcharr,fetch,Date.now,path.join(guideCacheDir,'dispatcharr-guide.json'), { archiveFile: path.join(guideCacheDir,'guide-archive.json'), archiveDays: 8 }) : Object.assign(async () => ({channels:[],available:false,stale:false}), {archive:async () => ({channels:[],available:false})});
+// UK televised-football rail for Coming Soon. Polite, cached and never fatal:
+// it reads the same live lineup the guide uses and keeps the last good parse on
+// disk so a restart inside the 6h window does not refetch the source.
+const sportListings = createSportListings({
+	channels: () => dispatcharr.channels(),
+	version: serverRelease.version,
+	cachePath: path.join(process.env.CATALOGUE_CACHE_DIR || process.env.AUTH_DIR || path.join(root,'auth-data'),'sport-listings.json')
+});
 const directPlayer = createDirectPlayer({origin:dispatcharr.origin});
 const subtitleLookup=createSubtitleLookup({directory:process.env.AUTH_DIR||path.join(root,'auth-data')});
 const vodPlayer = createVodPlayer({open:(source,options)=>source.type==='local'?fetch(new URL(source.route,upstream),{headers:{...headers(),...(options.range?{Range:options.range}:{})},redirect:'error',signal:options.signal}):source.type==='recording'?dispatcharr.recordingFile(source.id,options):dispatcharr.stream(source,options),close:(token,source)=>['recording','local'].includes(source.type)?Promise.resolve():dispatcharr.stopStream(token)});
@@ -396,10 +412,56 @@ app.get('/api/viewing-status', (req, res) => {
 // path. Forwarded addresses and browser hostnames are never trusted here.
 app.get('/api/activity/summary', (req, res) => {
 	res.set('Cache-Control', 'no-store');
-	if (!auth.isOwnerAdmin(req)) {
+	if (!auth.isOwnerAdmin(req) && !auth.isHome(req)) {
 		return res.status(403).json({ error: 'Read-only activity statistics are available to installation administrators only.' });
 	}
 	res.json(activity.summary());
+});
+// Permanent media deletion. Local administrator only, preview first, and the
+// caller must repeat the exact title. Jellyfin removes the entries and files.
+const purgeAdmin = (req, res, next) => {
+	if (!auth.isLocal(req) || !auth.isOwnerAdmin(req)) {
+		return res.status(403).json({ error: 'Deleting media is available to a local installation administrator only.' });
+	}
+	next();
+};
+function purgeFailure(res, error) {
+	const status = Number(error?.status) || 500;
+	return res.status(status).json({ error: status >= 500 && status !== 503 ? 'The media could not be deleted.' : String(error?.message || 'The media could not be deleted.') });
+}
+app.get('/api/admin/purge/search', purgeAdmin, async (req, res) => {
+	res.set('Cache-Control', 'no-store');
+	const term = String(req.query.q || '').trim().slice(0, 200);
+	if (term.length < 2) return res.json({ items: [] });
+	try {
+		const query = new URLSearchParams({ UserId: connection().userId, Recursive: 'true', IncludeItemTypes: 'Movie,Series,Season,Episode', SearchTerm: term, Limit: '40', Fields: 'Path,ChildCount' });
+		const data = await jelly('/Items?' + query);
+		res.json({ items: (data.Items || []).map(({ Id, Name, Type, ProductionYear, ChildCount, IndexNumber, ParentIndexNumber }) => ({ Id, Name, Type, ProductionYear, ChildCount, IndexNumber, ParentIndexNumber })) });
+	} catch { res.status(502).json({ error: 'The library could not be searched.' }); }
+});
+app.get('/purge', purgeAdmin, (req, res) => res.sendFile(path.join(root, 'public', 'purge.html')));
+app.get('/purge.js', purgeAdmin, (req, res) => res.sendFile(path.join(root, 'public', 'purge.js')));
+app.get('/api/admin/purge/preview', purgeAdmin, async (req, res) => {
+	res.set('Cache-Control', 'no-store');
+	try { res.json(await jellyfinAdmin.preview(String(req.query.id || ''))); }
+	catch (error) { return purgeFailure(res, error); }
+});
+app.post('/api/admin/purge', purgeAdmin, async (req, res) => {
+	if (!req.is('application/json') || req.get('origin') !== req.jserverOrigin) return res.sendStatus(403);
+	let data;
+	try { data = await jellyfinAdmin.preview(String(req.body?.id || '')); }
+	catch (error) { return purgeFailure(res, error); }
+	if (String(req.body?.confirm || '').trim().toLowerCase() !== data.name.trim().toLowerCase()) {
+		return res.status(400).json({ error: 'Type the title exactly to confirm the deletion.' });
+	}
+	const playing = activity.snapshot().active.filter(entry => entry.purpose !== 'download' && entry.state !== 'stopped'
+		&& (String(entry.itemId) === String(data.id) || data.episodeIds.some(id => String(id) === String(entry.itemId))));
+	if (playing.length) return res.status(409).json({ error: 'Stop playback of that title before deleting it.' });
+	try { await jellyfinAdmin.remove(data.id); }
+	catch (error) { return purgeFailure(res, error); }
+	try { metadataCache.clear(); discoveryLibraryCache.clear(); } catch {}
+	activity.record('media_purged', auth.identity(req), { itemId: data.id, name: data.name, type: data.type, count: data.count });
+	res.json({ ok: true, ...data });
 });
 function dispatcharrAdmin(req, res, next) {
 	if (!auth.isLocal(req) || req.get('authorization') || req.get('x-jserver-app')) return res.status(403).json({error:'Open the local Tellybox settings to manage Dispatcharr.'});
@@ -460,7 +522,13 @@ const seerr=installSeerr(app, { configPath: path.join(path.dirname(configPath), 
 	discoverCachePath: path.join(process.env.CATALOGUE_CACHE_DIR || process.env.AUTH_DIR || path.join(root,'auth-data'),'discover-public-cache.json') });
 app.get('/api/coming-soon', async (req, res) => {
 	res.set('Cache-Control', 'no-store');
-	res.json(await insights.upcoming());
+	const upcoming = await insights.upcoming();
+	// Sport is additive and must never break the page: on any problem the rail
+	// is empty and flagged unavailable, while the tv/movies fields are unchanged.
+	let sport = [], sportUnavailable = false;
+	try { sport = await sportListings.listings(); sportUnavailable = sportListings.unavailable(); }
+	catch { sportUnavailable = true; }
+	res.json({ ...upcoming, sport, ...(sportUnavailable ? { sportUnavailable: true } : {}) });
 });
 
 function connection() {
@@ -1554,7 +1622,7 @@ app.get('/api/admin/dispatcharr/streams',async(req,res)=>{
 // above keeps its owner-session check unchanged.
 app.get('/api/activity/streams',async(req,res)=>{
 	res.set('Cache-Control','no-store');
-	if(!auth.isOwnerAdmin(req))
+	if(!auth.isOwnerAdmin(req) && !auth.isHome(req))
 		return res.status(403).json({error:'Upstream stream monitoring is available to installation administrators only.'});
 	let response;
 	try{
@@ -1601,8 +1669,8 @@ async function sendTmdbArtwork(res,type,id,kind){
 app.get('/api/web/art/:kind/:id',async(req,res)=>{
 	res.set('Cache-Control','no-store');
 	if(!['movie','series'].includes(req.params.kind)||!/^\d+$/.test(req.params.id))return res.sendStatus(404);
-	let item;
-	try{item=await vodLibrary.raw(`dispatch-${req.params.kind}-${req.params.id}`);}catch{return res.sendStatus(404);}
+	let item=null;
+	try{item=await vodLibrary.raw(`dispatch-${req.params.kind}-${req.params.id}`);}catch{/* the merged catalogue lookup below can still resolve the poster */}
 	const logo=Number(item?.data?.logo?.id);
 	if(Number.isSafeInteger(logo)&&logo>0)
 		return proxyImage(res,{url:new URL(`/api/vod/vodlogos/${logo}/cache/`,dispatcharr.origin),maxBytes:3*1024*1024,
@@ -1611,9 +1679,17 @@ app.get('/api/web/art/:kind/:id',async(req,res)=>{
 	// public TMDB poster, resolve the existing card URL instead of forcing a
 	// permanent placeholder and an extra client request. This route never
 	// enqueues metadata and never invents an image path.
+	// The raw provider row can carry a wrong or missing TMDB id. Prefer the
+	// merged item's poster, which is what the detail page already shows.
+	try{
+		const view=await vodLibrary.item(`dispatch-${req.params.kind}-${req.params.id}`);
+		const match=/^\/api\/web\/tmdb-art\/(movie|tv)\/(\d+)\/(poster|backdrop)$/.exec(String(view?.Artwork||''));
+		if(match)return sendTmdbArtwork(res,match[1],match[2],'poster');
+	}catch{}
 	const tmdb=Number(item?.data?.tmdb_id);
-	if(!Number.isSafeInteger(tmdb)||tmdb<=0)return res.sendStatus(404);
-	return sendTmdbArtwork(res,req.params.kind==='movie'?'movie':'tv',String(tmdb),'poster');
+	if(Number.isSafeInteger(tmdb)&&tmdb>0)
+		return sendTmdbArtwork(res,req.params.kind==='movie'?'movie':'tv',String(tmdb),'poster');
+	return res.sendStatus(404);
 });
 app.get('/api/web/tmdb-art/:type/:id/:kind',async(req,res)=>{
 	res.set('Cache-Control','no-store');

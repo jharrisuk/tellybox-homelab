@@ -7,11 +7,11 @@
 	<title>Coming soon - Tellybox</title>
 	<link rel="icon" href="/icon.svg" type="image/svg+xml">
 	<link rel="stylesheet" href="/style.css">
-	<link rel="stylesheet" href="/coming-soon.css">
+	<link rel="stylesheet" href="/coming-soon.css?v=20261122">
 	<script src="/visitor-ui.js" defer></script>
-	<script src="/coming-calendar.js" defer></script>
+	<script src="/coming-calendar.js?v=20261122" defer></script>
 	<script src="/navigation.js" defer></script>
-	<script src="/coming-soon.js" defer></script>
+	<script src="/coming-soon.js?v=20261122" defer></script>
 	<script src="/connection-status.js" defer></script>
 </head>
 <body>
@@ -25,20 +25,32 @@
 	</header>
 	<main class="coming-page">
 		<header class="coming-page-heading">
-			<p class="eyebrow">WHAT'S NEXT</p>
+			<p class="eyebrow">WHAT’S NEXT</p>
 			<h1>Coming soon</h1>
-			<p>Upcoming episodes and films already on the list. Release and broadcast dates can change; a title becomes watchable here once it arrives.</p>
+			<p>Upcoming episodes, films and televised football. Dates can change; a title is watchable here when it arrives.</p>
 		</header>
-		<section class="coming-calendar" id="comingCalendar" aria-label="Recently released and coming up in the next seven days">
+				<section class="coming-calendar" id="comingCalendar" aria-label="Recently released and coming up in the next seven days">
 			<div class="calendar-heading"><h2>Recently released &amp; next 7 days</h2><span>Coming up</span></div>
 			<div class="calendar-groups" id="calendarDays"></div>
-			<p id="calendarSummary" class="calendar-summary" role="status">Checking what's coming up...</p>
+			<p id="calendarSummary" class="calendar-summary" role="status">Checking what’s coming up…</p>
+		</section>
+<section class="coming-sport" id="comingSport" aria-label="Football on TV" tabindex="-1">
+			<div class="sport-heading">
+				<h2><span class="sport-glyph" aria-hidden="true">&#9917;</span>Football on TV</h2>
+				<div class="sport-controls">
+					<span class="sport-count" id="sportCount"></span>
+					<button class="uk-toggle" id="ukOnlyToggle" type="button" aria-pressed="true">UK football only</button>
+				</div>
+			</div>
+			<div class="sport-list" id="sportList"></div>
+			<p id="sportStatus" class="sport-status" role="status">Checking football listings…</p>
+			<div class="more sport-more"><button id="sportMore" class="button quiet" type="button" aria-controls="sportList" aria-expanded="false" hidden>Show all matches</button></div>
 		</section>
 		<section class="hero coming-hero" id="comingHero" aria-label="Coming soon highlight" hidden>
 			<img id="comingHeroImage" alt="" hidden>
 			<div class="hero-content">
 				<p class="eyebrow" id="comingHeroEyebrow">NEXT ON THE LIST</p>
-				<h1 id="comingHeroTitle"></h1>
+				<h2 id="comingHeroTitle"></h2>
 				<p class="hero-description" id="comingHeroDescription"></p>
 				<div class="hero-meta" id="comingHeroMeta"></div>
 				<div class="hero-actions">
@@ -47,14 +59,16 @@
 				</div>
 			</div>
 		</section>
-		<p id="comingStatus" class="status" role="status">Checking what's on the way...</p>
-		<details class="coming-browse" id="comingBrowse">
-			<summary class="button quiet">Browse all upcoming</summary>
-			<div class="filters" id="comingFilters" aria-label="Coming soon category"><button class="chip active" data-coming="tv" aria-pressed="true">TV episodes</button><button class="chip" data-coming="movie" aria-pressed="false">Films</button></div>
+		<p id="comingStatus" class="status" role="status">Checking what’s on the way…</p>
+		<section class="coming-browse" id="comingBrowse" aria-label="Browse all upcoming">
+			<div class="browse-heading">
+				<h2>Browse all upcoming</h2>
+				<div class="filters segmented" id="comingFilters" role="group" aria-label="Coming soon category"><button class="chip active" data-coming="tv" type="button" aria-pressed="true">Episodes</button><button class="chip" data-coming="movie" type="button" aria-pressed="false">Films</button></div>
+			</div>
 			<div id="comingGrid" class="coming-grid"></div>
-			<div class="more"><button id="comingMore" class="button quiet" aria-controls="comingGrid" aria-expanded="false" hidden>Show all upcoming</button></div>
-		</details>
-		<p class="coming-note">Broadcast times use your device's time zone. Film dates are original release dates, not a promise of when they will be available here.</p>
+			<div class="more"><button id="comingMore" class="button quiet" type="button" aria-controls="comingGrid" aria-expanded="false" hidden>Show all upcoming</button></div>
+		</section>
+		<p class="coming-note">Broadcast times use your device’s time zone. Film dates are original release dates, not a promise of when they will be available here.</p>
 	</main>
 	<footer><a class="brand footer-brand" href="/">Telly<span class="brand-server">box</span></a><p>A little nostalgia. A lot to watch.</p><a class="credits-link" href="/legal.html">Credits &amp; licences</a></footer>
 	<dialog id="comingDetails" aria-labelledby="comingDetailsTitle"><button class="close" id="closeComingDetails" aria-label="Close details">&times;</button><div id="comingDetailsBody"></div></dialog>

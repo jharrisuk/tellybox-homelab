@@ -44,7 +44,12 @@
 			if (!response.ok) throw new Error('Unavailable');
 			const access = await response.json();
 			if (request !== generation) return;
-			render(access.local ? 'local' : 'relay', access.local ? 'Local connection · connected directly to your home server.' : 'Relay connection · this page is using the internet relay. Playback can switch to your home server when available.');
+			const atHome = Boolean(access.local || access.home);
+			render(atHome ? 'local' : 'relay', access.local
+				? 'Local connection · connected directly to your home server.'
+				: atHome
+					? 'At home · this page uses your public address; local streaming is checked when you press play.'
+					: 'Relay connection · this page is using the internet relay. Playback can switch to your home server when available.');
 		} catch { if (request === generation) render('unknown', 'Connection unavailable · unable to check your server.'); }
 	}
 	window.addEventListener('offline', () => { generation++; show(); });

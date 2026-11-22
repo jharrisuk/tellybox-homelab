@@ -9,6 +9,9 @@
 .coming-page .calendar-groups { display: flex; flex-direction: column; gap: 16px; }
 .coming-page .calendar-group h3 { margin: 0 0 8px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
 .coming-page .calendar-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+.coming-page .calendar-weekday { padding: 0 11px 2px; color: var(--muted); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+.coming-page .calendar-day.empty { border-color: transparent; background: transparent; }
+.coming-page .calendar-day.quiet { background: transparent; }
 .coming-page .calendar-day { display: block; padding: 11px; border: 1px solid var(--line); border-radius: 10px; background: #151a14; }
 .coming-page .calendar-day.recent { border-style: dashed; background: #12160f; }
 .coming-page .calendar-date { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; }
@@ -26,22 +29,61 @@
 .coming-hero .hero-content { display: flex; flex-direction: column; justify-content: center; }
 .coming-hero .hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .coming-page .filters { margin: 0 0 18px; }
+/* Sport is a first-class panel above the calendar: fixtures fill the row with
+   an auto-fill grid, so there is no fixed empty column at any width. */
+.coming-page .coming-sport { margin: 0 0 20px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+.coming-page .coming-sport:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+.coming-page .sport-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.coming-page .sport-heading h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 17px; }
+.coming-page .sport-glyph { font-size: 16px; line-height: 1; }
+.coming-page .sport-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.coming-page .sport-count { color: var(--muted); font-size: 12px; }
+.coming-page .uk-toggle { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); background: none; color: var(--muted); padding: 6px 12px; border-radius: 30px; font-size: 12px; }
+.coming-page .uk-toggle::before { content: ''; width: 8px; height: 8px; border-radius: 50%; border: 1px solid currentColor; }
+.coming-page .uk-toggle:hover { border-color: var(--green); color: var(--text); }
+.coming-page .uk-toggle[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: #17200e; }
+.coming-page .uk-toggle[aria-pressed="true"]::before { background: currentColor; }
+.coming-page .uk-toggle[aria-pressed="true"]:hover { color: #17200e; }
+.coming-page .sport-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)); gap: 10px; }
+.coming-page .sport-fixture { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; padding: 12px; text-align: left; background: #151a14; border: 1px solid var(--line); border-radius: 10px; }
+.coming-page .sport-fixture:hover { border-color: var(--green); }
+.coming-page .sport-fixture:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+.coming-page .sport-when { display: flex; align-items: baseline; gap: 6px; }
+.coming-page .sport-when strong { color: var(--green); font-size: 13px; }
+.coming-page .sport-when span { color: var(--muted); font-size: 11px; }
+.coming-page .sport-title { font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
+.coming-page .sport-comp { color: var(--muted); font-size: 11px; line-height: 1.35; }
+.coming-page .sport-unowned { color: var(--muted); font-size: 11px; font-style: italic; }
+.coming-page .sport-status { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.coming-page .sport-more { margin-top: 14px; }
+/* Calendar fixture marker: icon + count only, never a second fixture list. */
+.coming-page .calendar-sport { display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; margin-top: 2px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--green); font-size: 10px; line-height: 1.4; }
+.coming-page .calendar-sport:hover { border-color: var(--green); background: #1d2418; }
+.coming-page .calendar-sport-glyph { font-size: 11px; line-height: 1; }
+/* Browse is an always-visible section with a compact segmented control. */
 .coming-page .coming-browse { margin: 0 0 18px; }
-.coming-page .coming-browse > summary { cursor: pointer; font-family: inherit; }
-.coming-page .coming-browse > summary:focus-visible { outline: 2px solid var(--green); outline-offset: 5px; }
-.coming-page .coming-browse[open] > summary { margin-bottom: 18px; }
+.coming-page .browse-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.coming-page .browse-heading h2 { margin: 0; font-size: 17px; }
+.coming-page .filters.segmented { display: inline-flex; flex-wrap: nowrap; gap: 0; margin: 0; padding: 3px; border: 1px solid var(--line); border-radius: 30px; }
+.coming-page .filters.segmented .chip { border: 0; padding: 6px 16px; }
 .coming-page .coming-browse .more { margin-top: 20px; }
-.coming-page .coming-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.coming-page .coming-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 .coming-page .coming-card { min-height: 118px; }
 .coming-page .coming-card:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
 .coming-page .coming-note { max-width: 820px; }
 @media (max-width: 1050px) {
-	.coming-page .calendar-days { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-	.coming-page .coming-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+	.coming-page .calendar-days { gap: 6px; }
+	.coming-page .calendar-day { padding: 9px 8px; }
+	.coming-page .calendar-weekday { padding: 0 8px 2px; }
 }
 @media (max-width: 850px) {
 	.coming-page { padding: 20px 4% 60px; }
+	.coming-page .coming-sport { padding: 14px; }
+	.coming-page .sport-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+	.coming-page .sport-heading { align-items: flex-start; }
 	.coming-page .calendar-days { grid-template-columns: 1fr; }
+	.coming-page .calendar-weekday { display: none; }
+	.coming-page .calendar-day.empty { display: none; }
 	.coming-page .calendar-day { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; align-items: center; }
 	.coming-page .calendar-date { display: grid; gap: 3px; margin: 0; }
 	.coming-page .calendar-day-items { gap: 5px; }
@@ -50,3 +92,12 @@
 	.coming-page .coming-grid { grid-template-columns: 1fr; }
 	.coming-page .coming-card { min-height: 0; }
 }
+@media (max-width: 560px) {
+	.coming-page .sport-list { grid-template-columns: 1fr; }
+	.coming-page .browse-heading { flex-direction: column; align-items: flex-start; }
+}
+
+.coming-hero .hero-content h2 { margin: 0 0 10px; line-height: 1.15; text-wrap: balance; }
+
+.coming-page .coming-channels { display: flex; flex-wrap: wrap; gap: 2px 8px; margin-top: 2px; }
+.coming-page .coming-channel { color: var(--muted); font-size: 11px; line-height: 1.35; white-space: normal; }

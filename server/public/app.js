@@ -377,7 +377,7 @@ let homeSkeletonShown = false;
 // times so a short page never looks like the end of the collection.
 const availabilityPollDelay = 1750;
 const availabilityPollLimit = 5;
-const availabilityCheckingText = 'Checking availability for more titles...';
+const availabilityCheckingText = 'Checking availability for more titles…';
 const homeAvailabilityRetryLimit = 2;
 // Artwork continuation is separate from full-feed availability verification.
 // A metadata lookup can land well after the two 1750 ms row checks, so the
@@ -410,11 +410,14 @@ let guideData = null;
 let recordingData = [], recordingFilter = 'all';
 
 function updateRouting(message = '') {
-	const local = casting.active ? casting.route === 'local' : state.session ? Boolean(routing.direct || state.sessionBase) : routing.direct || routing.enabled;
 	const active = Boolean(casting.active || state.session);
+	// At home on the public address the server has already recognised the home
+	// network; show the home icon before playback rather than the relay cloud.
+	const atHome = !active && routing.home === true;
+	const local = casting.active ? casting.route === 'local' : state.session ? Boolean(routing.direct || state.sessionBase) : routing.direct || routing.enabled || atHome;
 	const route = local ? 'local' : 'relay';
 	const text = active ? (local ? 'Streaming locally · video is travelling directly from your home server.' : 'Streaming through the relay · video is using your internet connection.')
-		: local ? (routing.direct ? 'Local connection · connected directly to your home server.' : 'Local streaming available · your home server was reached directly. This page uses the relay.')
+		: local ? (routing.direct ? 'Local connection · connected directly to your home server.' : atHome ? 'At home · local streaming will be checked when you press play.' : 'Local streaming available · your home server was reached directly. This page uses the relay.')
 		: 'Relay connection · this page is using the internet relay. Local playback is checked when you press play.';
 	window.dispatchEvent(new CustomEvent('tellybox-route', { detail: { route, text } }));
 	$('#localRouting').hidden = !routing.home && !routing.direct;
@@ -763,7 +766,7 @@ function showMaintenanceScreen(message) {
 	if (!overlay) return;
 	const text = overlay.querySelector('.boot-overlay-text');
 	const retry = document.getElementById('bootRetry');
-	if (text) text.textContent = message || 'Tellybox is down for maintenance. It will be back shortly.';
+	if (text) text.textContent = message || 'We’re doing some housekeeping. Tellybox will be back shortly.';
 	if (retry) {
 		retry.hidden = false;
 		retry.textContent = 'Try again';
@@ -1127,11 +1130,11 @@ function renderComing() {
 		if (item.type === 'movie') text.append(jserverUI.ratings(item.ratings, { compact: true }));
 		button.append(text); button.onclick = () => showComingDetails(item); return button;
 	}));
-	$('#comingStatus').textContent = coming.unavailable.includes(coming.type === 'tv' ? 'tv' : 'films') ? 'The schedule is temporarily unavailable. Please check back shortly.' : !items.length ? 'Nothing scheduled in the next three months yet. More dates will appear as they’re announced.' : '';
+	$('#comingStatus').textContent = coming.unavailable.includes(coming.type === 'tv' ? 'tv' : 'films') ? 'The schedule is temporarily unavailable. Please check back shortly.' : !items.length ? 'Nothing dated yet. As soon as a release is announced, it’ll appear here.' : '';
 	$('#comingStatus').hidden = !$('#comingStatus').textContent;
 	$('#comingMore').hidden = items.length <= previewCount;
 	$('#comingMore').setAttribute('aria-expanded', String(coming.expanded));
-	$('#comingMore').textContent = coming.expanded ? 'Show fewer' : `Show all ${items.length} upcoming ${coming.type === 'tv' ? 'shows' : 'films'}`;
+	$('#comingMore').textContent = coming.expanded ? 'Show fewer' : `Show all ${items.length} upcoming ${coming.type === 'tv' ? 'episodes' : 'films'}`;
 }
 
 async function loadComing() {
@@ -2564,7 +2567,7 @@ async function loadItems(append = false) {
 	if (nonstop) return loadNonstop(append);
 	if (dvr) return loadRecordings();
 	$('#genreLabel').hidden=!['all','movies','tvshows'].includes(state.type);
-	if(state.type==='favourites'){++state.generation;const items=Object.values(readFavourites()).filter(i=>i.Name.toLowerCase().includes($('#search').value.trim().toLowerCase()));state.items=items;state.total=items.length;$('#grid').replaceChildren(...items.map(i=>card(i)));$('#collectionTitle').firstChild.textContent=favouriteHome?'Home favourites ':'Favourites ';$('#count').textContent=items.length;$('#status').hidden=items.length>0;$('#status').textContent=favouriteHome?'Save something with the star button. Shared with everyone at home.':'Save something with the star button. Your favourites follow your sign-in.';$('#loadMore').hidden=true;return;}
+	if(state.type==='favourites'){++state.generation;const items=Object.values(readFavourites()).filter(i=>i.Name.toLowerCase().includes($('#search').value.trim().toLowerCase()));state.items=items;state.total=items.length;$('#grid').replaceChildren(...items.map(i=>card(i)));$('#collectionTitle').firstChild.textContent=favouriteHome?'Home favourites ':'Favourites ';$('#count').textContent=items.length;$('#status').hidden=items.length>0;$('#status').textContent=favouriteHome?'Tap the star on anything you love and it’ll appear here for everyone at home.':'Tap the star on anything you love — your favourites follow your sign-in.';$('#loadMore').hidden=true;return;}
 	// Home is the feed, not the collection. Fetching and rendering the first
 	// collection page here built up to 60 cards the viewer never saw (the
 	// collection section is hidden on Home) and cost a metadata request plus
@@ -2638,7 +2641,7 @@ async function loadNonstop(append = false) {
 	$('#search').placeholder='Find a 24/7 stream…';$('#search').setAttribute('aria-label','Search 24/7 streams');
 	$('.collection-toolbar .eyebrow').textContent='ALWAYS ON · JUST PRESS PLAY';
 	$('#collectionTitle').firstChild.textContent='24/7 ';
-	$('#status').hidden=false;$('#status').textContent='Finding your always-on favourites…';$('#loadMore').hidden=true;
+	$('#status').hidden=false;$('#status').textContent='Finding your 24/7 favourites…';$('#loadMore').hidden=true;
 	try {
 		if(!nonstopData || Date.now()-nonstopData.time>60000){
 			nonstopPending ||= api('/api/dispatcharr/channels').then(data=>(nonstopData={...data,time:Date.now()})).finally(()=>{nonstopPending=null;});
@@ -3371,7 +3374,7 @@ async function queryViewingStatus() {
 function showPlaybackClosed(message, generation = playGeneration) {
 	if (generation !== playGeneration || !player.open) return;
 	saveProgress();
-	const note = message || 'Playback was closed. Your place was saved.';
+	const note = message || 'Playback stopped, but your place is saved for whenever you’re ready.';
 	closePlayer();
 	const status = $('#status');
 	if (status) status.textContent = note;
@@ -3456,7 +3459,7 @@ async function report(action) {
 }
 
 let nextEpisode = null, nextTimer = null, lastChannel = null, previousChannel = null;
-let nextResult = null, nextDismissed = false, nextBusy = false, nextAutoBlocked = false, segments = [], skipSegment = null;
+let nextResult = null, nextDismissed = false, nextBusy = false, nextAutoBlocked = false, segments = [], skipSegment = null, liveFloor = 0;
 let nextRenderedId = null, nextRenderedResult = null, nextPlayAction = null;
 const introLedger = new TellyboxEpisodeFlow.IntroLedger();
 function clearNextTimer() { if (nextTimer !== null) { clearInterval(nextTimer); nextTimer = null; } }
@@ -3532,7 +3535,7 @@ function renderEnd(host) {
 	host.classList.add('episode-ended');
 	const summary=element('div','episode-end-summary');
 	summary.append(element('span','eyebrow','EPISODE FINISHED'),element('h2','',state.playing.SeriesName||nextResult.seriesName||'Your series'));
-	if(Number.isInteger(state.playing.ParentIndexNumber)&&Number.isInteger(state.playing.IndexNumber))summary.append(element('p','muted',`Season ${state.playing.ParentIndexNumber} - Episode ${state.playing.IndexNumber}`));
+	if(Number.isInteger(state.playing.ParentIndexNumber)&&Number.isInteger(state.playing.IndexNumber))summary.append(element('p','muted',`Season ${state.playing.ParentIndexNumber} · Episode ${state.playing.IndexNumber}`));
 	summary.append(element('p','muted',state.playing.Name));
 	const copy=endCopy(nextResult);
 	summary.append(element('h3','episode-end-copy-title',copy[0]),element('p','muted episode-end-copy-text',copy[1]));
@@ -3627,6 +3630,20 @@ function updateNext() {
 	armCountdown();
 }
 video.addEventListener('timeupdate', () => {
+	// A live or 24/7 source can reconnect and restart its timestamps earlier. Do
+	// not follow it backwards: return to the live edge instead of rewinding.
+	if (state.live && !casting.active && !video.seeking && !state.playBlocked && liveFloor > video.currentTime + 2) {
+		const ranges = video.seekable;
+		let target = 0;
+		if (ranges?.length) {
+			// Keep the viewer where they were if the new stream still covers it; otherwise
+			// go to the live edge.
+			for (let i = 0; i < ranges.length; i++) if (liveFloor >= ranges.start(i) && liveFloor <= ranges.end(i)) { target = liveFloor; break; }
+			if (!target) target = ranges.end(ranges.length - 1);
+		}
+		if (Number.isFinite(target) && target > 0) video.currentTime = target;
+	}
+	liveFloor = video.currentTime;
 	const position = video.currentTime;
 	skipSegment = TellyboxEpisodeFlow.manualAt(segments, mediaPositionMs(), mediaDurationMs());
 	$('#skipIntro').hidden = !skipSegment || casting.active || state.live;
@@ -3915,6 +3932,7 @@ async function startPlayback(item, position = 0, keepSettings = false, options =
 		$('#retryPlayer').disabled = playback.kind === 'audio';
 		const begin = () => {
 			if (generation !== playGeneration) return;
+			liveFloor = 0;
 			if (position > 0 && !playback.live) video.currentTime = position;
 			if(!state.hls)for(const track of video.textTracks)if(track.label.startsWith('tellybox-subtitle-'))track.mode=track.label==='tellybox-subtitle-'+subtitleValue?'showing':'disabled';
 			// Metadata can arrive after the click's transient activation has
@@ -3934,7 +3952,7 @@ async function startPlayback(item, position = 0, keepSettings = false, options =
 		}
 		for(const track of playback.subtitles.filter(track=>track.url)){const node=document.createElement('track');node.kind='subtitles';node.label=track.label;node.dataset.index=String(track.index);node.src=new URL(track.url,sessionBase||location.origin).href;node.default=String(track.index)===subtitleValue;video.append(node);node.track.mode=node.default?'showing':'disabled';node.addEventListener('load',()=>{if(node.track.mode==='showing'&&!node.track.cues?.length)$('#playerStatus').textContent='No matching captions available. Video can keep playing.';});}
 		if (playback.kind === 'hls' && typeof Hls !== 'undefined' && typeof Hls.isSupported === 'function' && Hls.isSupported()) {
-			const hls = new Hls({ maxBufferLength:30,backBufferLength:30,startPosition:state.live?-1:position });
+			const hls = new Hls({ maxBufferLength:30,backBufferLength:30,startPosition:state.live?-1:position, liveSyncDuration:4, liveMaxLatencyDuration:12, maxLiveSyncPlaybackRate:1.5 });
 			state.hls = hls;
 			hls.on(Hls.Events.ERROR, (_, data) => {
 				if (data.fatal) void playbackFailed('Playback was interrupted. Try compatibility mode, or choose a lower quality.', hls, data);
@@ -4478,6 +4496,7 @@ async function init() {
 		if (!status.connected) throw new Error('Your Tellybox is ready to set up. Connect Jellyfin or Dispatcharr in installation settings to start watching.');
 		state.libraries = (await api('/api/libraries')).filter(item=>item.CollectionType!=='livetv');
 		for(const library of state.libraries)if(library.CollectionType==='tvshows'&&/^(tv|tv shows|television)$/i.test(library.Name.trim()))library.Name='Series';
+		for(const library of state.libraries)if(library.CollectionType==='movies'&&/^(movies|films|cinema)$/i.test(library.Name.trim()))library.Name='Films';
 		for(const library of state.libraries)if(library.Name.toLowerCase()==='recordings'){library.LegacyRecordings=true;library.Name='Local recordings';}
 		if (features.live) state.libraries.push({Id:'dispatch-tv',CollectionType:'livetv',Name:'Live TV'},{Id:'dispatch-247',CollectionType:'nonstop',Name:'24/7'});
 		if (features.recordings) state.libraries.push({Id:'dispatch-recordings',CollectionType:'dvr',Name:'Recordings'});

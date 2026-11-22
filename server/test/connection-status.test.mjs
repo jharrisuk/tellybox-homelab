@@ -13,9 +13,10 @@ async function page(access, fails = false) {
 	await new Promise(resolve => setImmediate(resolve));
 	return { button: elements[1], note: elements[2], listeners, context };
 }
-test('home public IP is a relay connection until a verified media route is reported', async () => {
+test('home public IP shows the home icon before playback', async () => {
 	const { button, note, listeners } = await page({ home: true, local: false });
-	assert.equal(button.dataset.route, 'relay');
+	assert.equal(button.dataset.route, 'local');
+	assert.match(button.title, /At home/);
 	listeners['tellybox-route']({ detail: { route: 'local', text: 'Streaming locally' } });
 	assert.equal(button.dataset.route, 'local');
 	button.onclick(); assert.equal(note.hidden, false); assert.equal(note.textContent, 'Streaming locally');

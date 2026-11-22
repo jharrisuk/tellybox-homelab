@@ -538,7 +538,12 @@ export function createVodLibrary({dispatcharr,localItems,localItem,localEpisodes
 				// Dispatcharr lazily imports the provider's episodes on this detail request.
 				await dispatcharr.api(`/api/vod/series/${vodId}/provider-info/`);
 				const data=await dispatcharr.api(`/api/vod/series/${vodId}/episodes/`),rows=Array.isArray(data)?data:data.results||[];
-				remote.push(...rows.map(e=>{const v=vodView(e,'Episode');return v?{...v,Artwork:'/api/web/art/series/'+vodId,Name:v.Name.replace(/^.*?\s[-–]\sS\d+E\d+\s[-–]\s/i,'')}:null;}).filter(Boolean));
+				// The provider's series row often has no logo or TMDB id, so the
+				// generic /api/web/art/series/<vodId> route 404s and streamed episode
+				// rows show empty squares. The parent series already resolved a
+				// working poster for its own detail page; episodes inherit it.
+				const parentArtwork=typeof series.Artwork==='string'&&series.Artwork?series.Artwork:'';
+				remote.push(...rows.map(e=>{const v=vodView(e,'Episode');return v?{...v,Artwork:parentArtwork||('/api/web/art/series/'+vodId),Name:v.Name.replace(/^.*?\s[-–]\sS\d+E\d+\s[-–]\s/i,'')}:null;}).filter(Boolean));
 			}catch{unavailable=true;}
 		}
 		// A temporary upstream failure must not replace a complete saved season list with a partial one.

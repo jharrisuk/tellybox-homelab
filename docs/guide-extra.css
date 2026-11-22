@@ -98,3 +98,10 @@ td { color: var(--muted); }
 	.ha-actions a { width: 100%; }
 	.ha-setup { padding: 16px 18px; }
 }
+
+/* Orphan control: redistribute words, never shrink type. */
+p, li, figcaption, .intro, .ha-lede, .ha-meta, .guide-note p,
+.service-row-description, .service-summary, .dispatcharr-intro, .dispatcharr-note {
+	text-wrap: pretty;
+}
+h2, h3, summary { text-wrap: balance; }

@@ -34,6 +34,17 @@ export function normalizeClient(value) {
 	return ALIASES.get(value.trim().toLowerCase()) || '';
 }
 
+/* The device platform the app already declares via X-Tellybox-Client, mapped to
+ * the allowance platforms. Presentation and allowance metadata only: it never
+ * authenticates, approves or chooses a role. Empty when the client reports
+ * nothing recognisable, so callers can fall back to an explicit choice. */
+export function platformOf(req) {
+	const declared = normalizeClient(req?.get?.('x-tellybox-client'));
+	if (declared === 'android-tv') return 'tv';
+	if (declared === 'android-phone') return 'phone';
+	return '';
+}
+
 export function legacyClient(userAgent) {
 	const agent = String(userAgent || '');
 	if (TV_AGENT.test(agent)) return 'android-tv';

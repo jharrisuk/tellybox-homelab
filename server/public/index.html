@@ -84,7 +84,7 @@
 			<a id="searchEverywhere" class="button secondary" hidden>Search everywhere · add missing titles</a>
 			<div class="grid" id="grid"></div>
 			<section id="recordingsView" aria-label="Recordings" hidden>
-				<div class="recordings-toolbar"><p>Saved by Dispatcharr. Choose a programme in the TV guide to record it.</p><button id="refreshRecordings" class="button secondary">↻ Refresh</button></div>
+				<div class="recordings-toolbar"><p>Saved by Dispatcharr. Choose a programme in the TV guide to record it.</p><button id="refreshRecordings" class="button secondary">↻ Refresh recordings</button></div>
 				<div id="recordingFilters" class="filters" aria-label="Recording status"><button class="chip active" data-recording-filter="all">All</button><button class="chip" data-recording-filter="completed">Ready to watch</button><button class="chip" data-recording-filter="scheduled">Scheduled</button><button class="chip" data-recording-filter="recording">Recording now</button></div>
 				<div id="recordingsList" class="recordings-list"></div>
 				<div id="olderRecordings" class="recordings-toolbar"></div>
@@ -105,7 +105,7 @@
 		<div class="video-stage"><video id="video" controls playsinline preload="metadata"></video>
 			<div id="liveControls" class="live-controls" hidden><span class="live-badge"><span aria-hidden="true">●</span> LIVE</span><button type="button" id="livePlay" class="live-button">Play live</button><button type="button" id="liveMute" class="live-button" aria-pressed="false">Mute</button><button type="button" id="liveFullscreen" class="live-button">Fullscreen</button></div>
 			<div id="playerLoading" class="brand-loading player-loading" role="status" aria-label="Loading video" hidden><img src="/tellybox-mark.svg" alt=""><span class="loading-dots" aria-hidden="true">•••</span></div></div>
-		<p id="playerStatus" role="status">Preparing your stream...</p>
+		<p id="playerStatus" role="status">Preparing your stream…</p>
 		<section id="playbackTrouble" class="playback-trouble" role="alert" hidden>
 			<p id="playbackTroubleMessage">Playback is struggling. This may be a slow connection or a temporary stream issue. Try again or choose a lower quality.</p>
 			<div class="playback-trouble-actions">

@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs';
 const DAY = 86400000;
 // Bound on how far back "Coming soon" looks. It is deliberately small so the
 // release calendar can show what has just arrived as well as what is next.
-export const RECENT_RELEASE_DAYS = 14;
-// The forward bound is unchanged: three months of announcements.
-export const UPCOMING_RELEASE_DAYS = 90;
+export const RECENT_RELEASE_DAYS = 7;
+// The forward bound matches the calendar: one week ahead.
+export const UPCOMING_RELEASE_DAYS = 7;
 
 export function score(source, value, max = 10, votes = 0, url = null) {
 	if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0 || value > max) return null;

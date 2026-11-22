@@ -12,8 +12,8 @@ const episode = (number, airDateUtc, seasonNumber = 3, extra = {}) => ({
 
 test('a TV coming-soon item exposes the season and episode the card represents', () => {
 	const [item] = upcomingSeries([
-		episode(2, '2026-10-10T20:00:00Z'),
-		episode(4, '2026-10-26T20:00:00Z')
+		episode(2, '2026-10-14T20:00:00Z'),
+		episode(4, '2026-10-22T20:00:00Z')
 	], now);
 	assert.equal(item.seasonNumber, 3);
 	assert.equal(item.episodeNumber, 4, 'the identity follows the chosen next episode, not the first in the history');
@@ -91,7 +91,7 @@ test('createInsights returns the resolved episode as the TV library link', async
 		config: () => ({ sonarr: { url: 'http://sonarr.test', key: 'secret' } }),
 		fetcher: async () => Response.json([
 			{ seriesId: 9, series: show, title: 'Episode 4', seasonNumber: 3, episodeNumber: 4,
-				monitored: true, hasFile: false, airDateUtc: '2026-10-26T20:00:00Z' }
+				monitored: true, hasFile: false, airDateUtc: '2026-10-22T20:00:00Z' }
 		]),
 		library: items => resolveComingMatches(items, {
 			availability,

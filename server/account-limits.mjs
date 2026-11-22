@@ -16,8 +16,11 @@ export function createAccountLimits(directory,{clock=Date.now,resolveViewer=view
 		return high;
 	}
 	function entry(id){
-		const e=store.get().accounts[id]||={minutes:0,seconds:0,downloads:false,dailyMinutes:0,dailySeconds:0,day:day(clock()),maxSessions:0};
+		const e=store.get().accounts[id]||={minutes:0,seconds:0,downloads:false,dailyMinutes:0,dailySeconds:0,day:day(clock()),maxSessions:0,maxPhones:1,maxTvs:1};
 		e.dailyMinutes??=0;e.dailySeconds??=0;e.maxSessions??=0;
+		// Q70: linked-device allowances per platform. Default one phone and one TV
+		// per account; 0 means unlimited, matching the remote-screens convention.
+		e.maxPhones??=1;e.maxTvs??=1;
 		if(e.day!==day(clock())){e.day=day(clock());e.dailySeconds=0;}
 		return e;
 	}
@@ -28,7 +31,9 @@ export function createAccountLimits(directory,{clock=Date.now,resolveViewer=view
 		if(!Number.isInteger(body.minutes)||body.minutes<0||body.minutes>525600||typeof body.downloads!=='boolean')throw fail('Enter a whole number of minutes, or 0 for unlimited.',400);
 		if(body.dailyMinutes!==undefined&&(!Number.isInteger(body.dailyMinutes)||body.dailyMinutes<0||body.dailyMinutes>1440))throw fail('Daily minutes must be between 0 and 1440. Use 0 for unlimited.',400);
 		if(body.maxSessions!==undefined&&(!Number.isInteger(body.maxSessions)||body.maxSessions<0||body.maxSessions>3))throw fail('Remote screens must be 0, 1, 2 or 3. Use 0 for unlimited.',400);
-		tick();const e=entry(id);Object.assign(e,{minutes:body.minutes,downloads:body.downloads,dailyMinutes:body.dailyMinutes??e.dailyMinutes,maxSessions:body.maxSessions??e.maxSessions});
+		if(body.maxPhones!==undefined&&(!Number.isInteger(body.maxPhones)||body.maxPhones<0||body.maxPhones>8))throw fail('Phone allowance must be a whole number from 0 to 8. Use 0 for unlimited.',400);
+		if(body.maxTvs!==undefined&&(!Number.isInteger(body.maxTvs)||body.maxTvs<0||body.maxTvs>8))throw fail('TV allowance must be a whole number from 0 to 8. Use 0 for unlimited.',400);
+		tick();const e=entry(id);Object.assign(e,{minutes:body.minutes,downloads:body.downloads,dailyMinutes:body.dailyMinutes??e.dailyMinutes,maxSessions:body.maxSessions??e.maxSessions,maxPhones:body.maxPhones??e.maxPhones,maxTvs:body.maxTvs??e.maxTvs});
 		if(body.reset===true){e.seconds=0;e.resetAt=clock();}
 		if(body.resetDaily===true){e.dailySeconds=0;e.dailyResetAt=clock();}
 		store.save();return status(id);

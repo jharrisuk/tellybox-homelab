@@ -15,9 +15,9 @@ test('coming films distinguish home and cinema release dates and exclude unavail
 		movie(6, { monitored: false, inCinemas: '2026-11-01' }),
 		movie(7, { inCinemas: '2027-12-01' })
 	], now);
-	assert.deepEqual(result.map(i => i.id), [2, 1, 3]);
+	assert.deepEqual(result.map(i => i.id), [1, 2, 3]);
 	assert.equal(result[0].dateLabel, 'Cinema release');
-	assert.equal(result[1].dateLabel, 'Digital release');
+	assert.equal(result[1].dateLabel, 'Cinema release');
 	assert.equal(result[2].date, null);
 	assert.ok(!JSON.stringify(result).includes('monitored'));
 });
@@ -36,7 +36,7 @@ test('films include a bounded recent window and mark already released titles', (
 	const result = upcomingMovies([
 		movie(11, { digitalRelease: '2026-10-15' }),
 		movie(12, { status: 'released', digitalRelease: '2026-09-18' }),
-		movie(13, { digitalRelease: '2026-11-01' })
+		movie(13, { digitalRelease: '2026-10-22' })
 	], now);
 	assert.deepEqual(result.map(i => i.id), [11, 13]);
 	assert.equal(result[0].released, true);
@@ -66,9 +66,9 @@ test('series include episodes aired in the recent window and flag them as releas
 	const result = upcomingSeries([
 		episode(1, 61, 'Aired recently', '2026-10-13T20:00:00Z', { hasFile: true }),
 		episode(2, 62, 'Aired a month ago', '2026-09-18T20:00:00Z'),
-		episode(3, 63, 'Airs later', '2026-11-01T20:00:00Z'),
+		episode(3, 63, 'Airs later', '2026-10-23T20:00:00Z'),
 		episode(4, 64, 'Aired before the return', '2026-10-14T20:00:00Z'),
-		episode(4, 64, 'Returns', '2026-10-25T20:00:00Z', { episodeNumber: 7 })
+		episode(4, 64, 'Returns', '2026-10-23T20:00:00Z', { episodeNumber: 7 })
 	], now, new Map([['tv:61', 'library-series-61']]));
 	assert.deepEqual(result.map(i => i.id), [61, 64, 63]);
 	const byId = new Map(result.map(i => [i.id, i]));
@@ -87,14 +87,14 @@ test('series include episodes aired in the recent window and flag them as releas
 test('a running series keeps its next episode when the recent window is full', () => {
 	const series = { title: 'Daily show', monitored: true, tmdbId: 71 };
 	const episodes = [];
-	for (let date = 5; date <= 10; date++) {
+	for (let date = 12; date <= 17; date++) {
 		episodes.push({ seriesId: 9, series, title: `Old ${date}`, seasonNumber: 1, episodeNumber: date, monitored: true, hasFile: true, airDateUtc: `2026-10-${String(date).padStart(2, '0')}T20:00:00Z` });
 	}
-	episodes.push({ seriesId: 9, series, title: 'The next one', seasonNumber: 1, episodeNumber: 11, monitored: true, hasFile: false, airDateUtc: '2026-10-30T20:00:00Z' });
+	episodes.push({ seriesId: 9, series, title: 'The next one', seasonNumber: 1, episodeNumber: 11, monitored: true, hasFile: false, airDateUtc: '2026-10-23T20:00:00Z' });
 	const [item] = upcomingSeries(episodes, now);
 	assert.equal(item.released, false);
 	assert.equal(item.dateLabel, 'Next episode airs');
-	assert.deepEqual(item.episodes.map(e => e.title), ['Old 9', 'Old 10', 'The next one'], 'the next episode is never crowded out');
+	assert.deepEqual(item.episodes.map(e => e.title), ['Old 16', 'Old 17', 'The next one'], 'the next episode is never crowded out');
 });
 
 test('createInsights merges library matches from the injected catalogue lookup', async () => {

@@ -205,7 +205,7 @@ async function load(more = false, silent = false) {
 		state.page = data.page; state.pages = data.pages;
 		if (!more) $('#discoverGrid').replaceChildren();
 		$('#discoverGrid').append(...data.items.map(card));
-		$('#discoverStatus').textContent = data.items.length ? state.mode === 'requests' ? 'Everything we’ve added to the list. Look for “Ready to watch” when it arrives.' : '' : data.page < data.pages ? 'No matches on these pages. Choose Show more to keep looking.' : more ? 'No more titles to show.' : state.mode === 'requests' ? 'Nothing on the list yet. Discover something you’d like to watch.' : `No matching ${state.mode === 'tv' ? 'Series' : 'films'}. Try a different search.`;
+		$('#discoverStatus').textContent = data.items.length ? state.mode === 'requests' ? 'Everything we’ve added to the list. Look for “Ready to watch” when it arrives.' : '' : data.page < data.pages ? 'No matches on these pages. Choose Show more to keep looking.' : more ? 'No more titles to show.' : state.mode === 'requests' ? 'Nothing on the list yet. Discover something you’d like to watch.' : `No matching ${state.mode === 'tv' ? 'series' : 'films'}. Try a different search.`;
 		$('#discoverMore').hidden = data.page >= data.pages;
 	} catch (error) {
 		if (generation === state.generation) retryable(error.message, () => load(more));
@@ -305,7 +305,7 @@ function renderDetails(item) {
 	const canRequest = item.watchId ? item.type === 'tv' && item.seasons.some(s => s.requestable) : item.type === 'tv' ? item.seasons.some(s => s.requestable) : item.requestable;
 	if (canRequest) actions.append(request);
 	const refresh = node('button', 'Refresh status', 'button quiet'); refresh.onclick = () => showDetails(item.type, item.id); actions.append(refresh);
-	const message = node('p', item.watchId ? (item.type === 'tv' ? 'Local episodes play first. Add any missing seasons above.' : 'Playing from your local library.') : canRequest ? 'Downloads to your media server when a suitable release is found.' : 'Already on our list. It will appear in the collection once it is ready.', 'request-feedback'); message.setAttribute('role', 'status');
+	const message = node('p', item.watchId ? (item.type === 'tv' ? 'Local episodes play first. Add any missing seasons above.' : 'Playing from your local library.') : canRequest ? 'We’ll download a copy to your media server when a suitable release is found.' : 'It’s on the list. When a copy arrives, it’ll be waiting in your collection.', 'request-feedback'); message.setAttribute('role', 'status');
 	body.append(actions, message);
 	function updateButton() { request.disabled = item.type === 'tv' && !inputs.some(i => i.checked && !i.disabled); }
 	updateButton();

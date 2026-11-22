@@ -3,9 +3,13 @@ import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
 import { randomBytes, createHash } from 'node:crypto';
 import path from 'node:path';
 import { installFavourites } from './favourites.mjs';
+import { platformOf } from './client-identity.mjs';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
 const day = 86400000;
+// The platform the app reports for itself, used for per-platform device
+// allowances. Legacy user-agents are the fallback; unknown stays unset.
+const declaredPlatform = (req, viewer) => platformOf(req) || (viewer?.client === 'android-tv' ? 'tv' : viewer?.client === 'android-phone' ? 'phone' : '');
 
 export function installAppAccess(app, { directory, local, home = () => false, identity, origin, publicOrigin, disconnect, audit, publicDirectory, people, browserPerson = () => null }) {
 	const file = path.join(directory, 'apps.json');
@@ -41,7 +45,7 @@ export function installAppAccess(app, { directory, local, home = () => false, id
 	}
 	function view(record) {
 		const { id, name, code, status, role, created, expires, approved, ip, lastSeen } = record;
-		return { id, name, code, status: expires <= Date.now() ? 'expired' : status, role, created, expires, approved, ip, lastSeen, identified: Boolean(record.deviceKey), ...(people?.device(record.id) || {}) };
+		return { id, name, code, status: expires <= Date.now() ? 'expired' : status, role, created, expires, approved, ip, lastSeen, identified: Boolean(record.deviceKey), ...(record.platform ? { platform: record.platform } : {}), ...(people?.device(record.id) || {}) };
 	}
 	function admin(req, res, next) {
 		if (req.get('authorization') || req.get('x-jserver-app')) {
@@ -73,10 +77,12 @@ export function installAppAccess(app, { directory, local, home = () => false, id
 		if (req.get('x-tellybox-device-id') && !stableKey) return res.status(400).json({ error: 'Invalid device identifier.' });
 		const now = Date.now();
 		const viewer = identity(req);
+		const platform = declaredPlatform(req, viewer);
 		const entries = read(), currentKey = key(req), current = currentKey && entries[currentKey];
 		if (current && current.expires > now && ['approved', 'pending'].includes(current.status)) {
 			if (stableKey && current.deviceKey && stableKey !== current.deviceKey) return res.status(409).json({ error: 'This credential belongs to another device.' });
 			if (stableKey && !Object.values(entries).some(record => record !== current && record.deviceKey === stableKey)) current.deviceKey = stableKey;
+			if (platform) current.platform = platform;
 			approveAtHome(current, req); touch(current, req); save(entries);
 			return res.json({ token: req.get('authorization').slice(7), ...view(current) });
 		}
@@ -94,6 +100,7 @@ export function installAppAccess(app, { directory, local, home = () => false, id
 			// An identifier is not authentication: home recovery always becomes a viewer.
 			const token = randomBytes(32).toString('hex');
 			record.status = 'approved'; record.role = 'viewer'; record.approved = now; record.expires = now + 365 * day;
+			if (platform) record.platform = platform;
 			touch(record, req); delete entries[oldKey]; entries[hash(token)] = record; save(entries);
 			disconnect(`app:${oldKey}`);
 			audit?.record('app_reconnected', viewer, { deviceId: record.id, deviceName: record.name, role: 'viewer' });
@@ -105,6 +112,7 @@ export function installAppAccess(app, { directory, local, home = () => false, id
 		const token = randomBytes(32).toString('hex');
 		const record = { id: randomBytes(16).toString('hex'), name: name.trim(), code: randomBytes(4).toString('hex').toUpperCase(), status: 'pending', role: 'viewer', created: now, expires: now + day, ip: viewer.ip };
 		if (stableKey) record.deviceKey = stableKey;
+		if (platform) record.platform = platform;
 		touch(record, req);
 		approveAtHome(record, req);
 		entries[hash(token)] = record; save(entries);
@@ -134,8 +142,9 @@ export function installAppAccess(app, { directory, local, home = () => false, id
 		res.json({ notifications, cursor: until });
 	});
 	app.post('/api/apps/:id', writeCheck, admin, (req, res) => {
-		const { action, role, name } = req.body || {};
-		if (!['approve', 'role', 'revoke', 'rename'].includes(action) || (['approve', 'role'].includes(action) && !['viewer', 'admin'].includes(role)) || (action === 'rename' && (typeof name !== 'string' || name.trim().length < 2 || name.length > 80 || /[\x00-\x1f]/.test(name)))) return res.status(400).json({ error: 'Choose approve, role or revoke, and a valid role.' });
+		const { action, role, name, platform } = req.body || {};
+		if (!['approve', 'role', 'revoke', 'rename', 'platform'].includes(action) || (['approve', 'role'].includes(action) && !['viewer', 'admin'].includes(role)) || (action === 'rename' && (typeof name !== 'string' || name.trim().length < 2 || name.length > 80 || /[\x00-\x1f]/.test(name)))) return res.status(400).json({ error: 'Choose approve, role or revoke, and a valid role.' });
+		if (action === 'platform' && !['phone', 'tv'].includes(platform)) return res.status(400).json({ error: 'Choose phone or tv.' });
 		const entries = read();
 		const tokenKey = Object.keys(entries).find(value => entries[value].id === req.params.id);
 		if (!tokenKey) return res.sendStatus(404);
@@ -144,16 +153,52 @@ export function installAppAccess(app, { directory, local, home = () => false, id
 		if (action === 'role' && !valid(record)) return res.status(409).json({ error: 'Only an approved app can change role.' });
 		if (action === 'revoke') { record.status = 'revoked'; record.expires = Date.now() + 30 * day; }
 		else if (action === 'rename') record.name = name.trim();
+		else if (action === 'platform') record.platform = platform;
 		else { record.role = role; if (action === 'approve') { record.status = 'approved'; record.approved = Date.now(); record.expires = Date.now() + 365 * day; } }
 		save(entries);
 		if (action === 'revoke') disconnect(`app:${tokenKey}`);
-		audit?.record(`app_${action}`, identity(req), { deviceId: record.id, deviceName: record.name, role: record.role });
+		audit?.record(`app_${action}`, identity(req), { deviceId: record.id, deviceName: record.name, role: record.role, ...(action === 'platform' ? { platform } : {}) });
 		res.json(view(record));
 	});
+	// Q70 link-code support. byDeviceKey finds the installation a link code is
+	// bound to; forPerson lists the devices counted against an account's
+	// platform allowances; linkApprove performs the claim-time approval and
+	// credential rotation, mirroring the home-reconnect rules (identifier is not
+	// authentication, revoked tombstones fail closed, the old owner is cut off).
+	function byDeviceKey(deviceKey) {
+		if (!/^[a-f0-9]{64}$/.test(deviceKey || '')) return null;
+		const entries = read();
+		const tokenKey = Object.keys(entries).find(value => entries[value].deviceKey === deviceKey);
+		return tokenKey ? { key: tokenKey, record: entries[tokenKey], device: view(entries[tokenKey]) } : null;
+	}
+	function forPerson(personId) {
+		if (!/^[a-f0-9]{32}$/.test(personId || '')) return [];
+		const now = Date.now();
+		return Object.values(read()).filter(record => ['approved', 'pending'].includes(record.status) && record.expires > now && people?.device(record.id).personId === personId).map(view);
+	}
+	function linkApprove({ deviceKey, name, platform, ip }) {
+		const now = Date.now();
+		const entries = read();
+		const oldKey = Object.keys(entries).find(value => entries[value].deviceKey === deviceKey);
+		let record = oldKey ? entries[oldKey] : null;
+		if (record && (record.status === 'revoked' || record.expires <= now)) throw Object.assign(Error('This device access was revoked or expired. Ask an administrator to review it.'), { status: 403 });
+		if (!record) {
+			if (Object.keys(entries).length >= 256) throw Object.assign(Error('The app list is full. Ask an admin to remove old devices.'), { status: 429 });
+			record = { id: randomBytes(16).toString('hex'), name, code: randomBytes(4).toString('hex').toUpperCase(), status: 'pending', role: 'viewer', created: now, expires: now + day, ip, deviceKey };
+		}
+		record.name = name; record.platform = platform;
+		record.status = 'approved'; record.approved = now; record.expires = now + 365 * day;
+		record.lastSeen = now; if (ip) record.ip = ip;
+		const token = randomBytes(32).toString('hex');
+		if (oldKey) { delete entries[oldKey]; disconnect(`app:${oldKey}`); }
+		entries[hash(token)] = record; save(entries);
+		return { token, device: view(record) };
+	}
 	return {
 		requireAdmin: admin, writeCheck, devices: () => Object.values(read()).filter(valid).map(view),
 		present: req => Boolean(req.get('authorization') || req.get('x-jserver-app')),
 		resolve(req) { const record = entry(req); return valid(record) ? { ...view(record), owner: `app:${key(req)}` } : null; },
-		validOwner: owner => owner.startsWith('app:') && valid(read()[owner.slice(4)])
+		validOwner: owner => owner.startsWith('app:') && valid(read()[owner.slice(4)]),
+		byDeviceKey, forPerson, linkApprove
 	};
 }

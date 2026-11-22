@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta name="theme-color" content="#101310">
+	<title>Delete media - Tellybox</title>
+	<link rel="icon" href="/icon.svg" type="image/svg+xml">
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body class="settings-page">
+	<main class="settings-shell">
+		<p class="eyebrow">LOCAL ADMINISTRATOR</p>
+		<h1>Delete media</h1>
+		<p class="settings-intro">Permanently remove a film, episode, season or series from Jellyfin and from the disk. This cannot be undone. Available only on the local network.</p>
+		<p class="settings-back"><a href="/settings">&larr; Back to settings</a></p>
+
+		<section class="settings-box" aria-labelledby="purgeSearchHeading">
+			<div class="settings-heading"><div><h2 id="purgeSearchHeading">Find a title</h2><p>Search the local library. Streamed titles cannot be deleted here.</p></div></div>
+			<label class="auth-field" for="purgeSearch">Title
+				<input id="purgeSearch" name="q" type="search" autocomplete="off" spellcheck="false" placeholder="For example, a film or series name">
+			</label>
+			<div id="purgeResults" class="access-list" aria-live="polite"></div>
+			<p id="purgeMessage" class="auth-note" role="status"></p>
+		</section>
+
+		<section class="settings-box" id="purgePreview" aria-labelledby="purgePreviewHeading" hidden>
+			<div class="settings-heading"><div><h2 id="purgePreviewHeading">Confirm deletion</h2><p id="purgeSummary"></p></div></div>
+			<label class="auth-field" for="purgeConfirm">Type the title to confirm
+				<input id="purgeConfirm" type="text" autocomplete="off" spellcheck="false">
+			</label>
+			<div class="preference-actions">
+				<button class="button primary" id="purgeDelete" type="button" disabled>Delete permanently</button>
+				<button class="button quiet" id="purgeCancel" type="button">Cancel</button>
+			</div>
+			<p class="auth-note">The file is removed from disk. There is no recycle bin.</p>
+		</section>
+	</main>
+	<script src="/purge.js" defer></script>
+</body>
+</html>

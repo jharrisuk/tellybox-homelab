@@ -100,19 +100,64 @@ function addPersonLink(parent, device, directory, onSaved) {
 	section.append(save, message); parent.append(section);
 	if (current) section.append(peopleElement('p', 'Viewing limits are managed from the linked account.', 'auth-note'));
 }
+function devicePlatformLabel(device) { return device.platform === 'tv' ? 'TV' : device.platform === 'phone' ? 'Phone' : ''; }
+function platformCounts(person) {
+	const counts = { phone: 0, tv: 0 };
+	for (const device of accountDevices(person)) if (device.platform === 'phone' || device.platform === 'tv') counts[device.platform]++;
+	return counts;
+}
+// Q70: claim a link code shown on a device, binding it to this account. The
+// server enforces the platform allowance and returns the exact over-limit copy.
+function addLinkCodeControl(parent, person, onLinked) {
+	const section = peopleElement('section', null, 'account-link');
+	section.append(peopleElement('h3', 'Link device'));
+	section.append(peopleElement('p', 'On the phone or TV, open Tellybox and choose to link it to an account. Enter the code it shows here. Codes expire after 10 minutes and work once.', 'auth-note'));
+	const form = peopleElement('form');
+	const label = peopleElement('label', 'Device code', 'auth-field');
+	const input = document.createElement('input');
+	input.maxLength = 8; input.required = true; input.autocomplete = 'off'; input.setAttribute('aria-label', 'Device code');
+	input.style.textTransform = 'uppercase';
+	label.append(input); form.append(label);
+	const message = peopleElement('p'); message.setAttribute('role', 'status');
+	const submit = peopleButton('Link device', async () => {
+		if (!form.reportValidity()) return;
+		submit.disabled = true; message.textContent = 'Linking...';
+		try {
+			const result = await authRequest('/api/people/link-code', { code: input.value.trim(), personId: person.id });
+			message.textContent = 'Linked ' + (result.device?.name || 'device') + '.';
+			input.value = '';
+			await onLinked();
+		} catch (error) { message.textContent = error.message; }
+		finally { submit.disabled = false; }
+	}, true);
+	form.append(submit); form.onsubmit = event => { event.preventDefault(); submit.onclick(); };
+	section.append(form, message); parent.append(section);
+	return { message };
+}
 function managePerson(person) {
 	const dialog = peopleDialog('Manage account');
 	dialog.append(peopleElement('p', person.email, 'account-email'), peopleElement('span', peopleStatus(person), 'access-badge ' + person.status));
 	const devices = accountDevices(person), browsers = peopleDirectory.localBrowsers.filter(b => b.personId === person.id);
 	const linked = peopleElement('section', null, 'account-link'); linked.append(peopleElement('h3', 'Linked devices & browsers'));
+	const initialCounts = platformCounts(person);
+	const countsLine = peopleElement('p', `Phones ${initialCounts.phone} · TVs ${initialCounts.tv}`, 'auth-note account-allowances');
+	const showCounts = limits => {
+		const counts = platformCounts(person);
+		countsLine.textContent = allowanceLine({ phone: { used: counts.phone, limit: limits.maxPhones ?? 1 }, tv: { used: counts.tv, limit: limits.maxTvs ?? 1 } });
+	};
+	linked.append(countsLine);
 	if (!devices.length && !browsers.length) linked.append(peopleElement('p', 'No devices or home browsers linked.', 'auth-note'));
 	else {
 		const list = peopleElement('ul', null, 'account-linked-list');
-		for (const entry of [...devices, ...browsers]) list.append(peopleElement('li', entry.name));
+		for (const entry of [...devices, ...browsers]) {
+			const platform = devicePlatformLabel(entry);
+			list.append(peopleElement('li', entry.name + (platform ? ' · ' + platform : '')));
+		}
 		linked.append(list);
 	}
 	linked.append(peopleButton('Link another device', () => { dialog.close(); showAccessPanel('devices'); })); dialog.append(linked);
-	addAccountLimits(dialog, 'person:' + person.id);
+	const limitsControl = addAccountLimits(dialog, 'person:' + person.id, showCounts);
+	addLinkCodeControl(dialog, person, async () => { await loadPeople(); limitsControl.refresh(); });
 	const controls = peopleElement('section', null, 'account-link'); controls.append(peopleElement('h3', 'Access'));
 	controls.append(peopleElement('p', 'Controls email sign-in. Linked apps keep their separate device approval.', 'auth-note'));
 	const actions = peopleElement('div', null, 'people-actions'); controls.append(actions);
@@ -243,7 +288,8 @@ async function loadPeople(directory) {
 				const list = peopleElement('div', null, 'account-devices');
 				for (const device of linked) {
 					const item = peopleElement('div', null, 'account-device'); item.dataset.linkedDevice = device.id;
-					item.append(peopleElement('span', device.name, 'account-device-name'), peopleElement('span', device.status === 'pending' ? 'Awaiting approval' : device.role === 'admin' ? 'Admin' : 'Viewer', 'access-badge ' + device.status), linkedDeviceButton(device)); list.append(item);
+					const platform = devicePlatformLabel(device);
+					item.append(peopleElement('span', device.name + (platform ? ' · ' + platform : ''), 'account-device-name'), peopleElement('span', device.status === 'pending' ? 'Awaiting approval' : device.role === 'admin' ? 'Admin' : 'Viewer', 'access-badge ' + device.status), linkedDeviceButton(device)); list.append(item);
 				}
 				row.append(list);
 			}

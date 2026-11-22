@@ -1,6 +1,7 @@
 import sax from 'sax';
 import {readFile,writeFile,rename} from 'node:fs/promises';
 import {broadcastEpisode} from './broadcast-resume.mjs';
+import {createGuideArchive} from './guide-archive.mjs';
 
 export const channelGroupName=value=>String(value||'Other').replace(/^UK\b\s*[|:\-]?\s*/i,'').trim()||'Other';
 
@@ -97,9 +98,14 @@ export async function parseEpg(body, channels, now = Date.now(), historyDays = 0
 	return { channels:result, until, invalid, conflicts, sharedSchedules:sharedSchedules.map(group=>group.map(c=>c.Name)), current:result.filter(c => c.programmes.some(p => Date.parse(p.StartDate) <= now && Date.parse(p.EndDate) > now)).length };
 }
 
-export function createDispatcharrGuide(dispatcharr, fetcher = fetch, clock = Date.now, file = '') {
+export function createDispatcharrGuide(dispatcharr, fetcher = fetch, clock = Date.now, file = '', { archiveFile = '', archiveDays = 8 } = {}) {
 	let cached, pending, lastAttempt = 0;
-	const restored=file?readFile(file,'utf8').then(text=>{const value=JSON.parse(text);if(Array.isArray(value.channels)&&clock()-value.fetchedAt<24*3600000)cached=value;}).catch(()=>{}):Promise.resolve();
+	// Catch-up history does not depend on Dispatcharr keeping it: past programmes
+	// seen in any refresh are folded into this rolling archive.
+	const archive = archiveFile ? createGuideArchive({ file: archiveFile, clock, retentionDays: archiveDays }) : null;
+	const restored=file?readFile(file,'utf8').then(text=>{const value=JSON.parse(text);if(Array.isArray(value.channels)&&clock()-value.fetchedAt<24*3600000)cached=value;})
+		.then(()=>{if(archive&&cached)void archive.ready.then(()=>{archive.merge(cached.channels);void archive.flush();}).catch(()=>{});})
+		.catch(()=>{}):Promise.resolve();
 	async function refresh(force = false) {
 		await restored;
 		if (pending) return pending;
@@ -112,6 +118,7 @@ export function createDispatcharrGuide(dispatcharr, fetcher = fetch, clock = Dat
 				if (!response.ok) throw Error('Guide unavailable');
 				const data = await parseEpg(response.body, channels, clock(), 7);
 				cached = { ...data, historyDays:7, fetchedAt:clock(), available:true, stale:false, provider:'Dispatcharr' };
+				if (archive) { try { await archive.ready; archive.merge(data.channels); void archive.flush(); } catch {} }
 				if(file)try{await writeFile(file+'.tmp',JSON.stringify(cached),{mode:0o600});await rename(file+'.tmp',file);}catch{}
 			} catch {
 				const previous = new Map((cached?.channels || []).map(c => [c.Id, c]));
@@ -128,6 +135,14 @@ export function createDispatcharrGuide(dispatcharr, fetcher = fetch, clock = Dat
 		if(clock()-cached.fetchedAt>120000)void refresh().catch(()=>{});
 		return {...cached,refreshing:Boolean(pending),channels:cached.channels.map(c=>({...c,Group:channelGroupName(c.Group),programmes:c.programmes.filter(p=>Date.parse(p.EndDate)>clock())}))};
 	};
-	get.archive=async()=>{await restored;if(!cached||cached.historyDays!==7||clock()-cached.fetchedAt>120000)await refresh(true);return cached;};
+	get.archive=async()=>{
+		await restored;
+		if(!cached||cached.historyDays!==7||clock()-cached.fetchedAt>120000)await refresh(true);
+		if(!archive)return cached;
+		try{
+			await archive.ready;
+			return {...cached,channels:archive.snapshot(cached.channels)};
+		}catch{return cached;}
+	};
 	return get;
 }

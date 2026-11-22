@@ -6,7 +6,8 @@ window.jserverCalendar = {
 			const offset = index - past;
 			const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
 			const dayKey = key(date);
-			return { key: dayKey, date, past: offset < 0, today: dayKey === todayKey, items: [] };
+			// Monday first, so every column is the same weekday on every row.
+			return { key: dayKey, date, weekday: (date.getDay() + 6) % 7, past: offset < 0, today: dayKey === todayKey, items: [] };
 		});
 		for (const item of [...schedule.tv, ...schedule.movies]) {
 			// Only the episode the card actually represents may keep the library
@@ -31,5 +32,21 @@ window.jserverCalendar = {
 		}
 		for (const day of days) day.items.sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
 		return days;
+	},
+
+	// Rows of seven, Monday..Sunday, with null for a cell the window does not
+	// cover. Padding is what keeps a Monday above a Monday.
+	weeks(days) {
+		const rows = [];
+		let row = [];
+		for (const day of days) {
+			if (row.length === 7) { rows.push(row); row = []; }
+			while (row.length < day.weekday) row.push(null);
+			if (row.length === 7) { rows.push(row); row = []; }
+			row.push(day);
+		}
+		while (row.length && row.length < 7) row.push(null);
+		if (row.length) rows.push(row);
+		return rows;
 	}
 };

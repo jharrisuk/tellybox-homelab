@@ -162,3 +162,45 @@ test('the Home episode route never translates a stale series id', async () => {
 	assert.equal(canonical[0].SeriesId, `dispatch-series-${CANONICAL}`);
 	assert.deepEqual(calls, [`dispatch-series-${RELATION}`, `dispatch-series-${CANONICAL}`]);
 });
+
+test('streamed episodes inherit the parent series poster instead of the provider art route', async t => {
+	const directory = await mkdtemp(path.join(os.tmpdir(), 'episode-art-'));
+	const server = createServer((request, response) => {
+		const url = new URL(request.url, 'http://127.0.0.1');
+		const send = (status, body) => {
+			response.writeHead(status, {'Content-Type': 'application/json'});
+			response.end(JSON.stringify(body));
+		};
+		if (url.pathname === '/api/vod/movies/') return send(200, {results: [], next: null});
+		if (url.pathname === '/api/vod/series/') return send(200, {results: [canonicalSeriesRow()], next: null});
+		if (url.pathname === `/api/vod/series/${CANONICAL}/`) return send(200, canonicalSeriesRow());
+		if (url.pathname === `/api/vod/series/${CANONICAL}/provider-info/`) return send(200, {});
+		if (url.pathname === `/api/vod/series/${CANONICAL}/episodes/`) {
+			return send(200, [{id: 27414, name: 'Episode one', series: {id: CANONICAL, name: 'The Horne Section TV Show'}, season_number: 1, episode_number: 1}]);
+		}
+		return send(404, {detail: 'Not found.'});
+	});
+	await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+	t.after(async () => {
+		await new Promise(resolve => server.close(resolve));
+		await rm(directory, {recursive: true, force: true});
+	});
+	const dispatcharr = createDispatcharr({file: path.join(directory, 'dispatcharr.json'), origin: `http://127.0.0.1:${server.address().port}`});
+	await writeFile(path.join(directory, 'dispatcharr.json'), JSON.stringify({key: 'episode-art-key'}));
+	const library = createVodLibrary({
+		dispatcharr,
+		file: path.join(directory, 'vod.json'),
+		clock: () => NOW,
+		localItems: async () => [],
+		localItem: async () => null,
+		localEpisodes: async () => [],
+		// The real metadata service resolves the series' own poster. The provider
+		// row alone often has no logo or TMDB id, so its generic art route 404s.
+		metadata: {cached: rows => rows, enrich: async items => items.map(item => item.Type === 'Series' ? {...item, Artwork: '/api/web/tmdb-art/tv/158001/poster'} : item)}
+	});
+	await library.refresh();
+	const series = await library.item(`dispatch-series-${CANONICAL}`);
+	assert.equal(series.Artwork, '/api/web/tmdb-art/tv/158001/poster');
+	const episodes = await library.episodes(`dispatch-series-${CANONICAL}`);
+	assert.equal(episodes.items[0].Artwork, series.Artwork, 'the episode row uses the series poster that works, not /api/web/art/series/<provider id>');
+});

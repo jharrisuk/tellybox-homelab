@@ -6,7 +6,8 @@ import path from 'node:path';
 import { createPeople } from './people.mjs';
 import { createLoginProtection } from './login-protection.mjs';
 import { installAppAccess } from './app-access.mjs';
-import { appMarkers, clientOf } from './client-identity.mjs';
+import { createDeviceLink } from './device-link.mjs';
+import { appMarkers, clientOf, platformOf } from './client-identity.mjs';
 
 const deriveKey = promisify(scrypt);
 const cookieName = 'jserver_session';
@@ -167,10 +168,11 @@ export function installAuth(app, options) {
 		if (!local(req) || req.get('authorization') || req.get('x-jserver-app')) return res.status(403).json({ error: 'Open the local Tellybox address for this page.' });
 		next();
 	}
-	// The read-only Activity view (streams and downloads summaries) is for the
-	// installation owner and approved admin apps. Being on the home network is
-	// not an administrator role: a household viewer at home must not see who is
-	// watching what, or the torrent queue.
+	// The read-only Activity view is for the installation owner, approved admin
+	// apps, and the household at home. The local entry already shows it to any
+	// home browser without a sign-in, so recognising the same household through
+	// the trusted public entry must not give a different answer. Remote viewers
+	// still need an administrator.
 	function ownerSession(req) {
 		const value = token(req);
 		if (!/^[a-f0-9]{64}$/.test(value)) return false;
@@ -206,6 +208,7 @@ export function installAuth(app, options) {
 	const people = createPeople(directory, { audit, revoke: disconnect, ...(publicOrigin ? { loginUrl: publicOrigin + '/login' } : {}), ...(options.emailDelivery ? { deliver: options.emailDelivery } : {}) });
 	const loginProtection = createLoginProtection(directory);
 	const apps = installAppAccess(app, { directory, people, browserPerson: browserIdentity, publicDirectory, local, home, identity, origin, publicOrigin, disconnect, audit });
+	const deviceLink = createDeviceLink(directory, { apps, people, accountLimits: options.accountLimits, audit, clock: options.linkClock });
 	// The public player may contact the LAN for playback only, never for administration.
 	app.use((req, res, next) => {
 		const from = req.get('origin');
@@ -334,9 +337,72 @@ export function installAuth(app, options) {
 		app.get('/api/account-limits/:id',apps.requireAdmin,(req,res)=>{if(!known(req.params.id))return res.sendStatus(404);res.json(options.accountLimits.status(req.params.id));});
 		app.post('/api/account-limits/:id',apps.writeCheck,apps.requireAdmin,(req,res)=>{if(!known(req.params.id))return res.sendStatus(404);res.json(options.accountLimits.set(req.params.id,req.body||{}));});
 	}
+	// Q70 device link codes. The device asks unauthenticated (same transport rules
+	// as enrolment: local or the secure public address); the claim needs an
+	// approved account session, or an administrator choosing the account. Nothing
+	// here approves a device until an account holder claims the code, so the
+	// normal playback gate keeps refusing unclaimed devices.
+	app.post('/api/link/start', (req, res) => {
+		if (!req.is('application/json')) return res.sendStatus(415);
+		if (!local(req) && !origin(req).startsWith('https://')) return res.status(403).json({ error: 'Use the secure jServer address.' });
+		if (req.get('origin') && req.get('origin') !== origin(req) && req.get('origin') !== publicOrigin) return res.sendStatus(403);
+		const caller = identity(req);
+		try {
+			res.json(deviceLink.start({ deviceId: req.body?.deviceId, platform: platformOf(req) || req.body?.platform, name: req.body?.name }, caller));
+		} catch (error) { res.status(error.status || 500).json({ error: error.status ? error.message : 'The link code could not be created.' }); }
+	});
+	app.get('/api/link/status', (req, res) => {
+		// Same transport rule as start: the pickup response can carry the device
+		// credential, so never serve it over plain HTTP.
+		if (!local(req) && !origin(req).startsWith('https://')) return res.status(403).json({ error: 'Use the secure jServer address.' });
+		try { res.json(deviceLink.status(String(req.query.deviceId || ''), identity(req).ip)); }
+		catch (error) { res.status(error.status || 500).json({ error: error.status ? error.message : 'The link status could not be read.' }); }
+	});
+	app.post('/api/people/link-code', apps.writeCheck, (req, res) => {
+		const session = people.session(token(req));
+		let personId = session?.personId || '';
+		if (!personId) {
+			if (!ownerAdmin(req)) return res.status(403).json({ error: 'Sign in with your email account to link a device.' });
+			personId = String(req.body?.personId || '');
+			if (!/^[a-f0-9]{32}$/.test(personId)) return res.status(400).json({ error: 'Choose an account to link this device to.' });
+		}
+		try { res.json(deviceLink.claim({ code: req.body?.code, personId }, identity(req))); }
+		catch (error) { res.status(error.status || 500).json({ error: error.status ? error.message : 'The device could not be linked.' }); }
+	});
+	// The signed-in account holder's own devices and allowances. Never another
+	// account's data; local/home browsers without an email account get nothing.
+	app.get('/api/people/me', (req, res) => {
+		const session = people.session(token(req));
+		const person = session?.personId && people.list().people.find(p => p.id === session.personId);
+		if (!person || person.status !== 'approved') return res.status(403).json({ error: 'Sign in with your email account to see your devices.' });
+		const devices = apps.forPerson(person.id);
+		const linkedIds = new Set(devices.map(device => device.id));
+		const watchingNow = (audit?.snapshot().active || []).filter(entry => entry.purpose !== 'download' && !entry.local && !entry.home
+			&& (entry.personId === person.id || linkedIds.has(entry.deviceId))).length;
+		res.json({ person: { id: person.id, name: person.name, email: person.email }, devices, allowances: deviceLink.allowances(person.id),
+			limits: options.accountLimits ? options.accountLimits.status('person:' + person.id) : null, watchingNow });
+	});
+	// Self-service removal: unlink a device this account owns so a slot frees up.
+	// The device keeps its separate approval; an administrator can still revoke it.
+	app.post('/api/people/me/devices', apps.writeCheck, (req, res) => {
+		const session = people.session(token(req));
+		if (!session?.personId) return res.status(403).json({ error: 'Sign in with your email account to manage your devices.' });
+		const deviceId = String(req.body?.deviceId || '');
+		if (req.body?.action !== 'remove' || !/^[a-f0-9]{32}$/.test(deviceId)) return res.status(400).json({ error: 'Choose a device to remove.' });
+		if (people.device(deviceId).personId !== session.personId) return res.sendStatus(404);
+		people.manage({ action: 'unlink', deviceId });
+		audit?.record('device_unlinked', identity(req), { personId: session.personId, deviceId, method: 'self-service' });
+		res.json({ ok: true, allowances: deviceLink.allowances(session.personId) });
+	});
 	app.post('/api/people/browsers', apps.writeCheck, apps.requireAdmin, (req,res) => res.json(people.manageBrowser(req.body || {})));
 	app.post('/api/people', apps.writeCheck, apps.requireAdmin, async (req, res) => {
 		if (['device', 'unlink'].includes(req.body?.action) && !apps.devices().some(d => d.id === req.body.deviceId)) return res.sendStatus(404);
+		// The manual admin link obeys the same platform allowance as a code claim.
+		if (req.body?.action === 'device') {
+			const device = apps.devices().find(d => d.id === req.body.deviceId);
+			try { deviceLink.checkAllowance(req.body.id, device?.platform, device?.id); }
+			catch (error) { return res.status(error.status || 500).json({ error: error.status ? error.message : 'The device could not be linked.' }); }
+		}
 		res.json(await people.manage(req.body || {}));
 	});
 	app.get('/api/auth/email/config', apps.requireAdmin, (req, res) => res.json(people.status()));
@@ -348,10 +414,14 @@ export function installAuth(app, options) {
 	app.get(['/settings', '/settings.html'], localOnly, (req, res) => res.sendFile(path.join(publicDirectory, 'settings.html')));
 	app.get('/api/auth/tunnel', apps.requireAdmin, async (req, res) => res.json(options.tunnelStatus ? await options.tunnelStatus() : { url: null, connected: false }));
 	app.get(['/activity', '/activity.html'], (req, res, next) => {
-		if (!ownerAdmin(req)) return res.status(403).json({ error: 'Activity is available to installation administrators only.' });
+		// The local entry already shows Activity to any home browser without a
+		// sign-in. The trusted public entry recognises the same household, so it
+		// must give the same answer; remote viewers still need an administrator.
+		if (!ownerAdmin(req) && !home(req)) return res.status(403).json({ error: 'Activity is available to installation administrators only.' });
 		res.sendFile(path.join(publicDirectory, 'activity.html'));
 	});
-	app.get('/api/activity', apps.requireAdmin, (req, res) => {
+	const activityReader = (req, res, next) => home(req) ? next() : apps.requireAdmin(req, res, next);
+	app.get('/api/activity', activityReader, (req, res) => {
 		res.set('Cache-Control', 'no-store');
 		const config = read(passwordPath, null);
 		const peopleState = people.list();

@@ -9,6 +9,7 @@ async function request(path, body) {
 function field(parent, label, input) { const wrap = node('label', label, 'auth-field'); wrap.append(input); parent.append(wrap); return input; }
 function button(label, run, primary = false) { const result = node('button', label, 'button ' + (primary ? 'primary' : 'secondary')); result.type = 'button'; result.onclick = run; return result; }
 function seen(device) { return device.lastSeen ? 'Last connected ' + new Date(device.lastSeen).toLocaleString() : 'Last connection not recorded by older builds'; }
+function deviceTitle(device) { const platform = device.platform === 'tv' ? 'TV' : device.platform === 'phone' ? 'Phone' : ''; return device.name + (platform ? ' · ' + platform : ''); }
 function cleanup(devices) {
 	const candidates = devices.filter(device => !device.identified && ['approved', 'pending'].includes(device.status));
 	const dialog = node('dialog', null, 'device-dialog'), form = node('form'); dialog.append(form);
@@ -40,6 +41,10 @@ async function manage(device, favourites) {
 	const role = field(form, 'Access', node('select'));
 	for (const [value, label] of [['viewer', 'Viewer — watch and request'], ['admin', 'Admin — manage Tellybox']]) { const option = node('option', label); option.value = value; role.append(option); }
 	role.value = device.role;
+	const platformField = field(form, 'Platform', node('select'));
+	for (const [value, label] of [['', 'Not reported by this app'], ['phone', 'Phone'], ['tv', 'TV']]) { const option = node('option', label); option.value = value; platformField.append(option); }
+	platformField.value = device.platform || '';
+	form.append(node('p', 'The platform counts this device against the linked account’s phone or TV allowance. Older apps report it automatically; set it here if missing.', 'auth-note'));
 	if (typeof addPersonLink === 'function') {
 		try {
 			const directory = await request('/api/people');
@@ -79,6 +84,7 @@ async function manage(device, favourites) {
 			if (profileId === 'new') profileId = (await request('/api/favourites/profiles', { name: collectionName.value })).id;
 			else if (profileId && collectionName.value !== favourites.profiles.find(p => p.id === profileId)?.name) await request('/api/favourites/profiles/' + profileId, { name: collectionName.value });
 			if (name.value !== device.name) await request('/api/apps/' + device.id, { action: 'rename', name: name.value });
+			if (platformField.value && platformField.value !== (device.platform || '')) await request('/api/apps/' + device.id, { action: 'platform', platform: platformField.value });
 			if (device.status === 'pending' || role.value !== device.role) await request('/api/apps/' + device.id, { action: device.status === 'pending' ? 'approve' : 'role', role: role.value });
 			if (profileId) await request('/api/favourites/devices/' + device.id, { profileId, linkedProfiles: [...linked.querySelectorAll('input:checked')].map(input => input.value).filter(id => id !== profileId) });
 			dialog.close(); await load();
@@ -110,7 +116,7 @@ async function load() {
 			if (typeof filterAccessRows === 'function') {
 				const row = node('article', null, 'access-row');
 				row.dataset.accessSearch = `${device.name} ${device.personName || ''} ${device.id}`.toLowerCase();
-				const identity = node('div', null, 'access-identity'); identity.append(node('h3', device.name));
+				const identity = node('div', null, 'access-identity'); identity.append(node('h3', deviceTitle(device)));
 				identity.append(node('p', device.personName || 'Separate device account', 'auth-note'), node('p', seen(device), 'auth-note'));
 				if (device.status === 'pending') identity.append(node('p', 'Pairing code: ' + device.code, 'approval-code'));
 				const label = device.status === 'pending' ? 'Awaiting approval' : device.role === 'admin' ? 'Admin' : 'Viewer';
@@ -119,7 +125,7 @@ async function load() {
 			}
 			const section = node('section', null, 'settings-box device-card');
 			section.dataset.accessSearch = `${device.name} ${device.personName || ''} ${device.id}`.toLowerCase();
-			section.append(node('p', device.status === 'pending' ? 'AWAITING APPROVAL' : device.role === 'admin' ? 'ADMINISTRATOR' : 'VIEWER', 'eyebrow'), node('h3', device.name));
+			section.append(node('p', device.status === 'pending' ? 'AWAITING APPROVAL' : device.role === 'admin' ? 'ADMINISTRATOR' : 'VIEWER', 'eyebrow'), node('h3', deviceTitle(device)));
 			section.append(node('p', device.identified ? 'Recognised device' : 'Older installation · ' + device.id.slice(0, 8), 'auth-note'), node('p', seen(device), 'auth-note'));
 			if (device.status === 'pending') section.append(node('p', device.code, 'approval-code'));
 			else {

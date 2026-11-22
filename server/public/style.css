@@ -13,7 +13,7 @@ button, input, select { font: inherit; }
 button, a, input, select { -webkit-tap-highlight-color: transparent; }
 button, select { cursor: pointer; }
 button { color: inherit; }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--green); outline-offset: 5px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--green); outline-offset: 5px; }
 a { color: inherit; text-decoration: none; }
 [hidden] { display: none !important; }
 .topbar { display: flex; align-items: center; gap: 24px; min-height: 92px; padding: 20px 5%; border-bottom: 1px solid var(--line); }
@@ -1072,3 +1072,15 @@ footer [data-server-version] { display: inline; font-size: 11px; letter-spacing:
 /* Maintenance banner for viewers who are still allowed (local/admin while a
    remote-scoped activation is on). Blocked viewers get the 503 page instead. */
 .maintenance-banner{position:sticky;top:0;z-index:1100;padding:8px 16px;text-align:center;font-size:13px;line-height:1.4;background:#3a2f14;color:#f0dfa0;border-bottom:1px solid rgba(226,173,77,.55)}
+
+/* Orphan control: redistribute words, never shrink type. */
+p, li, dd, figcaption,
+.status, .auth-note, .auth-description, .settings-intro,
+.player-note, .coming-note, .discover-note, .shelf-description,
+.home-landing-strap, .calendar-summary {
+	text-wrap: pretty;
+}
+h2, h3, summary { text-wrap: balance; }
+/* Clamped / fixed-height text keeps default wrapping so truncation stays predictable. */
+.card h3, .card p, .hero-description, .continue-title, .continue-meta,
+.discover-card > strong, .catchup-overview { text-wrap: wrap; }

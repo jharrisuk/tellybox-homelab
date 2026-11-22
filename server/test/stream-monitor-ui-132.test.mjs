@@ -32,7 +32,7 @@ test('Activity gains a third Streams tab and panel after Activity and Logs', () 
 	const panel = activityHtml.indexOf('id="streamsPanel"');
 	assert.ok(activityTab < logsTab && logsTab < streamsTab, 'Streams is the third tab');
 	assert.ok(logsPanel < panel, 'the Streams panel follows the Logs panel');
-	assert.match(streamsPanel, /<h2 id="streamsHeading">Upstream streams<\/h2>/);
+	assert.match(streamsPanel, /<h2 id="streamsHeading">Dispatcharr streams<\/h2>/);
 	assert.match(streamsPanel, /not Tellybox viewers or unique people/);
 	assert.match(streamsPanel, /may be incomplete/);
 	assert.match(streamsPanel, /id="streamsStatus"[^>]*role="status"[^>]*aria-live="polite"/);

@@ -2,6 +2,110 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Server 0.26.68 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Playback
+
+- Live and 24/7 playback keeps a 30-second back buffer and a narrow live-sync
+  speed range, so a brief source reconnect is ridden out rather than jumping the
+  timeline. A backward timestamp jump still keeps the viewer's place when the
+  new stream covers it, otherwise it returns to the live edge.
+- The Android apps get the same discontinuity guard and a larger player buffer
+  in the next app release.
+
+## Server 0.26.67 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Coming soon
+
+- The Football on TV panel now sits below the recently released and next seven
+  days calendar, matching the page order the owner requested.
+
+## Server 0.26.66 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Coming soon
+
+- Football fixtures are a first-class panel above the calendar, showing only
+  channels in your lineup and a UK-only filter (remembered in the browser).
+- Fixture days carry a small marker in the calendar so sport is visible without
+  hunting for a tab.
+- The collapsed "Browse all upcoming" control is replaced by a compact, always
+  visible browse section with an Episodes | Films switch.
+- The layout uses auto-fill and auto-fit columns, so wide screens do not leave
+  fixed empty columns.
+
+## Server 0.26.65 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Home and Activity
+
+- A browser recognised as being at home through the public address now shows the
+  home connection icon before playback, and the read-only Activity view is
+  available there, matching the local entry. Remote viewers still need an
+  administrator. The torrent queue and media deletion remain administrator-only.
+
+### Playback
+
+- A live or 24/7 source that reconnects and restarts its timestamps earlier no
+  longer drags playback backwards. The player keeps the viewer's place when the
+  new stream still covers it, otherwise it returns to the live edge.
+
+### Media deletion
+
+- A local administrator can permanently delete a local film, episode, season or
+  series from Jellyfin, including its files, from **Settings -> Delete media**.
+  The screen searches the local library, previews the exact file count and size,
+  requires the title to be typed, refuses streamed titles and anything currently
+  playing, and records the deletion in Activity. A Jellyfin administrator API
+  key is required. There is no recycle bin.
+
+## Server 0.26.64 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Coming soon
+
+- The window is seven days back and seven days forward.
+- The calendar is one Monday-first grid, so a Monday always sits above a Monday;
+  past days keep their column and render quietly when nothing landed.
+
+### Sport on TV
+
+- A Sport section lists the next three days of UK televised football from
+  live-footballontv.com, cached for six hours. Only channels in the lineup are
+  named, and a UK-only filter is on by default. It is a fixture board, not a
+  launcher.
+
+### Household devices
+
+- Link a phone or TV with a short code from a signed-in account. Phone and TV
+  allowances are separate (default one each; 0 means unlimited), and a device can
+  be removed to free a slot. Manual approval and linking remain available.
+- Hardening: re-linking a device as another platform cannot bypass the new
+  allowance, unknown device polls cannot exhaust the linking throttle, and the
+  status route requires the same local-or-HTTPS transport as start.
+
+### Catch-up
+
+- A rolling eight-day guide archive keeps catch-up history independent of
+  Dispatcharr's own retention window.
+
+### Copy and layout
+
+- 25 measured copy fixes, orphan control (text-wrap), named Refresh buttons and
+  distinct guide links.
+
 ## Server 0.26.63 - 21 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home
