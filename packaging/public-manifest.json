@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.81",
+	"serverVersion": "0.26.83",
 	"files": [
 		{
 			"path": ".env.example",
@@ -54,18 +54,18 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 32975,
-			"sha256": "2ebc08aef27640ca85ad8169eeece4e85ebc5b031b3eeb1f3c11e2d9b48bcdf1"
+			"bytes": 33175,
+			"sha256": "d8a94e97a0c08c881a917d0ff6157ab7acc9ac659e7500fff3477f65a4c642b0"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 70257,
-			"sha256": "b78de30c8feba906993865b08c7ab0072a25dbc9ec61507ce0c5747550a4bc11"
+			"bytes": 71650,
+			"sha256": "af47dddcc1b0282f424aa34b57d4387e8c1d4fa3290baff40643e17e385a562e"
 		},
 		{
 			"path": "docs/guide-extra.css",
-			"bytes": 6300,
-			"sha256": "9e743f20940133313b31d9f4116d2732fa7306a48c0056713d53a28a8d450fb3"
+			"bytes": 6579,
+			"sha256": "7f4e6016689be107c4fa570e3855feb4abf2545cf4b506400b16bb2f8b9c2a54"
 		},
 		{
 			"path": "docs/guide.js",
@@ -89,8 +89,8 @@
 		},
 		{
 			"path": "docs/site/guide.css",
-			"bytes": 17400,
-			"sha256": "fecd3efb2a6eb9d99f91c112782c9c29e0a80acca02e8ceadd9875ec2e6cd2f2"
+			"bytes": 17679,
+			"sha256": "72b281913af2eedb8978eb730da542abb5c4049c613024a17307ab6f5156baa4"
 		},
 		{
 			"path": "docs/site/guide.js",
@@ -114,8 +114,8 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 56275,
-			"sha256": "789f813a7e147c85cdc8009f63cef20195e8e0db37d2d095adea0da9520fc1b5"
+			"bytes": 56475,
+			"sha256": "81630c3a9402af0583755385df556202bc6f87e4ebe5a322647c4d3a6785dee1"
 		},
 		{
 			"path": "docs/story.html",
@@ -685,12 +685,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "b7494d293ed24a706fecd3f3196463110aa89db99abcd94479ab6558bf5bb734"
+			"sha256": "0b8a675e7660e5ae8105d5b0a6412715b0c8d567de5fb08cf04df3a9eb663411"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "0c4ce0b48d8c356953192ed953e62e83e60ab9982780ba7d59837987b8c3f9bd"
+			"sha256": "2eb4ae2e8e7c8ef6f4f29d95733a130772407ba7f4baa0062fcc41ec75b460fd"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -769,8 +769,8 @@
 		},
 		{
 			"path": "server/public/app.js",
-			"bytes": 253197,
-			"sha256": "7dc01c4977c601678aa9500bcfe80e4ec4032cc1f06f869edbb3cc6415a55a82"
+			"bytes": 254250,
+			"sha256": "3983e375715cdd45e557b33255370a55a86c573cb4d0d6702ebbc61877e23751"
 		},
 		{
 			"path": "server/public/apps.html",
@@ -845,7 +845,7 @@
 		{
 			"path": "server/public/discover.html",
 			"bytes": 4913,
-			"sha256": "484459635677746e3c78885da86d757cf0ccdd5b6d75eff7bc5808ca284ce4ec"
+			"sha256": "b5ea5c1e26c7568d2f7f28b5cecac9b4546544ae054274d1be779bc7bf6d44aa"
 		},
 		{
 			"path": "server/public/discover.js",
@@ -875,7 +875,7 @@
 		{
 			"path": "server/public/index.html",
 			"bytes": 13743,
-			"sha256": "9e9488b52d8b076306f586add47e9b140ab3e32de1a01a21ca37976b26e4ae42"
+			"sha256": "db9414d6cc6913b8075323ce19ce3f8ed7a695cd13e912f68f898b7182ed36c3"
 		},
 		{
 			"path": "server/public/installation-settings.js",
@@ -1758,6 +1758,11 @@
 			"sha256": "177b3eb83e5be71d2686150dd96c41207e4d2928cb46d0ea74555d2fc1aeb18b"
 		},
 		{
+			"path": "server/test/episode-detail-web-083.test.mjs",
+			"bytes": 556,
+			"sha256": "eaf345fe93ed405d08cbbc4917174a3c3d2780de59f09babe165c755a0d2ac94"
+		},
+		{
 			"path": "server/test/episode-end.test.mjs",
 			"bytes": 1147,
 			"sha256": "d1e8227368e157549b1caeef2f5ceb0934106f20b7c5bbedf014b176232644bf"
@@ -2134,8 +2139,8 @@
 		},
 		{
 			"path": "server/test/live-sport-today-web-076.test.mjs",
-			"bytes": 816,
-			"sha256": "3e1621171e758e818f51c31f6bec8f7bf878aac450728ff92c4a3fc4d0410ace"
+			"bytes": 1098,
+			"sha256": "fb1aeade2dc4957c64ffedef277bad83616eda0a422e68d7d595554076d9c3f4"
 		},
 		{
 			"path": "server/test/live-tv.test.mjs",

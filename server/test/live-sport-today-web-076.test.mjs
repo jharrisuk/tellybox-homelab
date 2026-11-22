@@ -15,5 +15,12 @@ test('the Live TV page carries a today sport strip above the guide', () => {
 test('the sport strip is a collapsed section, not always-on furniture', () => {
 	assert.match(html, /<details id="liveSportToday"[^>]*hidden/);
 	assert.match(html, /<summary><span>Sport on TV<\/span>/);
-	assert.match(app, /section\.hidden = !\$\('#liveSportList'\)\?\.children\.length/);
+	assert.match(app, /inSportsCategory\(\) && \$\('#liveSportList'\)/);
+});
+
+test('the sport strip only appears in a sports guide category', () => {
+	assert.match(app, /function inSportsCategory\(\)/);
+	assert.match(app, /\/sport\/i\.test\(channelGroup/);
+	assert.match(app, /section\.hidden = !inSportsCategory\(\)/);
+	assert.match(app, /updateSportVisibility\(\);/);
 });

@@ -2731,8 +2731,9 @@ async function loadSportToday(force = false) {
 	const section = $('#liveSportToday');
 	if (!section) return;
 	if (state.type !== 'livetv') { section.hidden = true; return; }
-	// Re-show the cached strip when the viewer returns to Live TV.
-	if (!force && Date.now() - sportTodayAt < 60000) { section.hidden = !$('#liveSportList')?.children.length; return; }
+	// The strip belongs to the sports categories, not the whole of Live TV.
+	// Re-show the cached strip only when a sports category is active.
+	if (!force && Date.now() - sportTodayAt < 60000) { section.hidden = !(inSportsCategory() && $('#liveSportList')?.children.length); return; }
 	try {
 		const data = await api('/api/sport-today');
 		const items = Array.isArray(data.items) ? data.items : [];
@@ -2760,8 +2761,20 @@ async function loadSportToday(force = false) {
 		}
 		$('#liveSportSummary').textContent = items.length + (items.length === 1 ? ' fixture' : ' fixtures') + ' on your channels';
 		sportTodayAt = Date.now();
-		section.hidden = false;
+		section.hidden = !inSportsCategory();
 	} catch { section.hidden = true; }
+}
+// The Live TV sport strip is shown only for a sports category (Sports,
+// Sky Sports, TNT Sports), never on All or a film/news category.
+function inSportsCategory() {
+	return state.type === 'livetv' && /sport/i.test(channelGroup || '');
+}
+function updateSportVisibility() {
+	const section = $('#liveSportToday');
+	if (!section) return;
+	if (!inSportsCategory()) { section.hidden = true; return; }
+	if (!$('#liveSportList')?.children.length) { void loadSportToday(); return; }
+	section.hidden = false;
 }
 async function playSportChannel(channelId) {
 	// /api/sport-today returns the raw Dispatcharr uuid; the web guide uses the
@@ -2839,6 +2852,7 @@ function renderGuide() {
 	const overflows = grid.scrollWidth > scroller.clientWidth + 1;
 	$('#guideSummary').textContent = new Date().toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' }) + ' · Next ' + span + ' hours' + (overflows ? ' · Swipe across to look ahead' : '');
 	$('#guideFreshness').textContent=guideData.stale?'Guide refresh failed. Showing any remaining saved listings.':'Dispatcharr listings · checked '+guideTime(guideData.fetchedAt)+'. Gaps mean no listing was supplied.';
+	updateSportVisibility();
 }
 
 let guideResizeTimer = 0;
@@ -3103,7 +3117,8 @@ async function showDetails(id) {
 		const content = element('div', 'detail-content');
 		const title = element('h2', '', item.Name);
 		title.id = 'detailsTitle';
-		content.append(element('p', 'eyebrow', friendlyType(item).toUpperCase()), title, element('p', 'detail-meta', meta(item)));
+		const kind = friendlyType(item).toUpperCase(), number = item.Type === 'Episode' ? episodeNumber(item) : '';
+		content.append(element('p', 'eyebrow', kind + (number ? '  \u00b7  ' + number : '')), title, element('p', 'detail-meta', meta(item)));
 		if (['Movie', 'Series'].includes(item.Type)) content.append(jserverUI.ratings(item.Ratings, { links: true }));
 		if (item.Genres?.length) {
 			const genres=element('div','genre-list');genres.setAttribute('aria-label','Genres');
@@ -3177,6 +3192,12 @@ async function showDetails(id) {
 			const play = element('button', 'button primary', saved > 30 ? `▶  Resume at ${Math.floor(saved / 60)} min` : item.Type === 'TvChannel' ? '▶  Watch live' : '▶  Play');
 			play.onclick = () => startPlayback(item, saved);
 			content.append(play);
+			if (item.Type === 'Episode' && item.SeriesId) {
+				const show = element('button', 'button secondary', 'Go to show');
+				show.setAttribute('aria-label', 'Go to ' + (item.SeriesName || 'the show'));
+				show.onclick = () => showDetails(item.SeriesId);
+				content.append(show);
+			}
 			if (canShare && ['Movie', 'Episode'].includes(item.Type) && item.Source !== 'streamed') {
 				const share = element('button', 'button secondary share-button', 'Share this title');
 				share.onclick = () => showShare(item, content);

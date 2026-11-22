@@ -2,6 +2,26 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Android 0.26.49 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Updates
+
+- The update screen now carries the Tellybox wordmark, and a finished install
+  reopens the app automatically instead of asking you to reopen it yourself.
+
+### TV
+
+- Up and Down inside the left menu now stay in the menu, wrapping at the top and
+  bottom. Right enters the page; the menu no longer jumps sideways at its end.
+- Coming Soon mixes sport fixtures into the same day tiles as film and series
+  releases. A fixture tile tunes its first channel; hold for details.
+- The live guide has a Sport filter beside All channels and Favourites on both
+  TV and phone. It lists today's fixtures with tuneable channel buttons. The phone
+  no longer adds a separate sport button above its guide.
+
 ## Android 0.26.45 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home
@@ -14,6 +34,21 @@ installation.
 - The Live TV Sport today list expands in place above the guide; TV hides the
   guide while the fixture list is open.
 - On Coming Soon and the phone Home rail, hold a fixture for its details.
+
+## Server 0.26.83 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Live TV and the guide site
+
+- The web Live TV Sport on TV strip now appears only when a sports category is
+  selected (Sports, Sky Sports, TNT Sports), not on All channels or other
+  categories.
+- The installation guide header uses the same transparent Tellybox wordmark as
+  the apps.
+- An episode in the web detail view shows its season and episode number and has a
+  **Go to show** button for the parent series.
 
 ## Server 0.26.81 - 22 November 2026
 
