@@ -1,3 +1,18 @@
+## Android 0.26.52 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### TV updates
+
+- TV no longer uses the small update prompt. When an update is found it opens the
+  branded update screen directly, shows download/verification progress, and
+  relaunches into the TV home after Android installs it.
+- **Your TV > App updates** opens the same screen on demand and shows the
+  installed version.
+- The left menu is tighter: all ten items fit on screen without scrolling, and the
+  header uses less vertical space.
+
 ## Android 0.26.51 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home
