@@ -1,3 +1,13 @@
+## Android 0.26.51 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### TV
+
+- The clock is pinned to the top-left corner of the screen instead of living in
+  the navigation menu.
+
 # Changelog
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
