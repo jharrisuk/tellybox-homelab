@@ -2,6 +2,52 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Android 0.26.37 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### TV
+
+- Coming Soon has a Football on TV board below the calendar, showing only
+  channels in your lineup. The UK-only filter matches the web panel, including
+  sponsored competition names, and turning it off shows every competition.
+- Opening the guide from the menu starts at the top of the guide rather than
+  the last channel. Coming back from playback still returns to the channel you
+  were watching, including a channel changed inside the player.
+- The guide header and unused 24/7 and Record actions are gone, giving the
+  listings more room.
+
+### Playback
+
+- The player keeps a larger buffer and ignores a brief backward timestamp jump
+  when the new stream still covers the viewer's place, matching the server fix.
+
+### Library
+
+- An episode offers All episodes, which opens its series, and failed episode
+  artwork falls back to the series poster instead of an empty card.
+- The TV logo has a transparent background.
+
+## Server 0.26.69 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Coming soon
+
+- The sport board now covers boxing, MMA/UFC, rugby, cricket and the other
+  sports carried by livesportontv.co.uk, merged and de-duplicated with the
+  existing football fixtures. Each card still names only channels in your
+  lineup, and combat-sport cards show the fighters in their details.
+- The UK-only filter now applies to football only; turning it on no longer hides
+  boxing or other sports.
+- A local administrator can switch the board off, choose which sports appear,
+  and scope football to UK competitions or all football. Viewers can read the
+  settings but cannot change them.
+- Each fixture's details name its source, and the sport label matches the
+  fixture instead of always saying football.
+
 ## Server 0.26.68 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

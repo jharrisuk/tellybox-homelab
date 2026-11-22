@@ -44,6 +44,8 @@ import { createSubtitleLookup, downloadedSubtitleIndex } from './subtitle-lookup
 import { createDispatcharr, findChannelForArtwork, channelLogoUrl } from './dispatcharr.mjs';
 import { createDispatcharrGuide, channelView } from './dispatcharr-guide.mjs';
 import { createSportListings } from './sport-listings.mjs';
+import { createLiveSportOntv, KNOWN_SPORTS, mergeSportRails, applySportSettings } from './livesportontv.mjs';
+import { createSportSettings } from './sport-settings.mjs';
 import {createCatchup} from './catchup.mjs';
 import {createBroadcastResume} from './broadcast-resume.mjs';
 import {createCatchupPlayer} from './catchup-player.mjs';
@@ -104,6 +106,17 @@ const sportListings = createSportListings({
 	version: serverRelease.version,
 	cachePath: path.join(process.env.CATALOGUE_CACHE_DIR || process.env.AUTH_DIR || path.join(root,'auth-data'),'sport-listings.json')
 });
+// All-sports spine (Q79): livesportontv.co.uk carries boxing, MMA/UFC and the
+// other sports the football only source cannot. Same polite, cached, never fatal
+// rules and the same live lineup; merged with the football rail below.
+const liveSportOntv = createLiveSportOntv({
+	channels: () => dispatcharr.channels(),
+	version: serverRelease.version,
+	cachePath: path.join(guideCacheDir, 'livesportontv.json')
+});
+// Admin sport settings (Q80): enable/disable the rail, choose sports, and scope
+// football to UK competitions or all. Stored beside the other rail caches.
+const sportSettings = createSportSettings(guideCacheDir, { knownSports: KNOWN_SPORTS });
 const directPlayer = createDirectPlayer({origin:dispatcharr.origin});
 const subtitleLookup=createSubtitleLookup({directory:process.env.AUTH_DIR||path.join(root,'auth-data')});
 const vodPlayer = createVodPlayer({open:(source,options)=>source.type==='local'?fetch(new URL(source.route,upstream),{headers:{...headers(),...(options.range?{Range:options.range}:{})},redirect:'error',signal:options.signal}):source.type==='recording'?dispatcharr.recordingFile(source.id,options):dispatcharr.stream(source,options),close:(token,source)=>['recording','local'].includes(source.type)?Promise.resolve():dispatcharr.stopStream(token)});
@@ -525,10 +538,43 @@ app.get('/api/coming-soon', async (req, res) => {
 	const upcoming = await insights.upcoming();
 	// Sport is additive and must never break the page: on any problem the rail
 	// is empty and flagged unavailable, while the tv/movies fields are unchanged.
+	// The football rail and the all-sports spine are merged (deduped by kick-off
+	// + title) and the Q80 admin settings are applied server-side. When the rail
+	// is disabled the sport field is empty and not flagged unavailable.
 	let sport = [], sportUnavailable = false;
-	try { sport = await sportListings.listings(); sportUnavailable = sportListings.unavailable(); }
+	try {
+		const settings = sportSettings.status();
+		if (settings.enabled !== false) {
+			const [football, allSport] = await Promise.all([sportListings.listings(), liveSportOntv.listings()]);
+			sport = applySportSettings(mergeSportRails(football, allSport), settings);
+			sportUnavailable = sportListings.unavailable() && liveSportOntv.unavailable();
+		}
+	}
 	catch { sportUnavailable = true; }
 	res.json({ ...upcoming, sport, ...(sportUnavailable ? { sportUnavailable: true } : {}) });
+});
+// Sport settings (Q80). Any authenticated/local viewer may read; only a local
+// installation administrator may write, via the same local-settings gate the
+// Dispatcharr connection uses (local entry, no app token, same-origin JSON).
+app.get('/api/sport-settings', (req, res) => {
+	res.set('Cache-Control', 'no-store');
+	res.json(sportSettings.status());
+});
+function sportSettingsAdmin(req, res, next) {
+	if (!auth.isLocal(req) || req.get('authorization') || req.get('x-jserver-app')) {
+		return res.status(403).json({ error: 'Open the local Tellybox settings to manage sport listings.' });
+	}
+	if (!req.is('application/json') || req.get('origin') !== req.jserverOrigin) return res.sendStatus(403);
+	next();
+}
+app.post('/api/sport-settings', sportSettingsAdmin, (req, res) => {
+	try {
+		const result = sportSettings.set(req.body || {});
+		activity.record('sport_settings_changed', auth.identity(req), { enabled: result.enabled, sports: result.sports, football: result.football });
+		res.json(result);
+	} catch (error) {
+		res.status(error.status || 500).json({ error: error.status ? error.message : 'Sport settings could not be saved.' });
+	}
 });
 
 function connection() {

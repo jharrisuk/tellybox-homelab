@@ -104,8 +104,25 @@ function isUkCompetition(name) {
 	const key = competitionKey(name);
 	return UK_COMPETITIONS.has(UK_COMPETITION_ALIASES.get(key) ?? key);
 }
+// The "UK football only" toggle constrains football only. Other sports (boxing,
+// MMA, rugby, ...) are never hidden by it. Items without a sport field are legacy
+// football fixtures and stay subject to the toggle, so existing behaviour holds.
+function isFootballItem(item) { return !item.sport || item.sport === 'football'; }
 function visibleSport() {
-	return state.ukOnly ? state.sport.filter(item => isUkCompetition(item.competition)) : state.sport;
+	return state.ukOnly ? state.sport.filter(item => !isFootballItem(item) || isUkCompetition(item.competition)) : state.sport;
+}
+// Readable label for a sport slug, used in the details eyebrow. Football keeps
+// its existing wording; anything else is named so a boxing card is not labelled
+// "FOOTBALL ON TV".
+const SPORT_LABELS = {
+	'american-football': 'American Football', 'australian-rules': 'Australian Rules', basketball: 'Basketball',
+	boxing: 'Boxing', cricket: 'Cricket', cycling: 'Cycling', darts: 'Darts', football: 'Football',
+	'formula-1': 'Formula 1', golf: 'Golf', 'horse-racing': 'Horse Racing', 'ice-hockey': 'Ice Hockey',
+	mma: 'MMA', motogp: 'MotoGP', motorsport: 'Motorsport', pool: 'Pool', rugby: 'Rugby',
+	snooker: 'Snooker', tennis: 'Tennis', 'winter-sports': 'Winter Sports'
+};
+function sportLabel(slug) {
+	return SPORT_LABELS[slug] || String(slug || '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 function sportTime(item) {
 	const date = new Date(item.date);
@@ -287,9 +304,11 @@ function detailsMarkup(item) {
 	const body = element('div', 'detail-content coming-details');
 	const title = element('h2', '', item.title); title.id = 'comingDetailsTitle';
 	if (item.type === 'sport') {
-		body.append(element('p', 'eyebrow', 'FOOTBALL ON TV'), title,
+		const eyebrow = isFootballItem(item) ? 'FOOTBALL ON TV' : sportLabel(item.sport).toUpperCase() + ' ON TV';
+		body.append(element('p', 'eyebrow', eyebrow), title,
 			element('p', 'coming-date', `${item.dateLabel} · ${jserverUI.comingDate(item)}`),
-			...(item.competition ? [element('p', 'overview', item.competition)] : []));
+			...(item.competition ? [element('p', 'overview', item.competition)] : []),
+			...(item.notes ? [element('p', 'overview', item.notes)] : []));
 		const owned = ownedChannels(item);
 		if (owned.length) {
 			body.append(element('h3', '', 'Where to watch'));
@@ -303,7 +322,8 @@ function detailsMarkup(item) {
 		} else {
 			body.append(element('p', 'overview', 'This match is not on a channel in your lineup.'));
 		}
-		body.append(element('p', 'coming-note', 'Fixtures from live-footballontv.com. Kick-off times use your device time zone.'));
+		const source = item.source || 'live-footballontv.com';
+		body.append(element('p', 'coming-note', `Fixtures from ${source}. Kick-off times use your device time zone.`));
 		const guide = element('a', 'button secondary', 'Open the TV guide');
 		guide.href = '/?view=livetv';
 		body.append(guide);

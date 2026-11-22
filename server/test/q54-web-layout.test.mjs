@@ -55,8 +55,8 @@ test('guide re-renders slice the listings already fetched and never request more
 });
 
 test('coming soon keeps the calendar primary and shows browse without a disclosure', () => {
-	assert.ok(coming.indexOf('id="comingSport"') < coming.indexOf('id="comingCalendar"'), 'sport is a first-class panel above the calendar');
-	assert.ok(coming.indexOf('id="comingCalendar"') < coming.indexOf('id="comingBrowse"'), 'the calendar comes before browse');
+	assert.ok(coming.indexOf('id="comingCalendar"') < coming.indexOf('id="comingSport"'), 'sport sits below the calendar, as the owner asked');
+	assert.ok(coming.indexOf('id="comingSport"') < coming.indexOf('id="comingBrowse"'), 'browse follows the sport panel');
 	assert.match(coming, /<section class="coming-browse" id="comingBrowse" aria-label="Browse all upcoming">/);
 	assert.doesNotMatch(coming, /<details|<summary/, 'the collapsed disclosure is gone');
 	const browse = coming.slice(coming.indexOf('<section class="coming-browse"'), coming.indexOf('</section>', coming.indexOf('<section class="coming-browse"')));
