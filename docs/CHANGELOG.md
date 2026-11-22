@@ -2,6 +2,19 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Android 0.26.45 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Sport
+
+- Tapping a sport fixture tunes its first channel instead of opening a popup.
+  The other channels on the fixture remain one tap away.
+- The Live TV Sport today list expands in place above the guide; TV hides the
+  guide while the fixture list is open.
+- On Coming Soon and the phone Home rail, hold a fixture for its details.
+
 ## Server 0.26.81 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home
