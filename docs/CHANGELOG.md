@@ -33,6 +33,17 @@ installation.
 - Each fixture card shows a pictogram for its sport next to the name, such as a
   ball, boxing glove, race helmet or skier, so a mixed sport list scans faster.
 
+## Android 0.26.40 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Sport
+
+- The TV sport board and the phone Sport on TV rail now have a day strip: All,
+  Today, Tomorrow and the following days, each showing the busiest sports with
+  their counts. Tapping a day filters the fixtures; tapping All restores them.
+
 ## Android 0.26.39 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home
