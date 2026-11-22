@@ -23,6 +23,7 @@ export function mediaView(item, type = item.mediaType) {
 		poster: /^\/[a-zA-Z0-9_-]+\.(jpg|png|webp)$/.test(item.posterPath || '') ? item.posterPath : null,
 		date: String(item.releaseDate || item.firstAirDate || '').slice(0, 10),
 		ratings: [score('TMDB', item.voteAverage, 10, item.voteCount, Number.isInteger(item.id) && validType(type) ? `https://www.themoviedb.org/${type}/${item.id}` : null)].filter(Boolean),
+		cast: Array.isArray(item.credits?.cast) ? item.credits.cast.filter(person => person && typeof person.name === 'string').slice(0, 8).map(person => ({ name: person.name.slice(0, 120), character: String(person.character || '').slice(0, 120) })) : [],
 		status, statusLabel: failed && status < 4 ? 'Needs attention' : labels[status] || 'Not requested',
 		watchId: /^[a-f0-9-]{32,36}$/i.test(media.jellyfinMediaId || '') ? media.jellyfinMediaId : null,
 		requestable: type === 'tv' || (!active.length && ![2, 3, 4, 5].includes(status) && !failed),
@@ -41,7 +42,7 @@ export function mediaView(item, type = item.mediaType) {
 // status lives in Seerr's mediaInfo/requests, which is deliberately not
 // persisted. On a cache hit return a neutral, honest status; the details
 // dialog and any request action still use the live Seerr route.
-const neutralStatus = item => ({ ...item, status: 6, statusLabel: 'Status not checked', requestable: false, watchId: null, seasons: [] });
+const neutralStatus = item => ({ ...item, status: 6, statusLabel: 'Not in your library', requestable: false, watchId: null, seasons: [] });
 
 export function createSeerr({ config, fetcher = fetch, audit = () => {}, enrich = async items => items, library, trendingCachePath, discoverCache = null }) {
 	const locks = new Map();

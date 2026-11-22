@@ -176,7 +176,12 @@ function card(item) {
 	const button = node('button', undefined, 'discover-card');
 	const ratings = jserverUI.ratings(item.ratings, { compact: true });
 	if (!ratings.childElementCount) ratings.append(node('span', 'Not rated yet', 'discover-unrated'));
-	button.append(poster(item), node('strong', item.title), node('span', `${item.type === 'tv' ? 'TV show' : 'Film'}${item.date ? ' · ' + item.date.slice(0, 4) : ''}`, 'discover-meta'), ratings, node('span', jserverUI.status(item.statusLabel), 'request-badge' + (item.statusLabel === 'Not requested' ? ' unrequested' : '')));
+	const parts = [poster(item), node('strong', item.title), node('span', `${item.type === 'tv' ? 'TV show' : 'Film'}${item.date ? ' · ' + item.date.slice(0, 4) : ''}`, 'discover-meta'), ratings];
+	// A streamed copy already says where it plays; do not stack "not in your
+	// library" above "Stream now". A title with neither says so plainly.
+	if (item.watchId) parts.push(node('span', 'In your library', 'request-badge'));
+	else if (!item.vodAvailable) parts.push(node('span', jserverUI.status(item.statusLabel), 'request-badge' + (item.statusLabel === 'Not requested' ? ' unrequested' : '')));
+	button.append(...parts);
 	// The TorrentDay audit confirmed a title can genuinely have both a local
 	// copy and a streamed counterpart. The card must not double-label that
 	// case: "In your library" already says the local copy wins, so the
@@ -269,30 +274,45 @@ async function showDetails(type, id) {
 }
 function renderDetails(item) {
 	const body = $('#requestBody'); body.replaceChildren();
+	const missingSeasons = item.type === 'tv' && Array.isArray(item.seasons) && item.seasons.some(season => season.requestable);
 	const heading = node('div', undefined, 'request-summary');
 	const text = node('div');
 	const title = node('h2', item.title); title.id = 'requestTitle';
 	text.append(title, node('p', `${item.type === 'tv' ? 'TV show' : 'Film'}${item.date ? ' · ' + item.date.slice(0, 4) : ''}`, 'discover-meta'), node('span', item.watchId ? 'In your library' : item.vodAvailable ? sourceLabel.streamNow(item) : jserverUI.status(item.statusLabel), 'request-badge'), jserverUI.ratings(item.ratings, { links: true }));
+	if (item.watchId) text.append(node('p', 'Local · in your collection', 'discover-source'));
+	else if (item.vodId) text.append(node('p', sourceLabel.streamed(item), 'discover-source'));
 	heading.append(poster(item), text);
 	body.append(heading, node('p', item.overview || 'No description available yet.', 'request-overview'));
+	if (Array.isArray(item.cast) && item.cast.length) body.append(node('p', 'Starring ' + item.cast.map(person => person.name).join(', '), 'discover-cast'));
 	if(item.vodId && !item.watchId){const watch=node('div',undefined,'request-actions');const stream=node('a',item.type==='tv'?'▶ Browse streamed episodes':'▶ Stream now','button primary');stream.href='/?item='+encodeURIComponent(item.vodId)+'&from=discover';stream.addEventListener('click',saveHandoffState);watch.append(stream);body.append(watch,node('p',sourceLabel.available(item)+' Prefer a local copy? Request it below.','request-feedback'));}
 	body.append(TellyboxTaste.controls(item));
 	const inputs = [];
 	if (item.type === 'tv') {
 		const fieldset = node('fieldset', undefined, 'season-picker');
-		fieldset.append(node('legend', item.vodAvailable?'Request a local copy · choose seasons':'Choose seasons'));
-		fieldset.append(node('p', 'Add it once. We keep watching for future episodes and new seasons automatically.'));
-		if (item.seasons.some(s => s.requestable && s.number > 0)) {
+		// A title already in the library is not a request: show its seasons and
+		// open links. Only genuinely missing seasons carry a request checkbox.
+		fieldset.append(node('legend', item.watchId ? 'Seasons' : item.vodAvailable ? 'Request a local copy \u00b7 choose seasons' : 'Choose seasons'));
+		if (!item.watchId && missingSeasons) fieldset.append(node('p', 'Add it once. We keep watching for future episodes and new seasons automatically.'));
+		if (missingSeasons && item.seasons.some(season => season.requestable && season.number > 0)) {
 			const all = node('button', 'Select all available to request', 'button quiet'); all.type = 'button';
 			all.onclick = () => { for (const input of inputs) if (!input.disabled && Number(input.value) > 0) input.checked = true; updateButton(); };
 			fieldset.append(all);
 		}
 		for (const season of item.seasons) {
+			const description = node('span', season.name + ' ');
+			description.append(node('small', `\u00b7 ${season.episodes} episodes \u00b7 ${jserverUI.status(season.statusLabel).toLowerCase()}`));
+			if (item.watchId && season.status === 5) {
+				const row = node('div', 'season-choice available-season');
+				const open = node('a', 'Open season \u2192', 'season-open');
+				open.href = '/?item=' + encodeURIComponent(item.watchId) + '&from=discover';
+				open.addEventListener('click', saveHandoffState);
+				description.append(open);
+				row.append(description); fieldset.append(row);
+				continue;
+			}
 			const label = node('label', undefined, 'season-choice');
 			const input = node('input'); input.type = 'checkbox'; input.value = season.number; input.disabled = !season.requestable;
 			input.onchange = () => updateButton(); inputs.push(input);
-			const description = node('span', season.name + ' ');
-			description.append(node('small', `· ${season.episodes} episodes · ${jserverUI.status(season.statusLabel).toLowerCase()}`));
 			label.append(input, description); fieldset.append(label);
 		}
 		if (!item.seasons.length) fieldset.append(node('p', 'Season information is not available yet.'));

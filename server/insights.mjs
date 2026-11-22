@@ -163,10 +163,38 @@ export function createInsights({ config, fetcher = fetch, clock = Date.now, libr
 	async function ratings() {
 		return new Map((await movies() || []).map(m => [String(m.tmdbId), movieRatings(m)]));
 	}
+	// Detailed views pay for a Radarr lookup when a film is not in the local
+	// library, so IMDb and (when supplied) Rotten Tomatoes can appear. Browse
+	// pages never trigger a burst of lookups; one entry is a detail request.
+	const lookupCache = new Map();
+	async function lookupRatings(items) {
+		const now = clock(), found = new Map();
+		await Promise.all(items.map(async item => {
+			const key = String(item.id), cached = lookupCache.get(key);
+			if (cached && now - cached.at < 6 * 3600000) { found.set(key, cached.ratings); return; }
+			try {
+				const data = await get('radarr', 'movie/lookup?term=' + encodeURIComponent('tmdb:' + key));
+				const match = Array.isArray(data) ? data[0] : null;
+				const scores = match ? movieRatings(match) : [];
+				lookupCache.set(key, { at: now, ratings: scores });
+				if (scores.length) found.set(key, scores);
+			} catch { /* keep the catalogue rating */ }
+		}));
+		return found;
+	}
 	async function enrich(items) {
 		if (!items.some(i => i.type === 'movie')) return items;
 		const scores = await ratings();
-		return items.map(i => ({ ...i, ratings: i.type === 'movie' && scores.get(String(i.id))?.length ? scores.get(String(i.id)) : i.ratings || [] }));
+		const missing = items.length === 1 ? items.filter(i => i.type === 'movie' && i.id && !scores.get(String(i.id))?.length) : [];
+		const looked = missing.length ? await lookupRatings(missing) : new Map();
+		return items.map(i => {
+			if (i.type !== 'movie') return { ...i, ratings: i.ratings || [] };
+			const base = scores.get(String(i.id))?.length ? scores.get(String(i.id)) : i.ratings || [];
+			const extra = looked.get(String(i.id)) || [];
+			const merged = [...base];
+			for (const rating of extra) if (!merged.some(existing => existing.source === rating.source)) merged.push(rating);
+			return { ...i, ratings: merged };
+		});
 	}
 	async function libraryMatches(items) {
 		if (!library || !items.length) return null;

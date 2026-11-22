@@ -208,12 +208,21 @@ test('the real server gates writes to a local admin and applies settings to /api
 	const arsenal = body.sport.find(i => i.title === 'Arsenal v Chelsea');
 	assert.equal(arsenal.source, 'live-footballontv.com', 'the football rail wins the dedupe tie');
 
+	// The Live TV today strip only returns playable, today's fixtures.
+	const today = await call(localBase, '/api/sport-today');
+	assert.equal(today.status, 200);
+	assert.ok(Array.isArray((await today.json()).items), 'the today strip has an items array');
+
 	// disabled hides the rail entirely (empty, not unavailable)
 	let r = await call(localBase, '/api/sport-settings', { method: 'POST', body: { enabled: false } });
 	assert.equal(r.status, 200);
 	body = await soon();
 	assert.deepEqual(body.sport, [], 'disabled hides the sport rail');
 	assert.equal(body.sportDisabled, true, 'the client can tell a disabled rail from an empty one');
+	const disabledToday = await call(localBase, '/api/sport-today');
+	const disabledBody = await disabledToday.json();
+	assert.deepEqual(disabledBody.items, []);
+	assert.equal(disabledBody.disabled, true, 'the Live TV strip also reports a disabled rail');
 	assert.ok(!body.sportUnavailable, 'a disabled rail is not flagged unavailable');
 
 	// sports allow-list

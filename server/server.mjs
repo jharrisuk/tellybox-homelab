@@ -43,7 +43,7 @@ import { subtitleChoice, englishSubtitle } from './subtitle-choice.mjs';
 import { createSubtitleLookup, downloadedSubtitleIndex } from './subtitle-lookup.mjs';
 import { createDispatcharr, findChannelForArtwork, channelLogoUrl } from './dispatcharr.mjs';
 import { createDispatcharrGuide, channelView } from './dispatcharr-guide.mjs';
-import { createSportListings } from './sport-listings.mjs';
+import { createSportListings, londonDayKey } from './sport-listings.mjs';
 import { createLiveSportOntv, KNOWN_SPORTS, mergeSportRails, applySportSettings } from './livesportontv.mjs';
 import { createSportSettings } from './sport-settings.mjs';
 import {createCatchup} from './catchup.mjs';
@@ -117,6 +117,15 @@ const liveSportOntv = createLiveSportOntv({
 // Admin sport settings (Q80): enable/disable the rail, choose sports, and scope
 // football to UK competitions or all. Stored beside the other rail caches.
 const sportSettings = createSportSettings(guideCacheDir, { knownSports: KNOWN_SPORTS });
+
+// One merged, filtered sport rail for Coming Soon and the Live TV "today" strip.
+async function sportRail(settings) {
+	const [football, allSport] = await Promise.all([sportListings.listings(), liveSportOntv.listings()]);
+	return {
+		items: applySportSettings(mergeSportRails(football, allSport), settings),
+		unavailable: sportListings.unavailable() && liveSportOntv.unavailable()
+	};
+}
 const directPlayer = createDirectPlayer({origin:dispatcharr.origin});
 const subtitleLookup=createSubtitleLookup({directory:process.env.AUTH_DIR||path.join(root,'auth-data')});
 const vodPlayer = createVodPlayer({open:(source,options)=>source.type==='local'?fetch(new URL(source.route,upstream),{headers:{...headers(),...(options.range?{Range:options.range}:{})},redirect:'error',signal:options.signal}):source.type==='recording'?dispatcharr.recordingFile(source.id,options):dispatcharr.stream(source,options),close:(token,source)=>['recording','local'].includes(source.type)?Promise.resolve():dispatcharr.stopStream(token)});
@@ -546,13 +555,27 @@ app.get('/api/coming-soon', async (req, res) => {
 		const settings = sportSettings.status();
 		sportDisabled = settings.enabled === false;
 		if (!sportDisabled) {
-			const [football, allSport] = await Promise.all([sportListings.listings(), liveSportOntv.listings()]);
-			sport = applySportSettings(mergeSportRails(football, allSport), settings);
-			sportUnavailable = sportListings.unavailable() && liveSportOntv.unavailable();
+			const rail = await sportRail(settings);
+			sport = rail.items;
+			sportUnavailable = rail.unavailable;
 		}
 	}
 	catch { sportUnavailable = true; }
 	res.json({ ...upcoming, sport, ...(sportUnavailable ? { sportUnavailable: true } : {}), ...(sportDisabled ? { sportDisabled: true } : {}) });
+});
+// Today's playable sport for the Live TV page. Only fixtures on a channel in
+// this lineup and on today's UK day are returned. Additive and never fatal.
+app.get('/api/sport-today', async (req, res) => {
+	res.set('Cache-Control', 'no-store');
+	try {
+		const settings = sportSettings.status();
+		if (settings.enabled === false) return res.json({ items: [], disabled: true });
+		const rail = await sportRail(settings);
+		const today = londonDayKey(Date.now());
+		const items = rail.items.filter(item => londonDayKey(item.date) === today
+			&& (item.channels || []).some(channel => channel && channel.channelId));
+		res.json({ items, ...(rail.unavailable ? { unavailable: true } : {}) });
+	} catch { res.json({ items: [], unavailable: true }); }
 });
 // Sport settings (Q80). Any authenticated/local viewer may read; only a local
 // installation administrator may write, via the same local-settings gate the

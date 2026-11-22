@@ -110,7 +110,7 @@ test('persisted charts contain public catalogue fields only and hits carry neutr
 
 	const hit = await service.trending('week-movie');
 	assert.equal(hit.items[0].status, 6, 'a cache hit has no trustworthy request status');
-	assert.equal(hit.items[0].statusLabel, 'Status not checked');
+	assert.equal(hit.items[0].statusLabel, 'Not in your library');
 	assert.equal(hit.items[0].requestable, false);
 	assert.equal(hit.items[0].watchId, null);
 

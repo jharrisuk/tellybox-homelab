@@ -12,6 +12,23 @@ installation.
 - Home has a Sport on TV rail with the next fixtures, the channels in your
   lineup that show them, and tap-for-details including fighters and notes.
 
+## Server 0.26.75 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Live TV and Discover
+
+- The Live TV page has a Sport today strip above the guide, listing today's
+  fixtures on your channels; a channel button tunes it immediately.
+- Discover shows a clear source line (Local or Streamed · provider) instead of
+  a floating note. Films and series list their cast.
+- A series already in the library no longer asks to request a local copy: its
+  available seasons show Open season links, and only missing seasons keep a
+  request checkbox. The separate "Browse available episodes" button is gone.
+- A title that is not in the library now says "Not in your library" instead of
+  "Status not checked".
+
 ## Server 0.26.74 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home
@@ -57,6 +74,16 @@ installation.
 
 - Each fixture card shows a pictogram for its sport next to the name, such as a
   ball, boxing glove, race helmet or skier, so a mixed sport list scans faster.
+
+## Android 0.26.42 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Live TV
+
+- The TV and phone guides show today's sport above the listings, with a channel
+  button that tunes it straight away. Only fixtures on your channels appear.
 
 ## Android 0.26.41 - 22 November 2026
 

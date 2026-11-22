@@ -2552,6 +2552,7 @@ async function loadItems(append = false) {
 	$('#grid').hidden = live || dvr;
 	$('#recordingsView').hidden = !dvr;
 	$('#liveGuide').hidden = !live;
+	if (live) void loadSportToday(); else { const sportToday = $('#liveSportToday'); if (sportToday) sportToday.hidden = true; }
 	$('#sort').closest('label').hidden = live || nonstop || dvr || state.type === 'favourites';
 	$('#source').closest('label').hidden = !['all','movies','tvshows'].includes(state.type);
 	$('.collection-toolbar .eyebrow').textContent = live ? 'YOUR CHANNELS · AT A GLANCE' : 'SOMETHING FOR EVERYONE';
@@ -2722,6 +2723,52 @@ function guideLayout() {
 let guideRenderedLayout = null;
 let pendingLiveChannel = null;
 
+let sportTodayAt = 0;
+async function loadSportToday(force = false) {
+	const section = $('#liveSportToday');
+	if (!section) return;
+	if (state.type !== 'livetv') { section.hidden = true; return; }
+	if (!force && Date.now() - sportTodayAt < 60000) return;
+	try {
+		const data = await api('/api/sport-today');
+		const items = Array.isArray(data.items) ? data.items : [];
+		const list = $('#liveSportList');
+		list.replaceChildren();
+		if (!items.length) { section.hidden = true; return; }
+		for (const item of items) {
+			const card = element('article', 'live-sport-card');
+			card.append(element('h3', '', item.title));
+			const meta = [item.competition, item.dateLabel, (Number.isFinite(Date.parse(item.date)) ? new Date(item.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "")].filter(Boolean).join(' · ');
+			if (meta) card.append(element('p', 'live-sport-meta', meta));
+			const channels = (item.channels || []).filter(channel => channel && channel.channelId);
+			if (channels.length) {
+				const row = element('div', 'live-sport-channels');
+				for (const channel of channels) {
+					const button = element('button', 'live-sport-channel', channel.name);
+					button.type = 'button';
+					button.setAttribute('aria-label', 'Watch ' + channel.name + ' live');
+					button.onclick = () => { void playSportChannel(channel.channelId); };
+					row.append(button);
+				}
+				card.append(row);
+			}
+			list.append(card);
+		}
+		$('#liveSportSummary').textContent = items.length + (items.length === 1 ? ' fixture' : ' fixtures') + ' on your channels';
+		sportTodayAt = Date.now();
+		section.hidden = false;
+	} catch { section.hidden = true; }
+}
+async function playSportChannel(channelId) {
+	if (!guideData) { try { await loadGuide(); } catch { /* the guide status reports it */ } }
+	const channel = (guideData?.channels || []).find(item => item.Id === channelId);
+	if (channel) { startPlayback(channel, 0); return; }
+	// The guide may predate a lineup change; refresh once before giving up.
+	sportTodayAt = 0;
+	if (typeof loadGuide === 'function') { try { await loadGuide(true); } catch {} }
+	const fresh = (guideData?.channels || []).find(item => item.Id === channelId);
+	if (fresh) startPlayback(fresh, 0);
+}
 function renderGuide() {
 	if (!guideData || state.type !== 'livetv') return;
 	const now = Date.now();

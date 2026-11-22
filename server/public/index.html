@@ -6,7 +6,7 @@
 	<meta name="theme-color" content="#101310">
 	<title>Tellybox - Your home</title>
 	<link rel="icon" href="/icon.svg" type="image/svg+xml">
-	<link rel="stylesheet" href="/style.css">
+	<link rel="stylesheet" href="/style.css?v=20261122u">
 	<link rel="stylesheet" href="/home-124.css">
 	<script>
 		(() => {
@@ -27,7 +27,7 @@
 	<script src="/artwork-fallback.js" defer></script>
 	<script src="/source-label.js" defer></script>
 	<script src="/still-watching.js" defer></script>
-	<script src="/app.js" defer></script>
+	<script src="/app.js?v=20261122u" defer></script>
 	<script src="/connection-status.js" defer></script>
 	<script src="/server-version.js" defer></script>
 </head>
@@ -88,6 +88,10 @@
 				<div id="recordingFilters" class="filters" aria-label="Recording status"><button class="chip active" data-recording-filter="all">All</button><button class="chip" data-recording-filter="completed">Ready to watch</button><button class="chip" data-recording-filter="scheduled">Scheduled</button><button class="chip" data-recording-filter="recording">Recording now</button></div>
 				<div id="recordingsList" class="recordings-list"></div>
 				<div id="olderRecordings" class="recordings-toolbar"></div>
+			</section>
+			<section id="liveSportToday" class="live-sport-today" aria-label="Sport on TV today" hidden>
+				<div class="live-sport-head"><div><p class="eyebrow">TODAY</p><h2>Sport on TV</h2></div><p id="liveSportSummary" role="status"></p></div>
+				<div id="liveSportList" class="live-sport-list"></div>
 			</section>
 			<section id="liveGuide" aria-label="Live TV guide" hidden>
 				<div class="guide-toolbar"><p id="guideSummary" role="status"></p><button class="button quiet" id="onlyFavourites" aria-pressed="false">☆ All channels</button><button class="button quiet" id="catchupGuide">Catch up</button><button class="button quiet" id="refreshGuide">↻ Refresh guide</button></div>

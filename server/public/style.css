@@ -1090,3 +1090,20 @@ h2, h3, summary { text-wrap: balance; }
 .sport-choice { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: #151a14; cursor: pointer; }
 .sport-choice input { margin: 0; }
 .sport-choice small { margin-left: auto; color: var(--muted); font-size: 11px; }
+/* Today's sport above the Live TV guide. */
+.live-sport-today { margin: 0 0 18px; }
+.live-sport-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.live-sport-head h2 { margin: 2px 0 0; font-size: 20px; }
+.live-sport-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.live-sport-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: #151a14; }
+.live-sport-card h3 { margin: 0 0 3px; font-size: 14px; line-height: 1.35; }
+.live-sport-meta { color: var(--muted); font-size: 12px; }
+.live-sport-channels { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.live-sport-channel { border: 1px solid #454e38; background: #22291e; color: var(--green); border-radius: 999px; padding: 6px 10px; font-size: 12px; min-height: 32px; cursor: pointer; }
+.live-sport-channel:hover, .live-sport-channel:focus-visible { border-color: var(--green); }
+
+.discover-source { margin: 5px 0 0; color: var(--green); font-size: 12px; }
+.discover-cast { margin: 10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.season-open { display: inline-block; margin-left: 8px; color: var(--green); font-size: 12px; text-decoration: none; }
+.season-open:hover, .season-open:focus-visible { text-decoration: underline; }
+.available-season { display: block; }

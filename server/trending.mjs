@@ -224,7 +224,7 @@ async function busyNow(check) {
 
 const neutralHit = item => item.id == null
 	? { ...item, statusLabel:'Find this title', requestable:false, watchId:null, seasons:[] }
-	: { ...item, status:6, statusLabel:'Status not checked', requestable:false, watchId:null, seasons:[] };
+	: { ...item, status:6, statusLabel:'Not in your library', requestable:false, watchId:null, seasons:[] };
 
 export function createTrending({call,view,enrich=async items=>items,fetcher=fetch,cachePath,now=Date.now,sourceKey=null,maxBytes=4*1024*1024,maxReadBytes=4*1024*1024,maxEntries=64,maxActive=2,maxQueue=8,queueWaitMs=20000,callTimeoutMs=45000}) {
 	if (typeof call !== 'function') throw new TypeError('A chart upstream call function is required.');

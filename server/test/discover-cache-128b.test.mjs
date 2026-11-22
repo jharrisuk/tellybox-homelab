@@ -420,7 +420,7 @@ test('generic browse and provider rails share the public cache and reapply curre
 	const second = await service.browse('', 1, 'movie', 'popular');
 	assert.equal(second.cacheState, 'fresh');
 	assert.equal(paths.length, 1);
-	assert.equal(second.items[0].statusLabel, 'Status not checked');
+	assert.equal(second.items[0].statusLabel, 'Not in your library');
 	assert.equal(second.items[0].watchId, null);
 	assert.equal(second.items[0].availabilityRecomputed, true);
 	assert.ok(stats.enrichCalls >= 2);
@@ -429,7 +429,7 @@ test('generic browse and provider rails share the public cache and reapply curre
 	assert.equal(paths.length, 3);
 	assert.equal(railAgain.cacheState, 'fresh');
 	assert.equal(railAgain.provider.name, 'Netflix');
-	assert.equal(railAgain.items[0].statusLabel, 'Status not checked');
+	assert.equal(railAgain.items[0].statusLabel, 'Not in your library');
 	assert.equal(railAgain.items[0].requestable, false);
 	source = 'B';
 	const switched = await service.provider(8);
@@ -450,7 +450,7 @@ test('documentary category browsing shares the same sanitized public cache', asy
 	assert.equal(first.cacheState, 'miss');
 	assert.equal(second.cacheState, 'fresh');
 	assert.equal(paths.length, 1);
-	assert.equal(second.items[0].statusLabel, 'Status not checked');
+	assert.equal(second.items[0].statusLabel, 'Not in your library');
 	assert.equal(second.items[0].watchId, null);
 	await cache.flush();
 	assert.doesNotMatch(readFileSync(path.join(directory, 'snapshot.json'), 'utf8'), /mediaInfo|jellyfinMediaId|requestedBy/);
