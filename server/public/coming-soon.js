@@ -109,7 +109,10 @@ function isUkCompetition(name) {
 // football fixtures and stay subject to the toggle, so existing behaviour holds.
 function isFootballItem(item) { return !item.sport || item.sport === 'football'; }
 function visibleSport() {
-	return state.ukOnly ? state.sport.filter(item => !isFootballItem(item) || isUkCompetition(item.competition)) : state.sport;
+	// Only fixtures that are actually on a channel in this lineup. An event whose
+	// channels are all unmatched would be a dead end, so it is never listed.
+	const owned = state.sport.filter(item => ownedChannels(item).length > 0);
+	return state.ukOnly ? owned.filter(item => !isFootballItem(item) || isUkCompetition(item.competition)) : owned;
 }
 // Readable label for a sport slug, used in the details eyebrow. Football keeps
 // its existing wording; anything else is named so a boxing card is not labelled
@@ -152,12 +155,12 @@ function renderSport() {
 	toggle.classList.toggle('active', state.ukOnly);
 	const items = visibleSport(), preview = compact.matches ? 4 : 6;
 	$('#sportList').replaceChildren(...items.slice(0, state.sportExpanded ? items.length : preview).map(sportCard));
-	$('#sportCount').textContent = items.length ? `${items.length} match${items.length === 1 ? '' : 'es'} · next 3 days` : '';
+	$('#sportCount').textContent = items.length ? `${items.length} fixture${items.length === 1 ? '' : 's'} \u2014 next 3 days` : '';
 	const unavailable = state.sportUnavailable || state.unavailable.includes('sport');
-	$('#sportStatus').textContent = unavailable ? 'Football listings are temporarily unavailable. Please check back shortly.'
+	$('#sportStatus').textContent = unavailable ? 'Sport listings are temporarily unavailable. Please check back shortly.'
 		: items.length ? ''
-		: state.sport.length ? 'No UK football in the next three days. Turn off “UK football only” to see every televised match.'
-		: 'No televised football in the next three days.';
+		: state.ukOnly ? 'No sport on your channels in the next three days. Turn off “UK football only” to see every football competition.'
+		: 'No sport on your channels in the next three days.';
 	$('#sportStatus').hidden = !$('#sportStatus').textContent;
 	$('#sportMore').hidden = items.length <= preview;
 	$('#sportMore').setAttribute('aria-expanded', String(state.sportExpanded));
@@ -182,14 +185,18 @@ function sportDayCounts(items) {
 
 // --- calendar ------------------------------------------------------------
 function calendarDay(day, sportCount) {
-	const quiet = day.past && !day.items.length;
-	const section = element('section', 'calendar-day' + (day.past ? ' recent' : '') + (quiet ? ' quiet' : ''));
+	// A day with no release and no fixture keeps its grid slot but draws no
+	// square at all: an empty box reads as a missing card rather than a quiet day.
+	if (!day.items.length && !sportCount) {
+		const gap = element('div', 'calendar-day empty');
+		gap.setAttribute('aria-hidden', 'true');
+		return gap;
+	}
+	const section = element('section', 'calendar-day' + (day.past ? ' recent' : ''));
 	section.setAttribute('aria-label', day.date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }));
 	const date = element('div', 'calendar-date');
 	date.append(element('strong', '', day.today ? 'Today' : day.date.toLocaleDateString(undefined, { weekday: 'short' })), element('span', '', day.date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })));
 	section.append(date);
-	// A past day with nothing on it keeps its column but stays out of the way.
-	if (quiet) return section;
 	const items = element('div', 'calendar-day-items');
 	for (const item of day.items) {
 		const button = element('button', 'calendar-item');
@@ -204,14 +211,12 @@ function calendarDay(day, sportCount) {
 	if (sportCount) {
 		const marker = element('button', 'calendar-sport');
 		marker.type = 'button';
-		marker.setAttribute('aria-label', `${sportCount} football match${sportCount === 1 ? '' : 'es'} — view football`);
-		const glyph = element('span', 'calendar-sport-glyph', '⚽');
+		marker.setAttribute('aria-label', `${sportCount} sport fixture${sportCount === 1 ? '' : 's'} - view sport`);
+		const glyph = element('span', 'calendar-sport-glyph', '\u25cf');
 		glyph.setAttribute('aria-hidden', 'true');
 		marker.append(glyph, element('span', '', String(sportCount)));
 		marker.onclick = () => focusSport();
 		items.append(marker);
-	} else if (!day.items.length) {
-		items.append(element('span', 'calendar-empty', 'Nothing scheduled'));
 	}
 	section.append(items);
 	return section;

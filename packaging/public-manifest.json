@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.69",
+	"serverVersion": "0.26.70",
 	"files": [
 		{
 			"path": ".env.example",
@@ -54,13 +54,13 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 27780,
-			"sha256": "fdf1201af42ef19aa0be99db31cd32159e8326e10258fc0cb1c52c3a412f9ae5"
+			"bytes": 29812,
+			"sha256": "2818f8b32ebdfd2a0c6dcaa26a31d3afae8df6d5b2a9ade097a71d29d2ce3141"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 63202,
-			"sha256": "6c60d64a36f066b01b0e92c4157c5c359f76f2e1c18c7d448b0d9d6a700c9862"
+			"bytes": 64083,
+			"sha256": "209e17a115417c687596d1511b6a785f177fc2f5a40fe9f2eb109a70474e64b4"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -114,8 +114,8 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 51171,
-			"sha256": "9cea231d2fcf5b98efbff93d71fdf3b07d96e3f6f081c83a0f784411bd185344"
+			"bytes": 53152,
+			"sha256": "3a1b3d7c08cfdfe01c14d4bcd07a9f06e20551c7d0bac05fca21c13e9b76be01"
 		},
 		{
 			"path": "docs/story.html",
@@ -685,12 +685,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "dd2e3aa7142055f31d7912716b5fb623ee597b8710d7edcffdbf9380d2448512"
+			"sha256": "1ab75b501762a61d957e61007f8e1bb07bd65c608518d586b172e7b8d1baf254"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "25336d403e6e2904aba3f45f37d5dcf70688d5d25d2be01c2980fb81df63cd5f"
+			"sha256": "4f992b9eaf2d9df52794edcad8b317522ad21512105223135651acf1f1e40d29"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -824,13 +824,13 @@
 		},
 		{
 			"path": "server/public/coming-soon.html",
-			"bytes": 5257,
-			"sha256": "9c8758b8812c4576d91da96e79ef10855b8188fab15af0034914c27bcc1c049a"
+			"bytes": 5245,
+			"sha256": "24424b3820591d68ecc43925630b18fbc68927b78c63b0550f273fd2a196a839"
 		},
 		{
 			"path": "server/public/coming-soon.js",
-			"bytes": 20523,
-			"sha256": "a0165572064a0f39829bd0f06025e2822813db8fef061bb3d8ba789b3c6b9474"
+			"bytes": 20779,
+			"sha256": "a09b813ac492108a23aebe30fb520d37365c05dcb9e54398a6d1f122648cdbc9"
 		},
 		{
 			"path": "server/public/connection-status.js",
@@ -1519,18 +1519,18 @@
 		},
 		{
 			"path": "server/test/coming-soon-q65.test.mjs",
-			"bytes": 5656,
-			"sha256": "5be0823e377dfc6a0e0a6903f8876398c6c724b49f59900899db376229050c6e"
+			"bytes": 5775,
+			"sha256": "61ce93a8b925dd53524f412035b2f2e37d8f091a2b02815b9394059c1053a368"
 		},
 		{
 			"path": "server/test/coming-sport-q71.test.mjs",
-			"bytes": 6382,
-			"sha256": "69aee8c0a1e9d6d841105f5e738d37d16e447afc2ba114849929e4ec35d59d72"
+			"bytes": 6319,
+			"sha256": "566c92444dec5785cb59bdb985f056be90aa8c0668c1333f6c0532f7f5f3f9f7"
 		},
 		{
 			"path": "server/test/coming-sport-q77.test.mjs",
-			"bytes": 14507,
-			"sha256": "fa399745f94b64c206e5d25fe987bdd874521565cd47d92c5445712bcab90b08"
+			"bytes": 15950,
+			"sha256": "8096d0e639f63974c124ce2f03d676eaa236a74c37e56375ffb325a48aa8e43d"
 		},
 		{
 			"path": "server/test/connection-status.test.mjs",

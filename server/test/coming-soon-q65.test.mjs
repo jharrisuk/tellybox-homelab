@@ -113,7 +113,10 @@ test('the hero action follows the same library target and keeps details for unma
 });
 
 test('the calendar marks exactly one day as Today when recent days are shown', async () => {
-	const schedule = { tv: [], movies: [{ type: 'movie', id: 3, title: 'Recent film', dateLabel: 'Released', released: true, date: day(-3), ratings: [] }], unavailable: [] };
+	const schedule = { tv: [], movies: [
+		{ type: 'movie', id: 3, title: 'Recent film', dateLabel: 'Released', released: true, date: day(-3), ratings: [] },
+		{ type: 'movie', id: 4, title: 'Out today', dateLabel: 'Released', released: true, date: day(0), ratings: [] }
+	], unavailable: [] };
 	const { selectorNode } = await mount(schedule);
 	const calendar = selectorNode('#calendarDays');
 	const grid = calendar.children[0];

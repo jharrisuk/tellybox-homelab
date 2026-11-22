@@ -95,28 +95,23 @@ test('a fixture opens details listing only the channels we have', async () => {
 	assert.match(body, /Kick-off times use your device time zone/);
 });
 
-test('a fixture with no owned channel says so plainly instead of naming broadcasters', async () => {
+test('a fixture with no channel in the lineup is not displayed', async () => {
 	const unowned = { tv: [], movies: [], unavailable: [], sportUnavailable: false,
 		sport: [fixture('sport-c', 'Manchester United v Leeds', 'FA Cup', [{ name: 'BBC One' }, { name: 'ITV 1' }])] };
 	const { selectorNode } = await mount(unowned);
-	const card = selectorNode('#sportList').children[0];
-	const text = textOf(card);
-	assert.match(text, /Not on your channels/);
-	assert.doesNotMatch(text, /BBC One|ITV 1/);
-	card.onclick();
-	const body = textOf(selectorNode('#comingDetailsBody'));
-	assert.match(body, /This match is not on a channel in your lineup\./);
-	assert.doesNotMatch(body, /BBC One|ITV 1/);
+	assert.equal(selectorNode('#sportList').children.length, 0, 'no dead-end card is rendered');
+	assert.doesNotMatch(textOf(selectorNode('#sportList')), /BBC One|ITV 1/);
+	assert.match(selectorNode('#sportStatus').textContent, /No sport on your channels/);
 });
 
 test('an empty sport list says so plainly instead of using the film wording', async () => {
 	const { selectorNode } = await mount({ tv: [], movies: [], sport: [], unavailable: [], sportUnavailable: false });
-	assert.equal(selectorNode('#sportStatus').textContent, 'No televised football in the next three days.');
+	assert.equal(selectorNode('#sportStatus').textContent, 'No sport on your channels in the next three days. Turn off “UK football only” to see every football competition.');
 });
 
 test('a source outage marks the rail unavailable without breaking TV or films', async () => {
 	const { selectorNode } = await mount({ tv: [], movies: [], sport: [], unavailable: [], sportUnavailable: true });
-	assert.equal(selectorNode('#sportStatus').textContent, 'Football listings are temporarily unavailable. Please check back shortly.');
+	assert.equal(selectorNode('#sportStatus').textContent, 'Sport listings are temporarily unavailable. Please check back shortly.');
 	const tv = await mount({ tv: [], movies: [], sport: [], unavailable: [], sportUnavailable: true }, '?type=tv');
 	assert.equal(tv.selectorNode('#comingStatus').textContent, 'Nothing dated yet. As soon as a release is announced, it’ll appear here.');
 });

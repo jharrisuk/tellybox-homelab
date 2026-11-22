@@ -2,6 +2,31 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Android 0.26.38 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Phone
+
+- Home has a Sport on TV rail with the next fixtures, the channels in your
+  lineup that show them, and tap-for-details including fighters and notes.
+
+## Server 0.26.70 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Coming soon
+
+- The fixture panel is labelled Sport on TV, not Football on TV, now that it
+  carries MotoGP, skiing and every other televised sport alongside football.
+- A day with nothing scheduled no longer draws an empty square in the
+  recently released and next seven days calendar; the weekday columns keep
+  their alignment.
+- The calendar's fixture marker uses a neutral dot and counts every sport,
+  rather than implying a football match.
+
 ## Android 0.26.37 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

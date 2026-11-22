@@ -1,7 +1,7 @@
 // Q77: Sport is a first-class section of Coming Soon.
 // Mounts the real page scripts in a vm with a schedule that contains sport,
 // and asserts the redesign: sport visible without a tab switch, owned
-// channels only, a persistent "UK football only" toggle, calendar fixture
+// channels only, a persistent “UK football only” toggle, calendar fixture
 // markers, and the removal of the old <details> browse control.
 // No network: fetch is stubbed and counted.
 import test from 'node:test';
@@ -88,15 +88,17 @@ test('Sport is visible on first paint, without opening browse or switching a tab
 	assert.equal(tabs[1].getAttribute('aria-pressed'), 'false');
 });
 
-test('only owned channels render; a fixture we cannot play says so plainly', async () => {
+test('only fixtures on a lineup channel render at all', async () => {
 	const { selectorNode } = await mount(schedule);
 	const text = textOf(selectorNode('#sportList'));
 	assert.match(text, /Premier Sports 1/);
 	assert.match(text, /Sky Sports Football/);
 	assert.doesNotMatch(text, /Premier Sports 2/, 'an unowned broadcaster is never named on a card');
 	assert.doesNotMatch(text, /BBC One/);
-	const unownedCard = selectorNode('#sportList').children.find(node => textOf(node).includes('Manchester United v Leeds'));
-	assert.match(textOf(unownedCard), /Not on your channels/);
+	assert.equal(selectorNode('#sportList').children.some(node => textOf(node).includes('Manchester United v Leeds')), false,
+		'a fixture with no channel in the lineup is not displayed');
+	assert.equal(selectorNode('#sportList').children.some(node => textOf(node).includes('Not on your channels')), false,
+		'no dead-end card is shown');
 });
 
 test('the UK toggle defaults on, filters non-UK football, and is remembered in localStorage', async () => {
@@ -144,7 +146,7 @@ test('when the toggle hides everything the panel says so plainly', async () => {
 	const onlyNonUk = { tv: [], movies: [], unavailable: [], sportUnavailable: false,
 		sport: [fixture('sport-x', 'Real Madrid v Barcelona', 'La Liga', [owned('Premier Sports 1')], 1)] };
 	const { selectorNode } = await mount(onlyNonUk);
-	assert.equal(selectorNode('#sportStatus').textContent, 'No UK football in the next three days. Turn off “UK football only” to see every televised match.');
+	assert.equal(selectorNode('#sportStatus').textContent, 'No sport on your channels in the next three days. Turn off “UK football only” to see every football competition.');
 	assert.equal(selectorNode('#sportList').children.length, 0);
 	selectorNode('#ukOnlyToggle').onclick();
 	assert.equal(selectorNode('#sportStatus').hidden, true);
@@ -186,17 +188,21 @@ test('the calendar keeps Monday alignment and marks fixture days with icon and c
 	const grid = selectorNode('#calendarDays').children[0];
 	assert.deepEqual(Array.from(grid.children.slice(0, 7), cell => cell.textContent), ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'Monday-first columns are unchanged');
 	assert.equal(grid.children.length % 7, 0, 'whole weeks keep a Monday above a Monday');
+	const blanks = [];
+	walk(grid, node => { if (node.className === 'calendar-day empty') blanks.push(node); });
+	assert.ok(blanks.length > 0, 'days with nothing keep their slot');
+	for (const blank of blanks) assert.equal(blank.children.length, 0, 'an empty day draws no square, date or placeholder');
 	attachSections(grid);
-	const visible = schedule.sport.filter(item => item.competition !== 'La Liga');
+	const visible = schedule.sport.filter(item => item.competition !== 'La Liga' && (item.channels || []).some(channel => channel.channelId));
 	assert.deepEqual(renderedMarkerCounts(grid), expectedMarkerCounts(visible), 'markers follow the UK filter');
 	let markers = 0;
 	walk(grid, node => {
 		if (node.className !== 'calendar-sport') return;
 		markers++;
 		assert.equal(node.tag, 'button');
-		assert.equal(node.children[0].textContent, '⚽');
+		assert.equal(node.children[0].textContent, '\u25cf');
 		assert.equal(node.children[0].getAttribute('aria-hidden'), 'true');
-		assert.match(node.getAttribute('aria-label'), /football match/);
+		assert.match(node.getAttribute('aria-label'), /sport fixture/);
 		node.onclick(); // jumps to the sport panel; must not throw in any environment
 	});
 	assert.ok(markers > 0, 'fixture days carry a marker');
@@ -205,7 +211,21 @@ test('the calendar keeps Monday alignment and marks fixture days with icon and c
 	selectorNode('#ukOnlyToggle').onclick();
 	const offGrid = selectorNode('#calendarDays').children[0];
 	attachSections(offGrid);
-	assert.deepEqual(renderedMarkerCounts(offGrid), expectedMarkerCounts(schedule.sport));
+	assert.deepEqual(renderedMarkerCounts(offGrid), expectedMarkerCounts(schedule.sport.filter(item => (item.channels || []).some(channel => channel.channelId))));
+});
+
+test('a day with only a non-football fixture still shows the sport marker', async () => {
+	const boxingOnly = { tv: [], movies: [], unavailable: [], sportUnavailable: false,
+		sport: [{ ...fixture('box-1', 'Live Boxing', 'IBF Title Fights', [owned('DAZN')], 1), sport: 'boxing' }] };
+	const { selectorNode } = await mount(boxingOnly);
+	const grid = selectorNode('#calendarDays').children[0];
+	attachSections(grid);
+	let marker = null;
+	walk(grid, node => { if (node.className === 'calendar-sport') marker = node; });
+	assert.ok(marker, 'a boxing-only day carries a marker');
+	assert.equal(marker.children[1].textContent, '1', 'the marker counts the boxing fixture');
+	assert.match(marker.getAttribute('aria-label'), /sport fixture/);
+	assert.match(textOf(selectorNode('#sportList')), /Live Boxing/, 'the fixture is listed on a day with no football');
 });
 
 test('the sport list expands inline instead of hiding behind a details toggle', async () => {
