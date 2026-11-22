@@ -2,6 +2,28 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Android 0.26.43 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Live TV
+
+- Sport today is a section of its own rather than permanent furniture. On TV and
+  phone it is a single "Sport today - N fixtures" button above the guide; open it
+  to see the fixtures and tune a channel.
+
+## Server 0.26.77 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Live TV
+
+- Sport today is now a collapsible section above the guide instead of an
+  always-open block. The summary shows the fixture count; open it to see the
+  cards and tune a channel.
+
 ## Android 0.26.38 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

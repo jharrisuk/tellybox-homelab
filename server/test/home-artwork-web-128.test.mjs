@@ -162,10 +162,10 @@ test('artwork-fallback keeps its staged local -> poster -> card order', () => {
 });
 
 test('the page shell adds no stylesheet, inline script or external origin', () => {
-	const stylesheets = [...indexHtml.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="\/([^"]+)"/g)].map(match => match[1]);
+	const stylesheets = [...indexHtml.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="\/([^"?]+)/g)].map(match => match[1]);
 	assert.deepEqual(stylesheets, ['style.css', 'home-124.css']);
 	for (const name of stylesheets) assert.ok(existsSync(publicFile(name)), 'missing stylesheet ' + name);
-	const scripts = [...indexHtml.matchAll(/<script[^>]+src="\/([^"]+)"/g)].map(match => match[1]);
+	const scripts = [...indexHtml.matchAll(/<script[^>]+src="\/([^"?]+)/g)].map(match => match[1]);
 	for (const name of scripts) {
 		if (name.startsWith('vendor/')) continue;
 		assert.ok(existsSync(publicFile(name)), 'missing script ' + name);

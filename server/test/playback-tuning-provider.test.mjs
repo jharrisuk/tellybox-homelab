@@ -56,8 +56,8 @@ test('visibility toggles the same nodes back on a local item', () => {
 
 test('the player applies the policy before the request and again from the live response', () => {
 	assert.match(index, /class="player-note browser-preference-note"/);
-	const tuningScript = index.indexOf('<script src="/playback-tuning.js" defer></script>');
-	const appScript = index.indexOf('<script src="/app.js" defer></script>');
+	const tuningScript = index.indexOf('<script src="/playback-tuning.js"');
+	const appScript = index.indexOf('<script src="/app.js');
 	assert.ok(tuningScript > 0 && appScript > tuningScript, 'tuning policy loads before app.js');
 	assert.match(app, /const playbackTuning = globalThis\.TellyboxPlaybackTuning \|\| null;/);
 	assert.match(app, /updatePlaybackTuning\(item, false\);/);

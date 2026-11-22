@@ -338,12 +338,12 @@ test('every local-progress read and write path is behind the trust guard', () =>
 });
 
 test('index.html references only files that exist and adds no new stylesheet, origin or inline script', () => {
-	const stylesheets = [...indexHtml.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="\/([^"]+)"/g)].map(match => match[1]);
+	const stylesheets = [...indexHtml.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="\/([^"?]+)/g)].map(match => match[1]);
 	assert.ok(stylesheets.includes('style.css'));
 	assert.ok(stylesheets.includes('home-124.css'));
 	assert.ok(!stylesheets.includes('web-125.css'), 'no release-125 stylesheet was needed');
 	for (const name of stylesheets) assert.ok(existsSync(publicFile(name)), 'missing stylesheet ' + name);
-	const scripts = [...indexHtml.matchAll(/<script[^>]+src="\/([^"]+)"/g)].map(match => match[1]);
+	const scripts = [...indexHtml.matchAll(/<script[^>]+src="\/([^"?]+)/g)].map(match => match[1]);
 	for (const name of scripts) {
 		if (name.startsWith('vendor/')) continue;
 		assert.ok(existsSync(publicFile(name)), 'missing script ' + name);

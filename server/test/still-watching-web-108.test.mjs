@@ -14,7 +14,7 @@ function functionBody(name) {
 
 test('the player loads the shared monitor before app.js', () => {
 	const still = html.indexOf('<script src="/still-watching.js"');
-	const player = html.indexOf('<script src="/app.js"');
+	const player = html.indexOf('<script src="/app.js');
 	assert.notEqual(still, -1, 'still-watching.js is loaded');
 	assert.notEqual(player, -1, 'app.js is loaded');
 	assert.ok(still < player, 'still-watching.js must load before app.js');

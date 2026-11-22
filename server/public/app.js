@@ -2722,13 +2722,17 @@ function guideLayout() {
 }
 let guideRenderedLayout = null;
 let pendingLiveChannel = null;
+// A Discover "Open season" link asks the series page to open a specific season
+// rather than dropping the viewer on the first available one.
+let pendingSeason = null;
 
 let sportTodayAt = 0;
 async function loadSportToday(force = false) {
 	const section = $('#liveSportToday');
 	if (!section) return;
 	if (state.type !== 'livetv') { section.hidden = true; return; }
-	if (!force && Date.now() - sportTodayAt < 60000) return;
+	// Re-show the cached strip when the viewer returns to Live TV.
+	if (!force && Date.now() - sportTodayAt < 60000) { section.hidden = !$('#liveSportList')?.children.length; return; }
 	try {
 		const data = await api('/api/sport-today');
 		const items = Array.isArray(data.items) ? data.items : [];
@@ -2760,14 +2764,18 @@ async function loadSportToday(force = false) {
 	} catch { section.hidden = true; }
 }
 async function playSportChannel(channelId) {
+	// /api/sport-today returns the raw Dispatcharr uuid; the web guide uses the
+	// dispatch-live- prefix. Normalise before comparing.
+	const liveId = String(channelId || '').startsWith('dispatch-live-') ? channelId : 'dispatch-live-' + channelId;
 	if (!guideData) { try { await loadGuide(); } catch { /* the guide status reports it */ } }
-	const channel = (guideData?.channels || []).find(item => item.Id === channelId);
-	if (channel) { startPlayback(channel, 0); return; }
-	// The guide may predate a lineup change; refresh once before giving up.
-	sportTodayAt = 0;
-	if (typeof loadGuide === 'function') { try { await loadGuide(true); } catch {} }
-	const fresh = (guideData?.channels || []).find(item => item.Id === channelId);
-	if (fresh) startPlayback(fresh, 0);
+	let channel = (guideData?.channels || []).find(item => item.Id === liveId);
+	if (!channel) {
+		// The guide may predate a lineup change; refresh once before giving up.
+		sportTodayAt = 0;
+		try { await loadGuide(true); } catch {}
+		channel = (guideData?.channels || []).find(item => item.Id === liveId);
+	}
+	if (channel) startPlayback(channel, 0);
 }
 function renderGuide() {
 	if (!guideData || state.type !== 'livetv') return;
@@ -3087,6 +3095,7 @@ async function showDetails(id) {
 	try {
 		const item = await api('/api/web/items/' + id);
 		if (!details.open) return;
+		if (item.Type !== 'Series') pendingSeason = null;
 		const art = element('img', 'detail-art');
 		setArtwork(art, item, true, 1200);
 		art.alt = '';
@@ -3152,7 +3161,12 @@ async function showDetails(id) {
 					button.onclick = () => choose(season); tabs.append(button); buttons.push([season, button]);
 				}
 				selector.append(heading, tabs);
-				if (seasons.length) { content.append(selector, list); choose(seasons.find(s => s > 0) ?? seasons[0]); }
+				if (seasons.length) {
+					content.append(selector, list);
+					const requested = Number.isInteger(pendingSeason) && seasons.includes(pendingSeason) ? pendingSeason : null;
+					pendingSeason = null;
+					choose(requested ?? seasons.find(s => s > 0) ?? seasons[0]);
+				}
 				else {
 					list.textContent = data.notice || 'No episodes are available for this series yet. It may appear later; try again.';
 					content.append(list);
@@ -4563,6 +4577,8 @@ async function init() {
 		else if(['movies','tvshows'].includes(view)){const library=state.libraries.find(item=>item.CollectionType===view);if(library)selectLibrary(library.Id);else void loadItems();}
 		else void loadItems();
 		const requestedItem = new URLSearchParams(location.search).get('item');
+		const requestedSeason = Number(new URLSearchParams(location.search).get('season'));
+		pendingSeason = Number.isInteger(requestedSeason) && requestedSeason >= 0 ? requestedSeason : null;
 		if (/^(?:[a-f0-9-]{32,36}|dispatch-live-[a-f0-9-]{36}|dispatch-(?:movie|series)-[1-9]\d*|dispatch-episode-[1-9]\d*-[1-9]\d*)$/i.test(requestedItem || '')) await showDetails(requestedItem);
 	} catch (error) {
 		$('#status').textContent = error.message;

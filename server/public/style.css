@@ -1091,9 +1091,13 @@ h2, h3, summary { text-wrap: balance; }
 .sport-choice input { margin: 0; }
 .sport-choice small { margin-left: auto; color: var(--muted); font-size: 11px; }
 /* Today's sport above the Live TV guide. */
-.live-sport-today { margin: 0 0 18px; }
-.live-sport-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-.live-sport-head h2 { margin: 2px 0 0; font-size: 20px; }
+.live-sport-today { margin: 0 0 18px; border: 1px solid var(--line); border-radius: 10px; background: #151a14; }
+.live-sport-today > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 10px 14px; cursor: pointer; font-weight: 700; list-style: none; }
+.live-sport-today > summary::-webkit-details-marker { display: none; }
+.live-sport-today > summary::after { content: '+'; color: var(--green); font-weight: 700; }
+.live-sport-today[open] > summary::after { content: '\2212'; }
+.live-sport-today > summary span:last-child { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: auto; margin-right: 10px; }
+.live-sport-list { padding: 0 14px 14px; }
 .live-sport-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
 .live-sport-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: #151a14; }
 .live-sport-card h3 { margin: 0 0 3px; font-size: 14px; line-height: 1.35; }

@@ -284,7 +284,7 @@ function renderDetails(item) {
 	heading.append(poster(item), text);
 	body.append(heading, node('p', item.overview || 'No description available yet.', 'request-overview'));
 	if (Array.isArray(item.cast) && item.cast.length) body.append(node('p', 'Starring ' + item.cast.map(person => person.name).join(', '), 'discover-cast'));
-	if(item.vodId && !item.watchId){const watch=node('div',undefined,'request-actions');const stream=node('a',item.type==='tv'?'▶ Browse streamed episodes':'▶ Stream now','button primary');stream.href='/?item='+encodeURIComponent(item.vodId)+'&from=discover';stream.addEventListener('click',saveHandoffState);watch.append(stream);body.append(watch,node('p',sourceLabel.available(item)+' Prefer a local copy? Request it below.','request-feedback'));}
+	if(item.vodId && !item.watchId){const watch=node('div',undefined,'request-actions');const stream=node('a',item.type==='tv'?'▶ Browse streamed episodes':'▶ Stream now','button primary');stream.href='/?item='+encodeURIComponent(item.vodId)+'&from=discover';stream.addEventListener('click',saveHandoffState);watch.append(stream);body.append(watch,node('p','Prefer a local copy? Request it below.','request-feedback'));}
 	body.append(TellyboxTaste.controls(item));
 	const inputs = [];
 	if (item.type === 'tv') {
@@ -304,7 +304,7 @@ function renderDetails(item) {
 			if (item.watchId && season.status === 5) {
 				const row = node('div', 'season-choice available-season');
 				const open = node('a', 'Open season \u2192', 'season-open');
-				open.href = '/?item=' + encodeURIComponent(item.watchId) + '&from=discover';
+				open.href = '/?item=' + encodeURIComponent(item.watchId) + '&season=' + season.number + '&from=discover';
 				open.addEventListener('click', saveHandoffState);
 				description.append(open);
 				row.append(description); fieldset.append(row);
@@ -320,7 +320,8 @@ function renderDetails(item) {
 	}
 	const actions = node('div', undefined, 'request-actions');
 	
-	if (item.watchId) { const link = node('a', item.type === 'tv' ? 'Browse available episodes' : 'Watch in Tellybox', 'button primary'); link.href = '/?item=' + encodeURIComponent(item.watchId) + '&from=discover'; link.addEventListener('click', saveHandoffState); actions.append(link); }
+	const localSeasons = item.type === 'tv' && item.seasons.some(season => season.status === 5);
+	if (item.watchId && (item.type === 'movie' || !localSeasons)) { const link = node('a', item.type === 'tv' ? 'Open series' : 'Watch in Tellybox', 'button primary'); link.href = '/?item=' + encodeURIComponent(item.watchId) + '&from=discover'; link.addEventListener('click', saveHandoffState); actions.append(link); }
 	const request = node('button', item.watchId ? (item.type === 'tv' ? 'Add missing seasons' : 'Local copy available') : item.type === 'tv' ? 'Add seasons to local collection' : 'Add to local collection', 'button ' + (item.watchId ? 'secondary' : 'primary'));
 	const canRequest = item.watchId ? item.type === 'tv' && item.seasons.some(s => s.requestable) : item.type === 'tv' ? item.seasons.some(s => s.requestable) : item.requestable;
 	if (canRequest) actions.append(request);

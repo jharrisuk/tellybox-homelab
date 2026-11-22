@@ -67,15 +67,15 @@ test('local viewing stays on the origin and remote viewing gets signed CDN artwo
 	const cookie = login.headers.get('set-cookie').split(';')[0];
 
 	const localPage = await (await call('local', '/')).text();
-	assert.ok(localPage.includes('href="/style.css"'), 'local page keeps the local stylesheet');
-	assert.ok(localPage.includes('src="/app.js"'), 'local page keeps local JavaScript');
+	assert.ok(/href="\/style\.css(?:\?[^"]*)?"/.test(localPage), 'local page keeps the local stylesheet');
+	assert.ok(/src="\/app\.js(?:\?[^"]*)?"/.test(localPage), 'local page keeps local JavaScript');
 	assert.ok(!localPage.includes('cdn.example.test'), 'local page has no CDN dependency');
 
 	const remotePage = await (await call('remote', '/', { headers: { Cookie: cookie } })).text();
-	assert.ok(remotePage.includes('href="/style.css"'), 'an unverified CDN asset stays on the origin');
+	assert.ok(/href="\/style\.css(?:\?[^"]*)?"/.test(remotePage), 'an unverified CDN asset stays on the origin');
 	assert.ok(!remotePage.includes('cdn.example.test/tellybox/'), 'no unverified CDN asset URL is advertised');
 	assert.ok(!remotePage.includes('data-tellybox-local'));
-	assert.match(remotePage, /src="\/app\.js"/, 'JavaScript stays local and ordered');
+	assert.match(remotePage, /src="\/app\.js(?:\?[^"]*)?"/, 'JavaScript stays local and ordered');
 	const remoteHeaders = await call('remote', '/', { headers: { Cookie: cookie } });
 	const csp = remoteHeaders.headers.get('content-security-policy');
 	assert.match(csp, /img-src[^;]*https:\/\/cdn\.example\.test/);

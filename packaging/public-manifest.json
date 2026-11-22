@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.75",
+	"serverVersion": "0.26.77",
 	"files": [
 		{
 			"path": ".env.example",
@@ -54,13 +54,13 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 32804,
-			"sha256": "a9bb0d1445d5bbd43ad8ae83bd5bdfe8bf92e6cc9f7fbf01e7a60d821dbdd005"
+			"bytes": 32844,
+			"sha256": "ed6ef84fde690c9ee4de5f683b34369c8123ec3a22dc681fe9e5ae0040d43f66"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 67862,
-			"sha256": "684ce169d9a321369664c7e2f840e06177f1a2676a0e4b105c2a537f0ff279b2"
+			"bytes": 68540,
+			"sha256": "38d0e3b283cce1e757b702b59b5f8f8e757376bfe4ec5ff0e1ec6e68039d536e"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -114,8 +114,8 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 56104,
-			"sha256": "cd9476765af48766c263ed39ae852a2819fa2983d812d6f2af1eb4fcdec36b82"
+			"bytes": 56144,
+			"sha256": "f024ad2352dc68cb2f17c029f6c10f43846c6da3b3f0da087fa9ad57585dbb8a"
 		},
 		{
 			"path": "docs/story.html",
@@ -685,12 +685,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "36f3d16c66d393436721f376068f1398bd82710163eff204631eed45bf62efd9"
+			"sha256": "48ca5c98ecaf5407d95be76618d071713820759168cefeb34ccf38a91dd35d01"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "cabcea56ba011ea8a32c2a83db33c9a00053ae3deb119f583852f45bea195d13"
+			"sha256": "13f693d35fd1ad8ad5bb39929e3b7495c1117066d7587b1dc41b13d9246f2476"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -769,8 +769,8 @@
 		},
 		{
 			"path": "server/public/app.js",
-			"bytes": 251233,
-			"sha256": "e0eb480d6a57d7096d9e2db32f3e3f083c318c94ae24d051763315af2c16a590"
+			"bytes": 252103,
+			"sha256": "13e4154f88e9162c09ac1c16c8de01b9413b6c5961261612f03a9b3e2a4cf000"
 		},
 		{
 			"path": "server/public/apps.html",
@@ -844,13 +844,13 @@
 		},
 		{
 			"path": "server/public/discover.html",
-			"bytes": 4901,
-			"sha256": "8c75b1b8caf278d85c86a55277fe049fbc94d7302ec6c432cd0a0618c090f4e7"
+			"bytes": 4913,
+			"sha256": "742de4fdb52409f37b7457be26f4224434766bbc2d47c5a9fb90fb8618b074b1"
 		},
 		{
 			"path": "server/public/discover.js",
-			"bytes": 34320,
-			"sha256": "28e83e676f736c79b6678100aa8b5fd87283cef3c40f6c7005155a4f2ac9b785"
+			"bytes": 34444,
+			"sha256": "6ceb555345058b1b70ee6573c56634d5402af5760684f92faa534a4e8ddcae32"
 		},
 		{
 			"path": "server/public/dispatcharr-settings.js",
@@ -874,8 +874,8 @@
 		},
 		{
 			"path": "server/public/index.html",
-			"bytes": 13819,
-			"sha256": "445bb3b3dc5c55f8e708bd7f8fddb052cfa9044bef861b0c02467637d37c5421"
+			"bytes": 13743,
+			"sha256": "2f976fb247b048c180ed32bf6050c736e3e268d863bdb96947b4f6358f51500f"
 		},
 		{
 			"path": "server/public/installation-settings.js",
@@ -1049,8 +1049,8 @@
 		},
 		{
 			"path": "server/public/style.css",
-			"bytes": 92701,
-			"sha256": "69afccedc8b72706cc9e98a46e36cf21d5b2285df9b882fb996ae1351784167b"
+			"bytes": 93207,
+			"sha256": "174c724875434dbd0950a9818574a9241434222eb4a564cbe55abeed9e796bd6"
 		},
 		{
 			"path": "server/public/subtitle-settings.js",
@@ -1359,8 +1359,8 @@
 		},
 		{
 			"path": "server/test/artwork-cdn-server-094.test.mjs",
-			"bytes": 8318,
-			"sha256": "d42f0dd54d1472fe8680696aa3893a10639ad5f6b84aedfaf2daa750ee7e6713"
+			"bytes": 8360,
+			"sha256": "ff0899e6d14e173c357261e747fe5993e1285df5963511605a2ce389efdd5acf"
 		},
 		{
 			"path": "server/test/artwork-fallback-103.test.mjs",
@@ -1648,6 +1648,11 @@
 			"sha256": "79b57aa9854ad5e22f4eb40446649e560d38a4bff824b699b9c32587bd1187b8"
 		},
 		{
+			"path": "server/test/discover-season-link-077.test.mjs",
+			"bytes": 700,
+			"sha256": "53b6b8b62a6a0058e4bea43884591649508d603a7498df69e9a0d11266715255"
+		},
+		{
 			"path": "server/test/discover-web-128b.test.mjs",
 			"bytes": 11341,
 			"sha256": "b19d8f6e2edae0a9ecd80672c6d7c3677f228356ecd5b28840d645208ea1df84"
@@ -1835,7 +1840,7 @@
 		{
 			"path": "server/test/home-artwork-web-128.test.mjs",
 			"bytes": 11611,
-			"sha256": "9473ec89304128654ef4167466a1998c4263e7f23897f0f021b67d4a2c3985e1"
+			"sha256": "1da68ec26a0a200b9e80b5837bbf86a520225c92c01b375f6a3cc9dc0fa95c26"
 		},
 		{
 			"path": "server/test/home-assistant-admin.test.mjs",
@@ -2124,8 +2129,8 @@
 		},
 		{
 			"path": "server/test/live-sport-today-web-076.test.mjs",
-			"bytes": 523,
-			"sha256": "b71288e3a7d557ad152c020db993173e494090b9d58a90ce254d59d688c4a723"
+			"bytes": 816,
+			"sha256": "3e1621171e758e818f51c31f6bec8f7bf878aac450728ff92c4a3fc4d0410ace"
 		},
 		{
 			"path": "server/test/live-tv.test.mjs",
@@ -2274,8 +2279,8 @@
 		},
 		{
 			"path": "server/test/playback-tuning-provider.test.mjs",
-			"bytes": 5502,
-			"sha256": "eb9f4bbe6d566fa4bd059d09b9eea58a7bfba22a222eac7b85679e58c19362f8"
+			"bytes": 5469,
+			"sha256": "e39e93bdeff43ee7a2a12d08fc8200b1aaa182312b65d1d97bf6b084aa6de91a"
 		},
 		{
 			"path": "server/test/playback-warning-099.test.mjs",
@@ -2679,8 +2684,8 @@
 		},
 		{
 			"path": "server/test/still-watching-web-108.test.mjs",
-			"bytes": 5698,
-			"sha256": "5ed6ab0f78bdfd92da4f7229f15f2f322698838bfd97ebb40164d9388ac0a5d0"
+			"bytes": 5697,
+			"sha256": "5a6842ba85e6ee4f2d5038189825313b43d31a5502b963297e4c00803e68d05f"
 		},
 		{
 			"path": "server/test/stream-monitor-132-browser.mjs",
@@ -2930,7 +2935,7 @@
 		{
 			"path": "server/test/web-perf-125.test.mjs",
 			"bytes": 21643,
-			"sha256": "d12ff8f863aed17a7438a9031066d92cc19d7eeb7d21563ca58323a9713e393e"
+			"sha256": "6e24cb3223427deb9850894d395057cc8d5128c9c431109a17aff9030b618da3"
 		},
 		{
 			"path": "server/test/web-preferences.test.mjs",

@@ -11,3 +11,9 @@ test('the Live TV page carries a today sport strip above the guide', () => {
 	assert.match(app, /\/api\/sport-today/);
 	assert.match(app, /playSportChannel/);
 });
+
+test('the sport strip is a collapsed section, not always-on furniture', () => {
+	assert.match(html, /<details id="liveSportToday"[^>]*hidden/);
+	assert.match(html, /<summary><span>Sport on TV<\/span>/);
+	assert.match(app, /section\.hidden = !\$\('#liveSportList'\)\?\.children\.length/);
+});
