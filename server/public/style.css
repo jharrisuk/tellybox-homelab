@@ -1084,3 +1084,9 @@ h2, h3, summary { text-wrap: balance; }
 /* Clamped / fixed-height text keeps default wrapping so truncation stays predictable. */
 .card h3, .card p, .hero-description, .continue-title, .continue-meta,
 .discover-card > strong, .catchup-overview { text-wrap: wrap; }
+
+/* Sport listing selection on the local administrator settings page. */
+.sport-settings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin: 12px 0; }
+.sport-choice { display: flex; align-items: center; gap: 8px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: #151a14; cursor: pointer; }
+.sport-choice input { margin: 0; }
+.sport-choice small { margin-left: auto; color: var(--muted); font-size: 11px; }

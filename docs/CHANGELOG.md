@@ -12,6 +12,18 @@ installation.
 - Home has a Sport on TV rail with the next fixtures, the channels in your
   lineup that show them, and tap-for-details including fighters and notes.
 
+## Server 0.26.73 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Settings
+
+- Settings > Server > Sport on TV lists every sport the listing source provides,
+  with a checkbox for each, the football scope and an on/off switch. The current
+  next-three-days count appears beside each sport. Only a local administrator
+  can save; viewers see the resulting board read-only.
+
 ## Server 0.26.72 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

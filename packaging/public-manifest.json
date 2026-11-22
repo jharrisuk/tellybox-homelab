@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.72",
+	"serverVersion": "0.26.73",
 	"files": [
 		{
 			"path": ".env.example",
@@ -54,13 +54,13 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 30170,
-			"sha256": "536960ff3b49dd312ac48ef5f642c2c88b3cb26cfdeb8050e6b894d8fcd433e6"
+			"bytes": 30239,
+			"sha256": "8c33660ac2c9863cc56ca5127ae61c0666bba889d5c95b1ffd48ebc1f643a407"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 65388,
-			"sha256": "4b624d2d1fbcc51dec8759ee9024206cf4300890dbd5f16e267b1d9cee08b7e4"
+			"bytes": 65831,
+			"sha256": "9346bb72bd2672c4cefea2ea3e5ac7e6bd232f037b785594f73c7824158f55c5"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -114,8 +114,8 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 53510,
-			"sha256": "ceece45c319304cf4ade33109aa46bbfa5faa521e1eaba783c6622487fe1b7a4"
+			"bytes": 53579,
+			"sha256": "820c9f632422a37fb1dc2f0038e782a23dc60c943b8df2e439dfdde33f71be25"
 		},
 		{
 			"path": "docs/story.html",
@@ -685,12 +685,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "a0ce174afb9d85065a3556248e5fb61d7806a58757ed130aea7f7bc09fa31c8d"
+			"sha256": "fbefd5a3b75bf126f5f5ced9aa164924810df4817b4810d647818621f7edc783"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "e0b086c16ddb02adf5a62009cf3cb7e5c7f99d88de495bb3dee191a131a57846"
+			"sha256": "ad58b739859d6afb5de06a633b643f4df39833141a5db896009ca79aed5f3767"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -1009,8 +1009,8 @@
 		},
 		{
 			"path": "server/public/settings.html",
-			"bytes": 27129,
-			"sha256": "30bd5f71a6112c92263a6a7cbbec0cea73aeb6367dc95ed4177ddc6666236aa6"
+			"bytes": 28490,
+			"sha256": "a157e5102cf3e1ad9918d4de35a04ee0b55c2d6126e36d51ce78a1eb94c0a8cc"
 		},
 		{
 			"path": "server/public/settings.js",
@@ -1038,14 +1038,19 @@
 			"sha256": "24470ddece1a439dc1853135c0ff686790aae124e7fed1821dd616d94a56a037"
 		},
 		{
+			"path": "server/public/sport-settings.js",
+			"bytes": 4688,
+			"sha256": "c7264e549d965383494a275ffef5c6f8941173cea1fb08752d6a1006279848fa"
+		},
+		{
 			"path": "server/public/still-watching.js",
 			"bytes": 10107,
 			"sha256": "b518ed6ab32c0f74452555d4b99c34178c5a202ddae92254f655a01dea1fd018"
 		},
 		{
 			"path": "server/public/style.css",
-			"bytes": 90823,
-			"sha256": "ada58b10eb72a4a25558c36d4f6d9dedd6c258cc7fc33ab033c701ed5e9039b4"
+			"bytes": 91311,
+			"sha256": "2271882d8734c062dcfb7df8ea6de06130f45231b1dd0273a7a4e8fb5d87a3da"
 		},
 		{
 			"path": "server/public/subtitle-settings.js",
@@ -2646,6 +2651,11 @@
 			"path": "server/test/sport-settings-q80.test.mjs",
 			"bytes": 14625,
 			"sha256": "1b2f05611934dd08734bf7f1972143ccedcad426c8f924ab465d5397428a23cf"
+		},
+		{
+			"path": "server/test/sport-settings-ui-073.test.mjs",
+			"bytes": 970,
+			"sha256": "a86331e696998ed0d094e5455793c214e5243b7778912fac0e7959d5c99f3ae2"
 		},
 		{
 			"path": "server/test/start-over.test.mjs",
