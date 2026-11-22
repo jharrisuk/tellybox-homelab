@@ -124,6 +124,15 @@ const SPORT_LABELS = {
 	mma: 'MMA', motogp: 'MotoGP', motorsport: 'Motorsport', pool: 'Pool', rugby: 'Rugby',
 	snooker: 'Snooker', tennis: 'Tennis', 'winter-sports': 'Winter Sports'
 };
+const SPORT_GLYPHS = {
+	'american-football': '\u{1F3C8}', 'australian-rules': '\u{1F3C9}', basketball: '\u{1F3C0}',
+	boxing: '\u{1F94A}', cricket: '\u{1F3CF}', cycling: '\u{1F6B4}', darts: '\u{1F3AF}',
+	football: '\u26BD', 'formula-1': '\u{1F3CE}\uFE0F', golf: '\u26F3', 'horse-racing': '\u{1F40E}',
+	'ice-hockey': '\u{1F3D2}', mma: '\u{1F94B}', motogp: '\u{1F3CD}\uFE0F', motorsport: '\u{1F3C1}',
+	pool: '\u{1F3B1}', rugby: '\u{1F3C9}', snooker: '\u{1F3B1}', tennis: '\u{1F3BE}',
+	'winter-sports': '\u26F7\uFE0F'
+};
+function sportGlyph(slug) { return SPORT_GLYPHS[slug] || '\u25CF'; }
 function sportLabel(slug) {
 	return SPORT_LABELS[slug] || String(slug || '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
@@ -137,7 +146,11 @@ function sportCard(item) {
 	const when = element('span', 'sport-when');
 	when.append(element('strong', '', sportTime(item)), element('span', '', item.dateLabel));
 	button.append(when, element('strong', 'sport-title', item.title));
-	if (item.competition) button.append(element('span', 'sport-comp', item.competition));
+	const kind = element('span', 'sport-comp');
+	const icon = element('span', 'sport-icon', sportGlyph(item.sport));
+	icon.setAttribute('aria-hidden', 'true');
+	kind.append(icon, element('span', '', ' ' + sportLabel(item.sport) + (item.competition ? ' \u00b7 ' + item.competition : '')));
+	button.append(kind);
 	const owned = ownedChannels(item);
 	if (owned.length) {
 		const line = element('span', 'coming-channels');
@@ -309,7 +322,7 @@ function detailsMarkup(item) {
 	const body = element('div', 'detail-content coming-details');
 	const title = element('h2', '', item.title); title.id = 'comingDetailsTitle';
 	if (item.type === 'sport') {
-		const eyebrow = isFootballItem(item) ? 'FOOTBALL ON TV' : sportLabel(item.sport).toUpperCase() + ' ON TV';
+		const eyebrow = sportGlyph(item.sport) + ' ' + (isFootballItem(item) ? 'FOOTBALL ON TV' : sportLabel(item.sport).toUpperCase() + ' ON TV');
 		body.append(element('p', 'eyebrow', eyebrow), title,
 			element('p', 'coming-date', `${item.dateLabel} · ${jserverUI.comingDate(item)}`),
 			...(item.competition ? [element('p', 'overview', item.competition)] : []),

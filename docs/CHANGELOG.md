@@ -12,6 +12,26 @@ installation.
 - Home has a Sport on TV rail with the next fixtures, the channels in your
   lineup that show them, and tap-for-details including fighters and notes.
 
+## Server 0.26.71 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Coming soon
+
+- Each fixture card shows a pictogram for its sport next to the name, such as a
+  ball, boxing glove, race helmet or skier, so a mixed sport list scans faster.
+
+## Android 0.26.39 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Sport
+
+- The TV sport board and the phone Sport on TV rail show the same sport
+  pictograms as the web page.
+
 ## Server 0.26.70 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.70",
+	"serverVersion": "0.26.71",
 	"files": [
 		{
 			"path": ".env.example",
@@ -54,13 +54,13 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 29812,
-			"sha256": "2818f8b32ebdfd2a0c6dcaa26a31d3afae8df6d5b2a9ade097a71d29d2ce3141"
+			"bytes": 29953,
+			"sha256": "8863d89cf555a90e7e79b62313b431d44c77bf5d5cad5966959461c89c548dae"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 64083,
-			"sha256": "209e17a115417c687596d1511b6a785f177fc2f5a40fe9f2eb109a70474e64b4"
+			"bytes": 64642,
+			"sha256": "d2c0f7961db2c6beecee06e200c1ed2588820caedf5a52653e107f76358520cb"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -114,8 +114,8 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 53152,
-			"sha256": "3a1b3d7c08cfdfe01c14d4bcd07a9f06e20551c7d0bac05fca21c13e9b76be01"
+			"bytes": 53293,
+			"sha256": "6da3bc297165c1877d18c13fac991b0d3701cd9a9018f310cf55ef30bc2f865e"
 		},
 		{
 			"path": "docs/story.html",
@@ -685,12 +685,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "1ab75b501762a61d957e61007f8e1bb07bd65c608518d586b172e7b8d1baf254"
+			"sha256": "df73cff6ca576215afc59d78c930824a4c776f91980ad08608647b94a61f2d85"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "4f992b9eaf2d9df52794edcad8b317522ad21512105223135651acf1f1e40d29"
+			"sha256": "da168e4c2b4c2db92d4f19ca70d680f99c4d393f8c52259106b5995f6800cb7e"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -824,13 +824,13 @@
 		},
 		{
 			"path": "server/public/coming-soon.html",
-			"bytes": 5245,
-			"sha256": "24424b3820591d68ecc43925630b18fbc68927b78c63b0550f273fd2a196a839"
+			"bytes": 5248,
+			"sha256": "2b81c68511eab728a09e6e3e8831fe700e6acbefa7709603606176a5bf2bd62d"
 		},
 		{
 			"path": "server/public/coming-soon.js",
-			"bytes": 20779,
-			"sha256": "a09b813ac492108a23aebe30fb520d37365c05dcb9e54398a6d1f122648cdbc9"
+			"bytes": 21619,
+			"sha256": "ab12a021b490d44ffc0e22a74cd921fe2e5eb2d0d4e858342fa06bbb32134c8a"
 		},
 		{
 			"path": "server/public/connection-status.js",
@@ -1529,8 +1529,8 @@
 		},
 		{
 			"path": "server/test/coming-sport-q77.test.mjs",
-			"bytes": 15950,
-			"sha256": "8096d0e639f63974c124ce2f03d676eaa236a74c37e56375ffb325a48aa8e43d"
+			"bytes": 16062,
+			"sha256": "9825b5293a83bcabbd3ba5be69fc9389e049ee568e9cada64103c3667c0bb96c"
 		},
 		{
 			"path": "server/test/connection-status.test.mjs",

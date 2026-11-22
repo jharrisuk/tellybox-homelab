@@ -226,6 +226,7 @@ test('a day with only a non-football fixture still shows the sport marker', asyn
 	assert.equal(marker.children[1].textContent, '1', 'the marker counts the boxing fixture');
 	assert.match(marker.getAttribute('aria-label'), /sport fixture/);
 	assert.match(textOf(selectorNode('#sportList')), /Live Boxing/, 'the fixture is listed on a day with no football');
+	assert.ok(textOf(selectorNode('#sportList')).includes('\u{1F94A}'), 'a boxing card carries the boxing glyph');
 });
 
 test('the sport list expands inline instead of hiding behind a details toggle', async () => {
