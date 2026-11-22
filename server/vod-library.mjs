@@ -116,6 +116,35 @@ function mergeEpisodeRows(current,incoming,now) {
 		merged.ProviderIds={...loser.ProviderIds,...winner.ProviderIds};
 	return merged;
 }
+const LOCAL_IMAGE_ID = /^[a-f0-9-]{32,36}$/i;
+const VOD_SERIES_ALIAS = /^\/api\/web\/art\/series\/\d+(?:\?[^#]*)?$/;
+// A merged local episode can inherit the streamed duplicate's provider alias,
+// which 404s when the provider row has no logo or TMDB id (the reported
+// Succession case). Keep the episode's own Jellyfin still; otherwise use the
+// local series poster and expose its backdrop for 16:9 thumbnail slots. A
+// streamed-only series keeps the honest provider route it was given.
+function repairEpisodeArtwork(items, series) {
+	if (clean(series?.Source) !== 'local') return items;
+	const seriesId = LOCAL_IMAGE_ID.test(clean(series?.Id)) ? series.Id : '';
+	const hasSeriesPrimary = Boolean(series?.ImageTags?.Primary) || /^\/images\//i.test(clean(series?.Artwork));
+	const hasSeriesBackdrop = (Array.isArray(series?.BackdropImageTags) && series.BackdropImageTags.length > 0)
+		|| /^\/images\//i.test(clean(series?.BackdropArtwork));
+	return items.map(item => {
+		if (clean(item?.Source) !== 'local') return item;
+		const artwork = clean(item.Artwork);
+		let next = item;
+		if (!artwork || VOD_SERIES_ALIAS.test(artwork)) {
+			const ownStill = item.ImageTags?.Primary && LOCAL_IMAGE_ID.test(clean(item.Id))
+				? '/images/' + item.Id + '/Primary?width=400' : '';
+			const poster = ownStill || (seriesId && hasSeriesPrimary ? '/images/' + seriesId + '/Primary?width=400' : '');
+			if (poster) next = { ...next, Artwork: poster };
+		}
+		if (!clean(next.BackdropArtwork) && seriesId && hasSeriesBackdrop) {
+			next = { ...next, BackdropArtwork: '/images/' + seriesId + '/Backdrop?width=1280' };
+		}
+		return next;
+	});
+}
 export function mergeEpisodes(local,remote,series,now=Date.now()) {
 	const byNumber=new Map(),extras=[];
 	for(const item of [...remote,...local.map(e=>({...e,Source:'local'}))]) {
@@ -125,8 +154,8 @@ export function mergeEpisodes(local,remote,series,now=Date.now()) {
 		byNumber.set(key,{...merged,SeriesId:series.Id,SeriesName:series.Name});
 	}
 	const order=value=>Number.isInteger(value)?value:Number.MAX_SAFE_INTEGER;
-	return [...byNumber.values(),...extras].sort((a,b)=>order(a.ParentIndexNumber)-order(b.ParentIndexNumber)||order(a.IndexNumber)-order(b.IndexNumber)
-		||clean(a.Name).localeCompare(clean(b.Name))||String(a.Id??'').localeCompare(String(b.Id??'')));
+	return repairEpisodeArtwork([...byNumber.values(),...extras].sort((a,b)=>order(a.ParentIndexNumber)-order(b.ParentIndexNumber)||order(a.IndexNumber)-order(b.IndexNumber)
+		||clean(a.Name).localeCompare(clean(b.Name))||String(a.Id??'').localeCompare(String(b.Id??''))),series);
 }
 
 export function createVodLibrary({dispatcharr,localItems,localItem,localEpisodes,file,linksFile,seriesLinks={},metadata,clock=Date.now,indexFile=file+'.series.json'}) {

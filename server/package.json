@@ -1,6 +1,6 @@
 {
   "name": "tellybox-homelab",
-  "version": "0.26.77",
+  "version": "0.26.81",
   "private": true,
   "type": "module",
   "scripts": {

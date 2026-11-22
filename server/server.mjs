@@ -1626,7 +1626,22 @@ app.get('/api/web/items/:id',async(req,res)=>{
 	}
 	res.json(item);
 });
-app.get('/api/web/items/:id/episodes',async(req,res)=>res.json(await vodLibrary.episodes(req.params.id)));
+app.get('/api/web/items/:id/episodes',async(req,res)=>{
+	const value=await vodLibrary.episodes(req.params.id);
+	// Episode lists restored from an older cache can still carry the streamed
+	// duplicate's 404 art alias. Repair them on read as well as at merge time.
+	const id=String(req.params.id||'');
+	if(!/^[a-f0-9-]{32,36}$/i.test(id))return res.json(value);
+	let parent=null;
+	try{parent=await metadata(`series-art:${id}`,()=>jelly(`/Users/${connection().userId}/Items/${id}`));}catch{parent=null;}
+	if(!parent||parent.Type!=='Series')return res.json(value);
+	const index=seriesArtworkIndex([{...parent,Source:'local'}]);
+	res.json({...value,items:value.items.map(item=>{
+		const view={...item};
+		episodeParentArtwork(view,{SeriesId:item.SeriesId||id,Id:item.Id,ImageTags:item.ImageTags},index);
+		return view;
+	})});
+});
 // Owner-only upstream stream monitor. The main app has no owner session of its
 // own: it forwards ONLY the existing installation cookie to the fixed loopback
 // setup endpoint, which validates the session before its cache or upstream
@@ -2088,7 +2103,7 @@ async function seriesEpisodes(id) {
 	const index = parent && parent.Type === 'Series' ? seriesArtworkIndex([parent]) : new Map();
 	return episodes.map(episode => {
 		const view = itemView(episode);
-		if (index.size) episodeParentArtwork(view, { SeriesId: episode.SeriesId || id }, index);
+		if (index.size) episodeParentArtwork(view, { SeriesId: episode.SeriesId || id, Id: episode.Id, ImageTags: episode.ImageTags }, index);
 		return view;
 	});
 }

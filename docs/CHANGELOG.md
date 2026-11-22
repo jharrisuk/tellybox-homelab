@@ -2,6 +2,42 @@
 
 User-facing changes in Tellybox releases. Server and Android versions are independent.
 
+## Server 0.26.81 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Artwork
+
+- Series episode lists keep each episode's own local still. Episode lists saved
+  before this fix are repaired when read, so no restart or cache expiry is
+  needed.
+- Episode thumbnails load immediately rather than waiting on a deferred image.
+
+## Android 0.26.44 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Artwork
+
+- Episode rows no longer leave a blank image when a local episode is merged with
+  a streamed duplicate whose provider artwork route is missing. The episode
+  keeps its own still, or falls back to the series backdrop.
+
+## Server 0.26.78 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Artwork
+
+- A series detail page keeps each local episode's own still instead of a broken
+  streamed `art/series/<id>` alias; an episode with no still uses the series
+  poster, and the web list prefers the series backdrop in its 16:9 slot.
+- The repair happens when local and streamed episodes are merged, so web, phone
+  and TV show the same image.
+
 ## Android 0.26.43 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

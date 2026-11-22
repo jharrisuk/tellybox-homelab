@@ -3240,13 +3240,39 @@ function episodeRelease(item) {
 	const date=new Date(value+'T00:00:00Z');
 	return Number.isFinite(date.getTime())?'Aired '+date.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}):'';
 }
+// Episode thumbnails are 16:9, so a missing still prefers the series backdrop
+// over the series poster. The local route may still 404; hide the slot then.
+function setEpisodeStill(image, item, width = 360) {
+	const hasStill = Boolean(item.Artwork || item.ArtworkLocal || item.ImageTags?.Primary);
+	const seriesId = String(item.ParentBackdropItemId || item.SeriesId || '');
+	const backdrop = item.BackdropArtworkLocal || item.BackdropArtwork
+		|| (/^[a-f0-9-]{32,36}$/i.test(seriesId) ? `/images/${seriesId}/Backdrop?width=${width}` : '');
+	if (!hasStill && backdrop) setArtwork(image, { ...item, Artwork: backdrop, ArtworkLocal: backdrop }, true, width);
+	else setArtwork(image, item, false, width);
+	if (!backdrop) { image.addEventListener('error', () => { image.style.visibility = 'hidden'; }, true); return image; }
+	image.dataset.episodeBackdrop = backdrop;
+	image.addEventListener('error', () => {
+		const fallback = image.dataset.episodeBackdrop;
+		let current = '';
+		try { current = new URL(fallback, location.origin).href; } catch {}
+		if (fallback && image.src !== current) {
+			delete image.dataset.tellyboxLocal;
+			delete image.dataset.tellyboxPoster;
+			delete image.dataset.tellyboxFallback;
+			image.src = fallback;
+			return;
+		}
+		image.style.visibility = 'hidden';
+	}, true);
+	return image;
+}
 function renderEpisodes(items, list) {
 	list.replaceChildren();
 	for (const item of items) {
 		const button = element('button', 'episode');
 		const thumbnail = element('img', 'episode-thumb');
-		setArtwork(thumbnail, item, false, 360);
-		thumbnail.alt = ''; thumbnail.loading = 'lazy'; thumbnail.onerror = () => { if (!thumbnail.dataset.tellyboxFallback) thumbnail.style.visibility = 'hidden'; };
+		setEpisodeStill(thumbnail, item, 360);
+		thumbnail.alt = '';
 		const text = element('span', 'episode-text');
 		const progress = getProgress(item.Id);
 		text.append(element('span', 'episode-kicker', `${item.IndexNumber ? 'EPISODE ' + item.IndexNumber + ' · ' : ''}${minutes(item.RunTimeTicks)}`), element('span', 'episode-title', item.Name), element('span','episode-release',episodeRelease(item)), element('span', 'episode-overview', item.Overview || 'Ready to watch.'), element('span', 'episode-action', progress > 30 ? `Continue · ${Math.floor(progress / 60)} min in` : '▶ Play episode'));
@@ -3618,7 +3644,7 @@ function renderEnd(host) {
 		const more=element('section','episode-end-more'),cards=element('div','episode-end-cards');
 		more.append(element('h3','','More to explore'),element('p','muted',nextResult.suggestionGenre?'More in '+nextResult.suggestionGenre:'Choose a show to see its episodes.'));
 		for (const item of suggestions) {
-			const button=element('button','episode-end-card'),image=element('img');setArtwork(image,item);image.alt='';image.onerror=()=>{if(!image.dataset.tellyboxFallback)image.style.visibility='hidden';};
+			const button=element('button','episode-end-card'),image=element('img');setEpisodeStill(image,item,400);image.alt='';
 			button.setAttribute('aria-label','View series: '+item.Name);button.append(image,element('span','episode-end-name',item.Name),element('small','','View series'));
 			button.onclick=()=>{closePlayer();void showDetails(item.Id);};cards.append(button);
 		}

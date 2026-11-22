@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.77",
+	"serverVersion": "0.26.81",
 	"files": [
 		{
 			"path": ".env.example",
@@ -55,12 +55,12 @@
 		{
 			"path": "docs/build-guide.mjs",
 			"bytes": 32844,
-			"sha256": "ed6ef84fde690c9ee4de5f683b34369c8123ec3a22dc681fe9e5ae0040d43f66"
+			"sha256": "2678023a9a4569a24c678693d5e24a06e353a6ff3439301c8eb45c38f412fd89"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 68540,
-			"sha256": "38d0e3b283cce1e757b702b59b5f8f8e757376bfe4ec5ff0e1ec6e68039d536e"
+			"bytes": 69784,
+			"sha256": "01109164b964f65a6adc6c88930bab731dc5771acfa1a9d3be990dcee8de228f"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -115,7 +115,7 @@
 		{
 			"path": "docs/site/index.html",
 			"bytes": 56144,
-			"sha256": "f024ad2352dc68cb2f17c029f6c10f43846c6da3b3f0da087fa9ad57585dbb8a"
+			"sha256": "eb9f92bba2f5723a8248e70581414fa4190ac23464b4ddf7c1a843f396d9a03e"
 		},
 		{
 			"path": "docs/story.html",
@@ -685,12 +685,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "48ca5c98ecaf5407d95be76618d071713820759168cefeb34ccf38a91dd35d01"
+			"sha256": "b7494d293ed24a706fecd3f3196463110aa89db99abcd94479ab6558bf5bb734"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "13f693d35fd1ad8ad5bb39929e3b7495c1117066d7587b1dc41b13d9246f2476"
+			"sha256": "0c4ce0b48d8c356953192ed953e62e83e60ab9982780ba7d59837987b8c3f9bd"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -769,8 +769,8 @@
 		},
 		{
 			"path": "server/public/app.js",
-			"bytes": 252103,
-			"sha256": "13e4154f88e9162c09ac1c16c8de01b9413b6c5961261612f03a9b3e2a4cf000"
+			"bytes": 253197,
+			"sha256": "7dc01c4977c601678aa9500bcfe80e4ec4032cc1f06f869edbb3cc6415a55a82"
 		},
 		{
 			"path": "server/public/apps.html",
@@ -845,7 +845,7 @@
 		{
 			"path": "server/public/discover.html",
 			"bytes": 4913,
-			"sha256": "742de4fdb52409f37b7457be26f4224434766bbc2d47c5a9fb90fb8618b074b1"
+			"sha256": "484459635677746e3c78885da86d757cf0ccdd5b6d75eff7bc5808ca284ce4ec"
 		},
 		{
 			"path": "server/public/discover.js",
@@ -875,7 +875,7 @@
 		{
 			"path": "server/public/index.html",
 			"bytes": 13743,
-			"sha256": "2f976fb247b048c180ed32bf6050c736e3e268d863bdb96947b4f6358f51500f"
+			"sha256": "9e9488b52d8b076306f586add47e9b140ab3e32de1a01a21ca37976b26e4ae42"
 		},
 		{
 			"path": "server/public/installation-settings.js",
@@ -1194,8 +1194,8 @@
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 198493,
-			"sha256": "58634431cc27044d83ea229c37b92d4d4bb62ef6f82da75c88e477c19b05eb67"
+			"bytes": 199258,
+			"sha256": "f3d92606ff74f17492922108e7ebf6e2e66a77993dc33a909134d3eaf5b6a18f"
 		},
 		{
 			"path": "server/session-limits.mjs",
@@ -1751,6 +1751,11 @@
 			"path": "server/test/episode-artwork-fallback-158.test.mjs",
 			"bytes": 7576,
 			"sha256": "b7dace239fe62b4393845636b0d7e55f363d66c0da1d7eb37ddf7515c0cbf5eb"
+		},
+		{
+			"path": "server/test/episode-artwork-merge-078.test.mjs",
+			"bytes": 2909,
+			"sha256": "177b3eb83e5be71d2686150dd96c41207e4d2928cb46d0ea74555d2fc1aeb18b"
 		},
 		{
 			"path": "server/test/episode-end.test.mjs",
@@ -3004,8 +3009,8 @@
 		},
 		{
 			"path": "server/vod-library.mjs",
-			"bytes": 46420,
-			"sha256": "ff5565a124da7967ad9891485f47ef6ec0db1591195aa7339621d3c3643567bd"
+			"bytes": 48078,
+			"sha256": "bc33aabdb94ad206bba37decf3fb4dce0fd2cccbd344ac21a3970dc6f4f0c611"
 		},
 		{
 			"path": "server/vod-metadata.mjs",
