@@ -191,16 +191,25 @@ function sportDayCounts(items) {
 		const date = new Date(item.date);
 		if (!Number.isFinite(date.getTime())) continue;
 		const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-		counts.set(key, (counts.get(key) || 0) + 1);
+		const day = counts.get(key) || { total: 0, sports: new Map() };
+		const sport = item.sport || 'football';
+		day.total++;
+		day.sports.set(sport, (day.sports.get(sport) || 0) + 1);
+		counts.set(key, day);
+	}
+	for (const day of counts.values()) {
+		day.bySport = [...day.sports.entries()]
+			.map(([sport, count]) => ({ sport, count, label: sportLabel(sport) }))
+			.sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
 	}
 	return counts;
 }
 
 // --- calendar ------------------------------------------------------------
-function calendarDay(day, sportCount) {
+function calendarDay(day, sportDay) {
 	// A day with no release and no fixture keeps its grid slot but draws no
 	// square at all: an empty box reads as a missing card rather than a quiet day.
-	if (!day.items.length && !sportCount) {
+	if (!day.items.length && !sportDay) {
 		const gap = element('div', 'calendar-day empty');
 		gap.setAttribute('aria-hidden', 'true');
 		return gap;
@@ -221,13 +230,19 @@ function calendarDay(day, sportCount) {
 	}
 	// A small marker, not a second fixture list: icon + count, jumping to the
 	// sport panel. It follows the UK toggle so the count always matches it.
-	if (sportCount) {
+	if (sportDay) {
 		const marker = element('button', 'calendar-sport');
 		marker.type = 'button';
-		marker.setAttribute('aria-label', `${sportCount} sport fixture${sportCount === 1 ? '' : 's'} - view sport`);
-		const glyph = element('span', 'calendar-sport-glyph', '\u25cf');
-		glyph.setAttribute('aria-hidden', 'true');
-		marker.append(glyph, element('span', '', String(sportCount)));
+		const summary = sportDay.bySport.map(entry => `${entry.label} ${entry.count}`).join(', ');
+		marker.setAttribute('aria-label', `${sportDay.total} sport fixture${sportDay.total === 1 ? '' : 's'}: ${summary}`);
+		for (const entry of sportDay.bySport.slice(0, 3)) {
+			const pair = element('span', 'calendar-sport-pair');
+			const glyph = element('span', 'calendar-sport-glyph', sportGlyph(entry.sport));
+			glyph.setAttribute('aria-hidden', 'true');
+			pair.append(glyph, element('span', '', String(entry.count)));
+			marker.append(pair);
+		}
+		if (sportDay.bySport.length > 3) marker.append(element('span', 'calendar-sport-more', `+${sportDay.bySport.length - 3}`));
 		marker.onclick = () => focusSport();
 		items.append(marker);
 	}
@@ -246,7 +261,7 @@ function calendarGrid(days, sportCounts) {
 	});
 	for (const row of jserverCalendar.weeks(days)) {
 		for (const day of row) {
-			if (day) { cells.push(calendarDay(day, sportCounts.get(day.key) || 0)); continue; }
+			if (day) { cells.push(calendarDay(day, sportCounts.get(day.key) || null)); continue; }
 			const gap = element('div', 'calendar-day empty');
 			gap.setAttribute('aria-hidden', 'true');
 			cells.push(gap);

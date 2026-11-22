@@ -170,7 +170,8 @@ function renderedMarkerCounts(grid) {
 		if (node.className !== 'calendar-sport') return;
 		const section = node.__section;
 		const label = section.getAttribute('aria-label');
-		counts.set(label, (counts.get(label) || 0) + Number(node.children[1].textContent));
+		const total = /^(\d+) sport fixture/.exec(node.getAttribute('aria-label') || '');
+		counts.set(label, (counts.get(label) || 0) + Number(total ? total[1] : 0));
 	});
 	return counts;
 }
@@ -200,8 +201,8 @@ test('the calendar keeps Monday alignment and marks fixture days with icon and c
 		if (node.className !== 'calendar-sport') return;
 		markers++;
 		assert.equal(node.tag, 'button');
-		assert.equal(node.children[0].textContent, '\u25cf');
-		assert.equal(node.children[0].getAttribute('aria-hidden'), 'true');
+		assert.equal(node.children[0].children[0].textContent, '\u26BD');
+		assert.equal(node.children[0].children[0].getAttribute('aria-hidden'), 'true');
 		assert.match(node.getAttribute('aria-label'), /sport fixture/);
 		node.onclick(); // jumps to the sport panel; must not throw in any environment
 	});
@@ -223,10 +224,31 @@ test('a day with only a non-football fixture still shows the sport marker', asyn
 	let marker = null;
 	walk(grid, node => { if (node.className === 'calendar-sport') marker = node; });
 	assert.ok(marker, 'a boxing-only day carries a marker');
-	assert.equal(marker.children[1].textContent, '1', 'the marker counts the boxing fixture');
+	assert.equal(marker.children[0].children[0].textContent, '\u{1F94A}', 'the marker uses the boxing glyph');
+	assert.equal(marker.children[0].children[1].textContent, '1', 'the marker counts the boxing fixture');
 	assert.match(marker.getAttribute('aria-label'), /sport fixture/);
 	assert.match(textOf(selectorNode('#sportList')), /Live Boxing/, 'the fixture is listed on a day with no football');
 	assert.ok(textOf(selectorNode('#sportList')).includes('\u{1F94A}'), 'a boxing card carries the boxing glyph');
+});
+
+test('a mixed-sport day shows one icon and count per sport', async () => {
+	const mixed = { tv: [], movies: [], unavailable: [], sportUnavailable: false,
+		sport: [
+			{ ...fixture('f1', 'Arsenal v Chelsea', 'Premier League', [owned('Sky Sports Football')], 2), sport: 'football' },
+			{ ...fixture('f2', 'Spurs v Everton', 'Premier League', [owned('Sky Sports Football')], 2), sport: 'football' },
+			{ ...fixture('c1', 'England v India', 'Test Series', [owned('Sky Sports Cricket')], 2), sport: 'cricket' },
+			{ ...fixture('b1', 'Live Boxing', 'IBF Title Fights', [owned('DAZN')], 2), sport: 'boxing' }
+		] };
+	const { selectorNode } = await mount(mixed);
+	const grid = selectorNode('#calendarDays').children[0];
+	let marker = null;
+	walk(grid, node => { if (node.className === 'calendar-sport') marker = node; });
+	assert.ok(marker, 'the mixed day carries a marker');
+	const pairs = marker.children.filter(node => node.className === 'calendar-sport-pair');
+	assert.equal(pairs.length, 3, 'one pair per sport');
+	assert.deepEqual(pairs.map(pair => pair.children[0].textContent), ['\u26BD', '\u{1F94A}', '\u{1F3CF}']);
+	assert.deepEqual(pairs.map(pair => pair.children[1].textContent), ['2', '1', '1']);
+	assert.match(marker.getAttribute('aria-label'), /Football 2.*Boxing 1.*Cricket 1/);
 });
 
 test('the sport list expands inline instead of hiding behind a details toggle', async () => {

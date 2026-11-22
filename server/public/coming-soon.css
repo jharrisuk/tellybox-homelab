@@ -60,6 +60,9 @@
 .coming-page .calendar-sport { display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; margin-top: 2px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--green); font-size: 10px; line-height: 1.4; }
 .coming-page .calendar-sport:hover { border-color: var(--green); background: #1d2418; }
 .coming-page .calendar-sport-glyph { font-size: 11px; line-height: 1; }
+.coming-page .calendar-sport-pair { display: inline-flex; align-items: center; gap: 3px; }
+.coming-page .calendar-sport-pair + .calendar-sport-pair { margin-left: 4px; }
+.coming-page .calendar-sport-more { color: var(--muted); }
 /* Browse is an always-visible section with a compact segmented control. */
 .coming-page .coming-browse { margin: 0 0 18px; }
 .coming-page .browse-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }

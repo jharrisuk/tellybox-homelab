@@ -12,6 +12,17 @@ installation.
 - Home has a Sport on TV rail with the next fixtures, the channels in your
   lineup that show them, and tap-for-details including fighters and notes.
 
+## Server 0.26.72 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Coming soon
+
+- The calendar day marker now shows an icon and count for each sport on that
+  day (up to three, then a +N), instead of one dot and a total. A day with
+  football, cricket and boxing shows all three at a glance.
+
 ## Server 0.26.71 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home
