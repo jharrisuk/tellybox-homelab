@@ -95,14 +95,32 @@ const UK_COMPETITION_ALIASES = new Map([
 	['the fa cup', 'fa cup'],
 	['emirates fa cup', 'fa cup'],
 	['barclays womens super league', 'womens super league'],
-	['vanarama national league', 'national league']
+	['vanarama national league', 'national league'],
+	['premier sports cup', 'scottish league cup'],
+	['viaplay cup', 'scottish league cup'],
+	['cinch premiership', 'scottish premiership'],
+	['cinch championship', 'scottish championship'],
+	['sky bet championship', 'championship'],
+	['sky bet league one', 'league one'],
+	['sky bet league two', 'league two'],
+	['swpl1', 'womens super league']
 ]);
 function competitionKey(name) {
 	return String(name || '').toLowerCase().replace(/['\u2019]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 }
+function roundlessCompetition(key) {
+	return key
+		.replace(/\s+(?:first|second|third|fourth|fifth|sixth)\s+round$/, '')
+		.replace(/\s+(?:quarter|semi)[ -]?finals?$/, '')
+		.replace(/\s+round of \d+$/, '')
+		.replace(/\s+(?:group stage|league phase)$/, '')
+		.replace(/\s+play[ -]?offs?.*$/, '')
+		.replace(/\s+final$/, '');
+}
 function isUkCompetition(name) {
-	const key = competitionKey(name);
-	return UK_COMPETITIONS.has(UK_COMPETITION_ALIASES.get(key) ?? key);
+	const key = competitionKey(name), short = roundlessCompetition(key);
+	return UK_COMPETITIONS.has(UK_COMPETITION_ALIASES.get(key) ?? key)
+		|| (short !== key && UK_COMPETITIONS.has(UK_COMPETITION_ALIASES.get(short) ?? short));
 }
 // The "UK football only" toggle constrains football only. Other sports (boxing,
 // MMA, rugby, ...) are never hidden by it. Items without a sport field are legacy
@@ -170,14 +188,16 @@ function renderSport() {
 	$('#sportList').replaceChildren(...items.slice(0, state.sportExpanded ? items.length : preview).map(sportCard));
 	$('#sportCount').textContent = items.length ? `${items.length} fixture${items.length === 1 ? '' : 's'} \u2014 next 3 days` : '';
 	const unavailable = state.sportUnavailable || state.unavailable.includes('sport');
-	$('#sportStatus').textContent = unavailable ? 'Sport listings are temporarily unavailable. Please check back shortly.'
+	const disabled = state.sportDisabled === true;
+	$('#sportStatus').textContent = disabled ? 'Sport listings are turned off in settings.'
+		: unavailable ? 'Sport listings are temporarily unavailable. Please check back shortly.'
 		: items.length ? ''
 		: state.ukOnly ? 'No sport on your channels in the next three days. Turn off “UK football only” to see every football competition.'
 		: 'No sport on your channels in the next three days.';
 	$('#sportStatus').hidden = !$('#sportStatus').textContent;
 	$('#sportMore').hidden = items.length <= preview;
 	$('#sportMore').setAttribute('aria-expanded', String(state.sportExpanded));
-	$('#sportMore').textContent = state.sportExpanded ? 'Show fewer' : `Show all ${items.length} matches`;
+	$('#sportMore').textContent = state.sportExpanded ? 'Show fewer' : `Show all ${items.length} fixtures`;
 }
 function focusSport() {
 	const panel = $('#comingSport');
@@ -347,13 +367,15 @@ function detailsMarkup(item) {
 			body.append(element('h3', '', 'Where to watch'));
 			const list = element('div', 'upcoming-schedule');
 			for (const channel of owned) {
-				const row = element('div', 'upcoming-episode');
-				row.append(element('strong', '', channel.name), element('span', 'coming-date', 'In your lineup'));
+				const row = element('a', 'upcoming-episode watch-channel');
+				const liveId = String(channel.channelId).startsWith('dispatch-live-') ? channel.channelId : 'dispatch-live-' + channel.channelId;
+				row.href = '/?view=livetv&channel=' + encodeURIComponent(liveId);
+				row.append(element('strong', '', channel.name), element('span', 'coming-date', 'In your lineup \u00b7 Watch live \u2192'));
 				list.append(row);
 			}
 			body.append(list);
 		} else {
-			body.append(element('p', 'overview', 'This match is not on a channel in your lineup.'));
+			body.append(element('p', 'overview', 'This fixture is not on a channel in your lineup.'));
 		}
 		const source = item.source || 'live-footballontv.com';
 		body.append(element('p', 'coming-note', `Fixtures from ${source}. Kick-off times use your device time zone.`));
@@ -365,6 +387,10 @@ function detailsMarkup(item) {
 	body.append(element('p', 'eyebrow', item.released ? 'RECENTLY RELEASED' : 'COMING SOON'), title,
 		element('p', 'coming-date', `${item.dateLabel} · ${jserverUI.comingDate(item)}`),
 		element('p', 'overview', item.overview || 'Already on our list.'));
+	const available = Boolean(libraryTarget(item));
+	body.append(element('p', 'coming-availability' + (available ? ' available' : ''), available
+		? '● Available now · in your collection'
+		: item.released ? '● Released · not in your collection yet' : '● Coming soon'));
 	if (item.type === 'movie') body.append(jserverUI.ratings(item.ratings, { links: true }));
 	if (item.episodes?.length) {
 		body.append(element('h3', '', item.released ? 'Recent episodes' : 'Episodes'));
@@ -382,7 +408,7 @@ function detailsMarkup(item) {
 		: 'This is a release date, not a promise of when it will be watchable here. Cinema releases can arrive at home later.'));
 	if (item.id) {
 		const library = libraryTarget(item);
-		const link = element('a', 'button secondary', library ? 'Open in library' : item.type === 'tv' ? 'View show & available episodes' : 'View film & availability');
+		const link = element('a', library ? 'button primary' : 'button secondary', library ? 'Watch now' : item.type === 'tv' ? 'View show & available episodes' : 'View film & availability');
 		link.href = library || `/discover?type=${encodeURIComponent(item.type)}&title=${encodeURIComponent(item.id)}`;
 		body.append(link);
 	}

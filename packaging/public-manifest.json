@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.73",
+	"serverVersion": "0.26.74",
 	"files": [
 		{
 			"path": ".env.example",
@@ -54,13 +54,13 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 30239,
-			"sha256": "8c33660ac2c9863cc56ca5127ae61c0666bba889d5c95b1ffd48ebc1f643a407"
+			"bytes": 32381,
+			"sha256": "ca9bbe1fce051f819c09c9dd0a034ee453eaa30aa6db45219cade8e913272817"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 65831,
-			"sha256": "9346bb72bd2672c4cefea2ea3e5ac7e6bd232f037b785594f73c7824158f55c5"
+			"bytes": 66786,
+			"sha256": "72968645c13dadc348cecb94e9687e5a30f76d7e75a776915acbd0b0707117d3"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -114,8 +114,8 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 53579,
-			"sha256": "820c9f632422a37fb1dc2f0038e782a23dc60c943b8df2e439dfdde33f71be25"
+			"bytes": 55681,
+			"sha256": "9af93bcb9bd2d32a148068e36f9db35105291f412e269945fce9a2d3f5008e5e"
 		},
 		{
 			"path": "docs/story.html",
@@ -649,8 +649,8 @@
 		},
 		{
 			"path": "server/livesportontv.mjs",
-			"bytes": 19763,
-			"sha256": "5a2ef23361b65c119d35cc6b7b6591a11acb44c24eeb5759b4435f633f13b79d"
+			"bytes": 19895,
+			"sha256": "cd675c7015253cd15000bdbccfa540ab39c5a8d58851b3b0a9766d50a1aefe0a"
 		},
 		{
 			"path": "server/login-protection.mjs",
@@ -685,12 +685,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "fbefd5a3b75bf126f5f5ced9aa164924810df4817b4810d647818621f7edc783"
+			"sha256": "a275aac3ba3b667b0afb749d27d34dd0a700ee3aeff92ae7f2717fdc304761eb"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "ad58b739859d6afb5de06a633b643f4df39833141a5db896009ca79aed5f3767"
+			"sha256": "e158fcba5da6bacf375791a9bbd329d5eadc1a922dbe88118df0231628b72eb5"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -769,8 +769,8 @@
 		},
 		{
 			"path": "server/public/app.js",
-			"bytes": 248492,
-			"sha256": "cb6d439a8fedf003bdec39b88f900db4e9f55779051e933c863d69dc074d4f85"
+			"bytes": 248879,
+			"sha256": "d4378ffff13aeb6cdc91b9f4f77bfa7b7bf27f306f2019c6e8ecc8f86a837861"
 		},
 		{
 			"path": "server/public/apps.html",
@@ -819,8 +819,8 @@
 		},
 		{
 			"path": "server/public/coming-soon.css",
-			"bytes": 8804,
-			"sha256": "9e6457261815ff8ce32618fdbefa8738733cd4fb31794c6133377678337e998c"
+			"bytes": 9167,
+			"sha256": "628a196e21563d7a627286c8f13c35ffb057d3ee83fabf876993eac480d42ebd"
 		},
 		{
 			"path": "server/public/coming-soon.html",
@@ -829,8 +829,8 @@
 		},
 		{
 			"path": "server/public/coming-soon.js",
-			"bytes": 22385,
-			"sha256": "7ebb9686c30d8dbc51578139b4629ab7bf13425fb313b4d944c1ecb9a0621051"
+			"bytes": 23830,
+			"sha256": "4bd76893622a582cf7b02b1a5e798b9b7573937e59a637a0f1ae186e84034d35"
 		},
 		{
 			"path": "server/public/connection-status.js",
@@ -1009,8 +1009,8 @@
 		},
 		{
 			"path": "server/public/settings.html",
-			"bytes": 28490,
-			"sha256": "a157e5102cf3e1ad9918d4de35a04ee0b55c2d6126e36d51ce78a1eb94c0a8cc"
+			"bytes": 28502,
+			"sha256": "8868cbe6b5f8a37c7f32bd01be8c96ea313b80a5550bc1f7763c66da507599a3"
 		},
 		{
 			"path": "server/public/settings.js",
@@ -1194,8 +1194,8 @@
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 197393,
-			"sha256": "202134e50ce2aa0b9d8a2042778fe00d8bdd664a805980e50adc587bc24621d7"
+			"bytes": 197501,
+			"sha256": "d5ffd7361d227a51be15de09936f33ccb3c3225c92ddf4323f1d0f44c27a4c3d"
 		},
 		{
 			"path": "server/session-limits.mjs",
@@ -1214,8 +1214,8 @@
 		},
 		{
 			"path": "server/sport-listings.mjs",
-			"bytes": 18171,
-			"sha256": "8c7a92c1326438a123b9cb8cbbda41c7b7ff634145fca16761565ded8e7ee340"
+			"bytes": 18332,
+			"sha256": "2fc7c8e354d78c68f2260e346255a8faf2d6f893e4e41d9ed8b63e100ce17984"
 		},
 		{
 			"path": "server/sport-settings.mjs",
@@ -1529,13 +1529,13 @@
 		},
 		{
 			"path": "server/test/coming-sport-q71.test.mjs",
-			"bytes": 6319,
-			"sha256": "566c92444dec5785cb59bdb985f056be90aa8c0668c1333f6c0532f7f5f3f9f7"
+			"bytes": 7049,
+			"sha256": "2d135eed50f99d7735428114a0c9424a3c881b8a5c6704d8c2b172e8a50100f7"
 		},
 		{
 			"path": "server/test/coming-sport-q77.test.mjs",
-			"bytes": 17578,
-			"sha256": "1528610144fac8d36195c68092aeb9104d411f8c4850f1c3b82e1a7cea6519ba"
+			"bytes": 19089,
+			"sha256": "41444bb57bff9f870e699c823d47fa75ac9c3353c711a07e9ab79b211d08b6da"
 		},
 		{
 			"path": "server/test/connection-status.test.mjs",
@@ -2129,8 +2129,8 @@
 		},
 		{
 			"path": "server/test/livesportontv-q79.test.mjs",
-			"bytes": 27204,
-			"sha256": "e78a6b4938076c82b7f18b9fa611c74c66b16514355f8c7e9e96e95446aad9e5"
+			"bytes": 28551,
+			"sha256": "6da8f6a96f18cd1e66e964a6d79166fc18d1d7b66085d0ed9d58034b5d98fc76"
 		},
 		{
 			"path": "server/test/local-request.test.mjs",
@@ -2649,13 +2649,13 @@
 		},
 		{
 			"path": "server/test/sport-settings-q80.test.mjs",
-			"bytes": 14625,
-			"sha256": "1b2f05611934dd08734bf7f1972143ccedcad426c8f924ab465d5397428a23cf"
+			"bytes": 14723,
+			"sha256": "01bc699d147eed091c8fd65e60f1078ce74d87e38dc063637ef483ee28671bd2"
 		},
 		{
 			"path": "server/test/sport-settings-ui-073.test.mjs",
-			"bytes": 970,
-			"sha256": "a86331e696998ed0d094e5455793c214e5243b7778912fac0e7959d5c99f3ae2"
+			"bytes": 983,
+			"sha256": "bff561a0f8cbd55e1ddc4a823ae7dc36c9ff6d068eebe02a8dcb277e1b686c7f"
 		},
 		{
 			"path": "server/test/start-over.test.mjs",

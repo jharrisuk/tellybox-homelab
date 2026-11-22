@@ -213,6 +213,7 @@ test('the real server gates writes to a local admin and applies settings to /api
 	assert.equal(r.status, 200);
 	body = await soon();
 	assert.deepEqual(body.sport, [], 'disabled hides the sport rail');
+	assert.equal(body.sportDisabled, true, 'the client can tell a disabled rail from an empty one');
 	assert.ok(!body.sportUnavailable, 'a disabled rail is not flagged unavailable');
 
 	// sports allow-list

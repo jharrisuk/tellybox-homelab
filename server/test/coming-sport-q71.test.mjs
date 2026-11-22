@@ -93,6 +93,11 @@ test('a fixture opens details listing only the channels we have', async () => {
 	assert.doesNotMatch(body, /Not in your lineup/);
 	assert.match(body, /live-footballontv\.com/);
 	assert.match(body, /Kick-off times use your device time zone/);
+	let watch=null;
+	walk(selectorNode('#comingDetailsBody'),node=>{if(node.tag==='a'&&String(node.href||'').includes('/?view=livetv&channel='))watch=node;});
+	assert.ok(watch,'an owned channel links to the live player');
+	assert.match(watch.href,/\/\?view=livetv&channel=dispatch-live-chan-/);
+	assert.match(body,/Watch live/);
 });
 
 test('a fixture with no channel in the lineup is not displayed', async () => {
@@ -102,6 +107,12 @@ test('a fixture with no channel in the lineup is not displayed', async () => {
 	assert.equal(selectorNode('#sportList').children.length, 0, 'no dead-end card is rendered');
 	assert.doesNotMatch(textOf(selectorNode('#sportList')), /BBC One|ITV 1/);
 	assert.match(selectorNode('#sportStatus').textContent, /No sport on your channels/);
+});
+
+test('a rail disabled by the administrator says so instead of blaming the lineup', async () => {
+	const { selectorNode } = await mount({ tv: [], movies: [], sport: [], unavailable: [], sportUnavailable: false, sportDisabled: true });
+	assert.equal(selectorNode('#sportStatus').textContent, 'Sport listings are turned off in settings.');
+	assert.equal(selectorNode('#sportList').children.length, 0);
 });
 
 test('an empty sport list says so plainly instead of using the film wording', async () => {

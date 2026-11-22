@@ -201,24 +201,26 @@ export function matchChannels(names, index) {
 }
 
 // --- window -------------------------------------------------------------
-// Same local-day convention as the Coming Soon calendar (coming-calendar.js):
-// a day key is the runtime-local YYYY-MM-DD. The rail covers today through
-// today+3 (four day labels including today) and excludes past kick-offs.
-const pad = n => String(n).padStart(2, '0');
-const dayKey = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-const localDayKey = instant => dayKey(new Date(instant));
-function windowKeys(now) {
-	const base = new Date(now);
+// The rail follows UK days, not the server process timezone. The container runs
+// UTC, so runtime-local days would shift after 23:00 UTC in summer and drop the
+// far edge of the window. All keys and labels are explicitly Europe/London.
+const LONDON_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit' });
+export function londonDayKey(instant) { return LONDON_DAY.format(new Date(instant)); }
+function shiftDayKey(key, days) {
+	const [year, month, day] = key.split('-').map(Number);
+	return LONDON_DAY.format(new Date(Date.UTC(year, month - 1, day + days, 12)));
+}
+export function londonWindowKeys(now) {
+	const today = londonDayKey(now);
 	const keys = new Set();
-	for (let offset = 0; offset < 4; offset++) keys.add(dayKey(new Date(base.getFullYear(), base.getMonth(), base.getDate() + offset)));
+	for (let offset = 0; offset < 4; offset++) keys.add(shiftDayKey(today, offset));
 	return keys;
 }
-function dayLabel(instant, now) {
-	const key = localDayKey(instant);
-	const base = new Date(now);
-	if (key === dayKey(base)) return 'Today';
-	if (key === dayKey(new Date(base.getFullYear(), base.getMonth(), base.getDate() + 1))) return 'Tomorrow';
-	return new Date(instant).toLocaleDateString('en-GB', { weekday: 'long' });
+export function londonDayLabel(instant, now) {
+	const key = londonDayKey(instant), today = londonDayKey(now);
+	if (key === today) return 'Today';
+	if (key === shiftDayKey(today, 1)) return 'Tomorrow';
+	return new Date(instant).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'Europe/London' });
 }
 function sportId(fixture) {
 	return 'sport-' + createHash('sha1').update(`${fixture.kickoff}|${fixture.home}|${fixture.away}`).digest('hex').slice(0, 12);
@@ -228,19 +230,19 @@ function sportId(fixture) {
 // so the window boundaries can be tested without any network or clock.
 export function sportWindow(fixtures, lineup, now = Date.now()) {
 	const index = buildChannelIndex(lineup);
-	const keys = windowKeys(now);
+	const keys = londonWindowKeys(now);
 	const items = [];
 	for (const fixture of Array.isArray(fixtures) ? fixtures : []) {
 		if (!fixture || !Number.isFinite(fixture.kickoff)) continue;
 		if (fixture.kickoff < now) continue; // exclude past kick-offs
-		if (!keys.has(localDayKey(fixture.kickoff))) continue;
+		if (!keys.has(londonDayKey(fixture.kickoff))) continue;
 		items.push({
 			type: 'sport',
 			id: sportId(fixture),
 			title: `${fixture.home} v ${fixture.away}`,
 			competition: fixture.competition || '',
 			date: new Date(fixture.kickoff).toISOString(),
-			dateLabel: dayLabel(fixture.kickoff, now),
+			dateLabel: londonDayLabel(fixture.kickoff, now),
 			channels: matchChannels(fixture.channels, index)
 		});
 	}

@@ -541,17 +541,18 @@ app.get('/api/coming-soon', async (req, res) => {
 	// The football rail and the all-sports spine are merged (deduped by kick-off
 	// + title) and the Q80 admin settings are applied server-side. When the rail
 	// is disabled the sport field is empty and not flagged unavailable.
-	let sport = [], sportUnavailable = false;
+	let sport = [], sportUnavailable = false, sportDisabled = false;
 	try {
 		const settings = sportSettings.status();
-		if (settings.enabled !== false) {
+		sportDisabled = settings.enabled === false;
+		if (!sportDisabled) {
 			const [football, allSport] = await Promise.all([sportListings.listings(), liveSportOntv.listings()]);
 			sport = applySportSettings(mergeSportRails(football, allSport), settings);
 			sportUnavailable = sportListings.unavailable() && liveSportOntv.unavailable();
 		}
 	}
 	catch { sportUnavailable = true; }
-	res.json({ ...upcoming, sport, ...(sportUnavailable ? { sportUnavailable: true } : {}) });
+	res.json({ ...upcoming, sport, ...(sportUnavailable ? { sportUnavailable: true } : {}), ...(sportDisabled ? { sportDisabled: true } : {}) });
 });
 // Sport settings (Q80). Any authenticated/local viewer may read; only a local
 // installation administrator may write, via the same local-settings gate the

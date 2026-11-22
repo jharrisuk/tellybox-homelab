@@ -27,7 +27,7 @@
 // title, and applySportSettings() applies the Q80 admin settings.
 import { readFile, writeFile, rename } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { londonInstant, decodeEntities, buildChannelIndex, matchChannels } from './sport-listings.mjs';
+import { londonInstant, londonDayKey, londonWindowKeys, londonDayLabel, decodeEntities, buildChannelIndex, matchChannels } from './sport-listings.mjs';
 
 export const LIVESPORT_SOURCE_URL = 'https://livesportontv.co.uk/';
 export const LIVESPORT_SOURCE_LABEL = 'livesportontv.co.uk';
@@ -177,26 +177,7 @@ function parseChannels(chunk) {
 }
 
 // --- window -------------------------------------------------------------
-// Same local-day convention as the football rail (sport-listings.mjs) and the
-// Coming Soon calendar: a day key is the runtime-local YYYY-MM-DD. The rail
-// covers today through today+3 (four day labels including today) and excludes
-// past kick-offs. Kept identical so the two sources line up day-for-day.
-const pad = n => String(n).padStart(2, '0');
-const dayKey = date => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-const localDayKey = instant => dayKey(new Date(instant));
-function windowKeys(now) {
-	const base = new Date(now);
-	const keys = new Set();
-	for (let offset = 0; offset < 4; offset++) keys.add(dayKey(new Date(base.getFullYear(), base.getMonth(), base.getDate() + offset)));
-	return keys;
-}
-function dayLabel(instant, now) {
-	const key = localDayKey(instant);
-	const base = new Date(now);
-	if (key === dayKey(base)) return 'Today';
-	if (key === dayKey(new Date(base.getFullYear(), base.getMonth(), base.getDate() + 1))) return 'Tomorrow';
-	return new Date(instant).toLocaleDateString('en-GB', { weekday: 'long' });
-}
+// UK days, explicit Europe/London; shared with the football rail so both line up.
 function eventId(event) {
 	return 'sport-' + createHash('sha1').update(`${event.kickoff}|${event.sport}|${event.title}`).digest('hex').slice(0, 12);
 }
@@ -207,12 +188,12 @@ function eventId(event) {
 // name is returned (own-channel-only filtering is a client concern).
 export function allSportWindow(events, lineup, now = Date.now()) {
 	const index = buildChannelIndex(lineup);
-	const keys = windowKeys(now);
+	const keys = londonWindowKeys(now);
 	const items = [];
 	for (const event of Array.isArray(events) ? events : []) {
 		if (!event || !Number.isFinite(event.kickoff)) continue;
 		if (event.kickoff < now) continue; // exclude past kick-offs
-		if (!keys.has(localDayKey(event.kickoff))) continue;
+		if (!keys.has(londonDayKey(event.kickoff))) continue;
 		items.push({
 			type: 'sport',
 			sport: event.sport,
@@ -220,7 +201,7 @@ export function allSportWindow(events, lineup, now = Date.now()) {
 			title: event.title,
 			competition: event.competition || '',
 			date: new Date(event.kickoff).toISOString(),
-			dateLabel: dayLabel(event.kickoff, now),
+			dateLabel: londonDayLabel(event.kickoff, now),
 			channels: matchChannels(event.channels, index),
 			notes: event.notes || '',
 			source: LIVESPORT_SOURCE_LABEL
@@ -241,7 +222,11 @@ function normalisedTitle(title) {
 }
 export function dedupeKey(item) {
 	const minute = Math.floor(Date.parse(item.date) / 60000);
-	return `${minute}|${item.sport || 'football'}|${normalisedTitle(item.title)}`;
+	const title = normalisedTitle(item.title);
+	// Generic combat titles ("Live Boxing"/"MMA") need the card to tell two
+	// same-minute events apart; the fighters live in notes.
+	const generic = /^live (boxing|mma|ufc)\b/.test(title);
+	return `${minute}|${item.sport || 'football'}|${title}${generic ? '|' + normalisedTitle(item.notes) : ''}`;
 }
 export function mergeSportRails(footballItems, allSportItems) {
 	const byKey = new Map();
@@ -277,14 +262,32 @@ const UK_COMPETITION_ALIASES = new Map([
 	['the fa cup', 'fa cup'],
 	['emirates fa cup', 'fa cup'],
 	['barclays womens super league', 'womens super league'],
-	['vanarama national league', 'national league']
+	['vanarama national league', 'national league'],
+	['premier sports cup', 'scottish league cup'],
+	['viaplay cup', 'scottish league cup'],
+	['cinch premiership', 'scottish premiership'],
+	['cinch championship', 'scottish championship'],
+	['sky bet championship', 'championship'],
+	['sky bet league one', 'league one'],
+	['sky bet league two', 'league two'],
+	['swpl1', 'womens super league']
 ]);
 export function competitionKey(name) {
 	return String(name || '').toLowerCase().replace(/['\u2019]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 }
+function roundlessCompetition(key) {
+	return key
+		.replace(/\s+(?:first|second|third|fourth|fifth|sixth)\s+round$/, '')
+		.replace(/\s+(?:quarter|semi)[ -]?finals?$/, '')
+		.replace(/\s+round of \d+$/, '')
+		.replace(/\s+(?:group stage|league phase)$/, '')
+		.replace(/\s+play[ -]?offs?.*$/, '')
+		.replace(/\s+final$/, '');
+}
 export function isUkCompetition(name) {
-	const key = competitionKey(name);
-	return UK_COMPETITIONS.has(UK_COMPETITION_ALIASES.get(key) ?? key);
+	const key = competitionKey(name), short = roundlessCompetition(key);
+	return UK_COMPETITIONS.has(UK_COMPETITION_ALIASES.get(key) ?? key)
+		|| (short !== key && UK_COMPETITIONS.has(UK_COMPETITION_ALIASES.get(short) ?? short));
 }
 
 // Apply the Q80 admin settings to a merged rail. Pure so the filtering can be

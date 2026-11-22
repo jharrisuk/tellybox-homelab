@@ -126,8 +126,9 @@ test('the UK toggle defaults on, filters non-UK football, and is remembered in l
 test('the documented UK competition list passes the filter; unknown competitions do not', async () => {
 	const uk = ['Premier League', 'Championship', 'League One', 'League Two', 'FA Cup', 'EFL Cup', 'Carabao Cup',
 		'Scottish Premiership', 'Scottish Championship', 'Scottish Cup', "Women's Super League", 'Community Shield', 'National League',
-		'English Premier League', 'EFL Championship', 'Emirates FA Cup', "Barclays Women's Super League"];
-	const other = ['La Liga', 'Bundesliga', 'UEFA Champions League', 'International Friendly', ''];
+		'English Premier League', 'EFL Championship', 'Emirates FA Cup', "Barclays Women's Super League",
+		'Premier Sports Cup Final', 'FA Cup Second Round', 'Carabao Cup Quarter-Final', 'Sky Bet Championship'];
+	const other = ['La Liga', 'Bundesliga', 'UEFA Champions League', 'International Friendly', 'National League North', ''];
 	const competitions = [...uk, ...other];
 	const rail = { tv: [], movies: [], unavailable: [], sportUnavailable: false,
 		sport: competitions.map((competition, index) => fixture('comp-' + index, 'Match ' + index, competition, [owned('Sky Sports Football')], 1)) };
@@ -251,6 +252,30 @@ test('a mixed-sport day shows one icon and count per sport', async () => {
 	assert.match(marker.getAttribute('aria-label'), /Football 2.*Boxing 1.*Cricket 1/);
 });
 
+test('an available title says so and offers Watch now', async () => {
+	const date = new Date().toISOString();
+	const available = { tv: [], movies: [
+		{ type: 'movie', id: 3, title: 'Available film', dateLabel: 'Released', released: true, date, ratings: [], library: { id: 'jf-film-1', type: 'movie' } }
+	], unavailable: [], sportUnavailable: false, sport: [] };
+	const { selectorNode } = await mount(available, '?title=3');
+	const body = textOf(selectorNode('#comingDetailsBody'));
+	assert.match(body, /Available now/, 'an available title is labelled as available');
+	let watch = null;
+	walk(selectorNode('#comingDetailsBody'), node => { if (node.tag === 'a' && textOf(node).includes('Watch now')) watch = node; });
+	assert.ok(watch, 'the available title offers Watch now');
+	assert.equal(watch.href, '/?item=jf-film-1');
+});
+
+test('a released title without a library copy is honest about it', async () => {
+	const available = { tv: [], movies: [
+		{ type: 'movie', id: 4, title: 'Released film', dateLabel: 'Released', released: true, date: new Date().toISOString(), ratings: [] }
+	], unavailable: [], sportUnavailable: false, sport: [] };
+	const { selectorNode } = await mount(available, '?title=4');
+	const body = textOf(selectorNode('#comingDetailsBody'));
+	assert.match(body, /Released .* not in your collection yet/);
+	assert.match(body, /View film & availability/);
+});
+
 test('the sport list expands inline instead of hiding behind a details toggle', async () => {
 	const many = { tv: [], movies: [], unavailable: [], sportUnavailable: false,
 		sport: Array.from({ length: 8 }, (_, index) => fixture('m-' + index, 'Match ' + index, 'Premier League', [owned('Sky Sports Football')], 1)) };
@@ -258,7 +283,7 @@ test('the sport list expands inline instead of hiding behind a details toggle', 
 	assert.equal(selectorNode('#sportList').children.length, 6, 'a compact desktop preview');
 	const more = selectorNode('#sportMore');
 	assert.equal(more.hidden, false);
-	assert.equal(more.textContent, 'Show all 8 matches');
+	assert.equal(more.textContent, 'Show all 8 fixtures');
 	assert.equal(more.getAttribute('aria-expanded'), 'false');
 	more.onclick();
 	assert.equal(selectorNode('#sportList').children.length, 8);

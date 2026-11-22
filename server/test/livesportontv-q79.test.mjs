@@ -43,6 +43,18 @@ test('parser reads the saved page into a full week of events across 20 sports', 
 	}
 });
 
+test('the UK day window survives the process timezone at the BST edge', () => {
+	const now = Date.parse('2026-07-01T23:30:00Z'); // 00:30 BST on 2 July
+	const events = [
+		{ kickoff: Date.parse('2026-07-05T10:00:00Z'), sport: 'boxing', title: 'Late card', competition: '', notes: '', channels: [] }
+	];
+	const items = allSportWindow(events, [], now);
+	assert.equal(items.length, 1, 'a UK today+3 fixture survives after the UTC day has not rolled');
+	assert.equal(items[0].dateLabel, 'Sunday');
+	const tomorrow = allSportWindow([{ kickoff: Date.parse('2026-07-01T23:30:00Z'), sport: 'boxing', title: 'Midnight card', competition: '', notes: '', channels: [] }], [], Date.parse('2026-07-01T10:00:00Z'));
+	assert.equal(tomorrow[0].dateLabel, 'Tomorrow', 'the label follows the UK day, not UTC');
+});
+
 test('parser reads a boxing event exactly as the page lists it', () => {
 	const boxing = parseEvents(FIXTURE).find(e => e.sport === 'boxing' && e.competition === 'IBF Title Fights');
 	assert.ok(boxing, 'the sampled week has an IBF title fight');
@@ -283,11 +295,20 @@ test('merge against the two real fixtures removes overlapping football and adds 
 test('the curated UK competition list passes; unknown competitions do not', () => {
 	const uk = ['Premier League', 'Championship', 'League One', 'League Two', 'FA Cup', 'EFL Cup', 'Carabao Cup',
 		'Scottish Premiership', 'Scottish Championship', 'Scottish Cup', "Women's Super League", 'Community Shield', 'National League',
-		'English Premier League', 'EFL Championship', 'Emirates FA Cup', "Barclays Women's Super League"];
-	const other = ['La Liga', 'Bundesliga', 'UEFA Champions League', 'International Friendly', 'U18 Premier League', ''];
+		'English Premier League', 'EFL Championship', 'Emirates FA Cup', "Barclays Women's Super League",
+		'Premier Sports Cup Final', 'FA Cup Second Round', 'Carabao Cup Quarter-Final', 'cinch Premiership',
+		'Sky Bet Championship', 'Viaplay Cup', 'SWPL1'];
+	const other = ['La Liga', 'Bundesliga', 'UEFA Champions League', 'International Friendly', 'U18 Premier League', 'National League North', ''];
 	for (const name of uk) assert.ok(isUkCompetition(name), `UK competition ${name} is kept`);
 	for (const name of other) assert.ok(!isUkCompetition(name), `unknown competition ${JSON.stringify(name)} is excluded`);
 	assert.equal(competitionKey("Women's Super League"), 'womens super league');
+});
+
+test('same-minute boxing cards with different fighters stay separate', () => {
+	const date = new Date().toISOString();
+	const a = dedupeKey({ date, sport: 'boxing', title: 'Live Boxing', notes: 'A vs B' });
+	const b = dedupeKey({ date, sport: 'boxing', title: 'Live Boxing', notes: 'C vs D' });
+	assert.notEqual(a, b, 'the fighters in notes keep two events apart');
 });
 
 test('applySportSettings: disabled hides the whole rail', () => {

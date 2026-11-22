@@ -2720,6 +2720,7 @@ function guideLayout() {
 	return { hours, slots, minWidth: channel + track };
 }
 let guideRenderedLayout = null;
+let pendingLiveChannel = null;
 
 function renderGuide() {
 	if (!guideData || state.type !== 'livetv') return;
@@ -2816,6 +2817,11 @@ async function loadGuide(force = false) {
 		$('#status').textContent = `${error.message} Use Refresh guide to try again.`;
 		$('#guideSummary').textContent = guideData ? 'Showing earlier listings · refresh failed' : 'Guide unavailable';
 	} finally { $('#refreshGuide').disabled = false; }
+	if (pendingLiveChannel && guideData) {
+		const channel = guideData.channels.find(item => item.Id === pendingLiveChannel);
+		pendingLiveChannel = null;
+		if (channel) void startPlayback(channel, 0);
+	}
 }
 
 function showGuideDetails(channel, selected, checked = false) {
@@ -4504,6 +4510,8 @@ async function init() {
 			if(library.LegacyRecordings){const older=element('button','button quiet','Browse local recordings');older.onclick=()=>selectLibrary(library.Id);$('#olderRecordings').append(older);continue;}
 		}
 		const view=new URLSearchParams(location.search).get('view');
+		const requestedChannel=new URLSearchParams(location.search).get('channel');
+		if(view==='livetv'&&requestedChannel)pendingLiveChannel=requestedChannel;
 		if(view==='nonstop')selectLibrary('dispatch-247');else if(view==='livetv')selectLibrary('dispatch-tv');else if(view==='recordings')selectLibrary('dispatch-recordings');
 		else if(['movies','tvshows'].includes(view)){const library=state.libraries.find(item=>item.CollectionType===view);if(library)selectLibrary(library.Id);else void loadItems();}
 		else void loadItems();

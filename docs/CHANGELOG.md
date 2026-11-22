@@ -12,6 +12,19 @@ installation.
 - Home has a Sport on TV rail with the next fixtures, the channels in your
   lineup that show them, and tap-for-details including fighters and notes.
 
+## Server 0.26.74 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Coming soon
+
+- Each channel in a fixture's details is now a link: choose one to open Live TV
+  tuned to that channel.
+- An available film or series says "Available now · in your collection" and
+  offers Watch now. A released title that is not in the collection says so
+  plainly instead of implying it can be played.
+
 ## Server 0.26.73 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home
@@ -44,6 +57,19 @@ installation.
 
 - Each fixture card shows a pictogram for its sport next to the name, such as a
   ball, boxing glove, race helmet or skier, so a mixed sport list scans faster.
+
+## Android 0.26.41 - 22 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Sport
+
+- Sport cards on the TV can be reached with the remote and open a details
+  dialog with the competition, time, your channels and the fighters or notes.
+- The UK football filter recognises sponsored and round-suffixed competition
+  names such as Premier Sports Cup Final, FA Cup Second Round and Sky Bet
+  Championship, so valid fixtures are not hidden.
 
 ## Android 0.26.40 - 22 November 2026
 

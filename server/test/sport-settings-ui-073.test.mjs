@@ -11,7 +11,7 @@ test('the local administrator can choose sports from the Server settings tab', (
 	assert.match(html, /id="sportFootballScope"/);
 	assert.match(html, /id="sportChoices"/);
 	assert.match(html, /id="saveSportSettings"/);
-	assert.match(html, /src="\/sport-settings.js"/);
+	assert.match(html, /src="\/sport-settings\.js(?:\?[^"]*)?"/);
 });
 
 test('the sport panel edits the existing settings API and shows current fixture counts', () => {
