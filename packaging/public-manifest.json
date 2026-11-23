@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.84",
+	"serverVersion": "0.26.85",
 	"files": [
 		{
 			"path": ".env.example",
@@ -59,8 +59,8 @@
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 72768,
-			"sha256": "8d6250dd9608a3dbc724f008a51aa6b6c4f004d40bc056982f783fcca206a2c7"
+			"bytes": 73065,
+			"sha256": "c8b767a553a3c19ec912c738dbb9fc3a894ff4234fc7669411a8c0e21663ba70"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -115,7 +115,7 @@
 		{
 			"path": "docs/site/index.html",
 			"bytes": 56475,
-			"sha256": "911f864d0e0c4b338712a27f202a15c85f40a51bdd07a6e5a051425acb04bd14"
+			"sha256": "28c1170713e825f4d2ff420c87024e57bea2ac6b95605f891d9c9f125524ae4f"
 		},
 		{
 			"path": "docs/story.html",
@@ -329,8 +329,8 @@
 		},
 		{
 			"path": "server/auth.mjs",
-			"bytes": 35861,
-			"sha256": "fef78719cf5bf3c279360288adafb6f1a6c8aa3381ef872bdadb7fd1362f4e84"
+			"bytes": 35886,
+			"sha256": "6c35d4ce06c62f6163b06cf410f2ac1b90643faafc4746a91b36eb0a2cc54b60"
 		},
 		{
 			"path": "server/broadcast-resume.mjs",
@@ -659,8 +659,8 @@
 		},
 		{
 			"path": "server/maintenance.mjs",
-			"bytes": 4046,
-			"sha256": "65302d8fa0cd2667eff06db6ec2861a00b94977cf8456538b26d4acfb732547d"
+			"bytes": 4076,
+			"sha256": "6da99df22abec380ec99312ec61167d6450caa686cd28a81ab73626bd4443989"
 		},
 		{
 			"path": "server/media-segments.mjs",
@@ -685,12 +685,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "317d13a0945070a26fc44a6d3472880ddaa12202e1a9283c2139521a562b31f2"
+			"sha256": "d26943c08bad4a8c359048afc3d0eaf7f3862d29257abbaa5fe0ff416042cc02"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "267b2e99ebdfd1550a213c9d9b2c2c688c13bc21851c97c12eb6ccf8a4e18504"
+			"sha256": "c84e6016eed6d44f7c292078a377260a6c18f2a393284dc05a49f2afd419e9fa"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -734,8 +734,8 @@
 		},
 		{
 			"path": "server/public-assets.mjs",
-			"bytes": 7476,
-			"sha256": "d074cf658706159820eae9487ced2057461897d724792b8e68ef8a2921091c46"
+			"bytes": 7502,
+			"sha256": "1b3342a49cbc7a93fc75002f9b7dd3efddbcdc5c3cffa855ef96266bc587bb50"
 		},
 		{
 			"path": "server/public/account-devices.js",
@@ -749,8 +749,8 @@
 		},
 		{
 			"path": "server/public/activity.html",
-			"bytes": 9143,
-			"sha256": "e44969a176103bc456540dbca1b29f864245fe88abd9dccf2fe83f354ec1c8ec"
+			"bytes": 9147,
+			"sha256": "41e445cf223bf609555242e8c273b916034b23d9662e9a76ddd64e2fbda7341c"
 		},
 		{
 			"path": "server/public/activity.js",
@@ -824,8 +824,8 @@
 		},
 		{
 			"path": "server/public/coming-soon.html",
-			"bytes": 5248,
-			"sha256": "bb53ee4b83772b86e74a5c697d35018bc31e3c32ef72abc72046715d90fd2086"
+			"bytes": 5252,
+			"sha256": "395d0bc5c29e15a0f3f6b7ba9fe4c3c83c80e6c827af89bce3611218b0e56350"
 		},
 		{
 			"path": "server/public/coming-soon.js",
@@ -844,8 +844,8 @@
 		},
 		{
 			"path": "server/public/discover.html",
-			"bytes": 4913,
-			"sha256": "b5ea5c1e26c7568d2f7f28b5cecac9b4546544ae054274d1be779bc7bf6d44aa"
+			"bytes": 4917,
+			"sha256": "26852aab5768943ce13efd78c9342525f9f93a76f085a1fab83056091eae9814"
 		},
 		{
 			"path": "server/public/discover.js",
@@ -874,8 +874,8 @@
 		},
 		{
 			"path": "server/public/index.html",
-			"bytes": 13743,
-			"sha256": "db9414d6cc6913b8075323ce19ce3f8ed7a695cd13e912f68f898b7182ed36c3"
+			"bytes": 13614,
+			"sha256": "4e688a9d5a9ba12ff97c919b5bdce5251021d399ac7202c4e254fd6b6a1b2c75"
 		},
 		{
 			"path": "server/public/installation-settings.js",
@@ -884,8 +884,8 @@
 		},
 		{
 			"path": "server/public/legal.html",
-			"bytes": 2853,
-			"sha256": "ddfe08f741d5fd5fe4031c92581cd1e604aaf1bb2cd19ff1bd25a1333443c918"
+			"bytes": 2857,
+			"sha256": "c563b62db110492b6e243d0904a79a323f9edd4930648e2f9659440d8a0c0f8e"
 		},
 		{
 			"path": "server/public/local-request.mjs",
@@ -899,8 +899,8 @@
 		},
 		{
 			"path": "server/public/login.html",
-			"bytes": 2286,
-			"sha256": "e73336013131ab449ad18d3b73fd6326f862679c704b55303f325f004224ebc1"
+			"bytes": 2290,
+			"sha256": "37c5938a8f7015de6a0427df660a16805f3691ada8bde603e83f7a203b7986d0"
 		},
 		{
 			"path": "server/public/maintenance-settings.js",
@@ -944,8 +944,8 @@
 		},
 		{
 			"path": "server/public/preferences.html",
-			"bytes": 4928,
-			"sha256": "5d1392781d8a0f6b75b9fe14649067218d739b86975cbc715c885ec627f42eb1"
+			"bytes": 4932,
+			"sha256": "f4e25bf110f383ad1bcc873aef138cf111b9acbc2b470275af12fc4674bd168a"
 		},
 		{
 			"path": "server/public/purge.html",
@@ -984,8 +984,8 @@
 		},
 		{
 			"path": "server/public/search.html",
-			"bytes": 3352,
-			"sha256": "6ba52b23d1c8fa7bbb7feff9d382280265a46ad7c70f73e8bf1170f4ec17b7d6"
+			"bytes": 3356,
+			"sha256": "8ce29d944ad4f8ee63acec58914160493cd8e0088642e7ddd067840953a3388b"
 		},
 		{
 			"path": "server/public/search.js",
@@ -1009,8 +1009,8 @@
 		},
 		{
 			"path": "server/public/settings.html",
-			"bytes": 28502,
-			"sha256": "8868cbe6b5f8a37c7f32bd01be8c96ea313b80a5550bc1f7763c66da507599a3"
+			"bytes": 28506,
+			"sha256": "935daaa574cddbdfbbcf37a733c9d3e5d3b23c0c45fe3439afa175a166cddb08"
 		},
 		{
 			"path": "server/public/settings.js",
@@ -1078,6 +1078,11 @@
 			"sha256": "8a23b8d783f0bdb4738f5ecdc782fa700ad57f79c8e0f35377208d96281f1771"
 		},
 		{
+			"path": "server/public/tellybox-wordmark.png",
+			"bytes": 42664,
+			"sha256": "a5d0af86fd41c26942d9bd962c1e1fb6b3ea5d48aadacf453356aa59999024f3"
+		},
+		{
 			"path": "server/public/third-party-notices.txt",
 			"bytes": 86809,
 			"sha256": "7d5cdd8ea20678d1b63115bdaff0331de42d3004f20e56447bd949a3a4de8c7e"
@@ -1109,8 +1114,8 @@
 		},
 		{
 			"path": "server/qbittorrent-page.mjs",
-			"bytes": 4992,
-			"sha256": "3aa569197dd41e233eb4d4bb36693640662d44ed8ea39967e7795ea8ccebdc6f"
+			"bytes": 4996,
+			"sha256": "577d0961284535e7e8c77a4241427de7fbe88587ee11d897db0e7c0c510d628b"
 		},
 		{
 			"path": "server/qbittorrent.mjs",
@@ -1194,8 +1199,8 @@
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 199258,
-			"sha256": "f3d92606ff74f17492922108e7ebf6e2e66a77993dc33a909134d3eaf5b6a18f"
+			"bytes": 199283,
+			"sha256": "9bc1467901ee1cb2c38e8198d9db843d27eb266bc634db37f96478f2bd2bf8c8"
 		},
 		{
 			"path": "server/session-limits.mjs",
@@ -2169,8 +2174,8 @@
 		},
 		{
 			"path": "server/test/maintenance.test.mjs",
-			"bytes": 4927,
-			"sha256": "becdc63df4747bd0b4e0d3cccad967200036ecc2b737262e685586073a30d4af"
+			"bytes": 4931,
+			"sha256": "f3b7e14fe90c1a109132a201944c047d2f616877df31d1b3f354cea8e5f3f32e"
 		},
 		{
 			"path": "server/test/manual/linux-original-slow-121.mjs",
@@ -2329,8 +2334,8 @@
 		},
 		{
 			"path": "server/test/public-cdn.test.mjs",
-			"bytes": 10212,
-			"sha256": "66cf9f70dc70f3401b1b742add3a39eb15a79d781fed834d9b92502cdba8920f"
+			"bytes": 10237,
+			"sha256": "698be3134779caa5f89367d250b091f2dc229941e559d70353b98eb7a4012212"
 		},
 		{
 			"path": "server/test/push-gateway-client.test.mjs",

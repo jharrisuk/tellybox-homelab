@@ -319,7 +319,7 @@ function authHomeScopeFingerprint(req) {
 // routes only replace that header. app.js and home-124.css stay behind the
 // normal auth gate (registered later, just before express.static). APIs and
 // personalised JSON never take this path.
-for (const file of ['style.css', 'tellybox-logo.png', 'tellybox-logo.webp']) {
+for (const file of ['style.css', 'tellybox-logo.png', 'tellybox-logo.webp', 'tellybox-wordmark.png']) {
 	app.get('/' + file, (req, res) => {
 		res.setHeader('Cache-Control', 'max-age=0, must-revalidate');
 		res.sendFile(path.join(root, 'public', file));

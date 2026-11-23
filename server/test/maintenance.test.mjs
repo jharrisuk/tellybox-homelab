@@ -91,7 +91,7 @@ test('blocked API calls get a machine-readable 503 and browsers get the maintena
 	gate(fakeRequest({ accept: 'text/html' }), page, () => {});
 	assert.equal(page.statusCode, 503);
 	assert.match(String(page.body), /Tellybox is down for maintenance/);
-	assert.match(String(page.body), /tellybox-logo\.png/);
+	assert.match(String(page.body), /tellybox-wordmark\.png/);
 });
 
 test('the CLI writes and reads the state without the server running', t => {

@@ -18,7 +18,7 @@ const SCOPES = new Set(['local', 'remote', 'both']);
 // rest of the site is refused, otherwise the page renders unstyled or without
 // its logo.
 const PAGE_ASSETS = new Set([
-	'/style.css', '/tellybox-logo.png', '/tellybox-logo.webp', '/tellybox-mark.svg',
+	'/style.css', '/tellybox-logo.png', '/tellybox-wordmark.png', '/tellybox-logo.webp', '/tellybox-mark.svg',
 	'/icon.svg', '/asset-fallback.js'
 ]);
 const ALWAYS_OPEN = new Set([
@@ -38,7 +38,7 @@ function normalise(value) {
 function page() {
 	// The shipped CSP forbids inline styles, so the page reuses the site
 	// stylesheet and a small set of classes appended to style.css.
-	return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maintenance - Tellybox</title><link rel="stylesheet" href="/style.css"></head><body class="maintenance-page"><main><img class="maintenance-mark" src="/tellybox-logo.png" alt="Tellybox"><h1>Tellybox is down for maintenance</h1><p>It will be back shortly.</p><a class="button primary" href="/">Try again</a></main></body></html>`;
+	return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maintenance - Tellybox</title><link rel="stylesheet" href="/style.css"></head><body class="maintenance-page"><main><img class="maintenance-mark" src="/tellybox-wordmark.png" alt="Tellybox"><h1>Tellybox is down for maintenance</h1><p>It will be back shortly.</p><a class="button primary" href="/">Try again</a></main></body></html>`;
 }
 
 export function createMaintenance({ directory, clock = Date.now } = {}) {

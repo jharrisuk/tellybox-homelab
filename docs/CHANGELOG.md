@@ -1,3 +1,13 @@
+## Server 0.26.85 - 23 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Web branding
+
+- The boot, login, settings and maintenance screens use the transparent Tellybox
+  wordmark instead of the old logo with a black tile behind it.
+
 ## Server 0.26.84 - 23 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

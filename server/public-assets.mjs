@@ -22,6 +22,7 @@ export const PUBLIC_CDN_ASSETS = Object.freeze([
 	'qbittorrent.css',
 	'icon.svg',
 	'tellybox-logo.png',
+	'tellybox-wordmark.png',
 	'tellybox-logo.webp',
 	'tellybox-mark.svg',
 	'tmdb-logo.svg'

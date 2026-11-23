@@ -438,7 +438,7 @@ export function installAuth(app, options) {
 			device: String(query.device || ''), date: String(query.date || '')
 		}), browsers: [...sessions, ...emailBrowsers, ...localBrowsers] });
 	});
-	for (const file of ['style.css', 'auth.js', 'connection-status.js', 'icon.svg', 'tellybox-logo.png', 'tellybox-mark.svg', 'tmdb-logo.svg', 'asset-fallback.js']) app.get('/' + file, (req, res) => res.sendFile(path.join(publicDirectory, file)));
+	for (const file of ['style.css', 'auth.js', 'connection-status.js', 'icon.svg', 'tellybox-logo.png', 'tellybox-wordmark.png', 'tellybox-mark.svg', 'tmdb-logo.svg', 'asset-fallback.js']) app.get('/' + file, (req, res) => res.sendFile(path.join(publicDirectory, file)));
 
 	app.post('/api/auth/password', csrf, apps.requireAdmin, async (req, res) => {
 		const password = req.body?.password;

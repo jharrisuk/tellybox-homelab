@@ -62,7 +62,7 @@ test('enabled CDN version-keys only public CSS and static branding', async t => 
 		assert.ok(!cdn.assets.has(name), name);
 	}
 	assert.deepEqual(PUBLIC_CDN_ASSETS.filter(name => !name.endsWith('.css')).sort(),
-		['icon.svg', 'tellybox-logo.png', 'tellybox-logo.webp', 'tellybox-mark.svg', 'tmdb-logo.svg']);
+		['icon.svg', 'tellybox-logo.png', 'tellybox-logo.webp', 'tellybox-mark.svg', 'tellybox-wordmark.png', 'tmdb-logo.svg']);
 });
 
 test('content hash changes invalidate the CDN URL', async t => {
