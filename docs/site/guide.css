@@ -92,6 +92,17 @@ select:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
 /* Mirror the guide wrapping in the live setup UI. */
 p, li { text-wrap: pretty; }
 
+/* Compact optional add-on rows: less air while keeping the title, summary and state. */
+.integration-list { gap: 8px; }
+.integration-section > h2 { margin: 6px 0 10px; }
+.service-row { border-radius: 14px; }
+.service-row-heading { padding: 12px 16px; gap: 12px; }
+.service-row-title strong { font-size: 16px; }
+.service-row-description { margin-top: 2px; font-size: 12.5px; line-height: 1.4; }
+.service-state { padding: 5px 9px; font-size: 11px; }
+.service-chevron { width: 18px; height: 18px; flex-basis: 18px; }
+.service-row-body { padding: 0 16px 16px; }
+
 html { scroll-behavior: smooth; }
 main > section { margin: 64px 0; scroll-margin-top: 25px; }
 img, figure, svg, table { max-width: 100%; }

@@ -1,3 +1,13 @@
+## Server 0.26.84 - 23 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Installation settings
+
+- The Optional add-ons list is more compact: tighter row padding and gaps,
+  smaller titles and state pills, and a shorter chevron.
+
 ## Android 0.26.52 - 22 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

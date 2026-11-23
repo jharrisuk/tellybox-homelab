@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.83",
+	"serverVersion": "0.26.84",
 	"files": [
 		{
 			"path": ".env.example",
@@ -59,8 +59,8 @@
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 72475,
-			"sha256": "8c5eca60ecc39ceecc4dc1d8003f181f3654cdfb06636e69cf65205167c2af13"
+			"bytes": 72768,
+			"sha256": "8d6250dd9608a3dbc724f008a51aa6b6c4f004d40bc056982f783fcca206a2c7"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -89,8 +89,8 @@
 		},
 		{
 			"path": "docs/site/guide.css",
-			"bytes": 17679,
-			"sha256": "72b281913af2eedb8978eb730da542abb5c4049c613024a17307ab6f5156baa4"
+			"bytes": 18239,
+			"sha256": "517fa99a2eedff78cc8921fbea9ba54139f005e79214ada465b3da7a846f82eb"
 		},
 		{
 			"path": "docs/site/guide.js",
@@ -115,7 +115,7 @@
 		{
 			"path": "docs/site/index.html",
 			"bytes": 56475,
-			"sha256": "f1ca84e2872e2caf5e908eb6f5591f056c127755ffc6bfbbbeca3f0a46a76b73"
+			"sha256": "911f864d0e0c4b338712a27f202a15c85f40a51bdd07a6e5a051425acb04bd14"
 		},
 		{
 			"path": "docs/story.html",
@@ -529,8 +529,8 @@
 		},
 		{
 			"path": "server/homelab/public/index.html",
-			"bytes": 11382,
-			"sha256": "971c1526f9df03dda8d83af963473b03574068677c26824082d0cd78d597d4a5"
+			"bytes": 11394,
+			"sha256": "3e52e9f102acae3d5ee62c94d20b4a04df97aa946c2789d7f6fb1325bf087e92"
 		},
 		{
 			"path": "server/homelab/public/notification-mode.mjs",
@@ -544,8 +544,8 @@
 		},
 		{
 			"path": "server/homelab/public/setup.css",
-			"bytes": 11099,
-			"sha256": "8247247c4b3b148a360749a092d35af3dcc18b9f7fb63bea4eca04c1faabca4b"
+			"bytes": 11659,
+			"sha256": "39dc22bcd44c4d41992d7cd9e853c634a92e2ee080b6e3f6b3ca1dd24c205066"
 		},
 		{
 			"path": "server/homelab/public/setup.js",
@@ -685,12 +685,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "0b8a675e7660e5ae8105d5b0a6412715b0c8d567de5fb08cf04df3a9eb663411"
+			"sha256": "317d13a0945070a26fc44a6d3472880ddaa12202e1a9283c2139521a562b31f2"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "2eb4ae2e8e7c8ef6f4f29d95733a130772407ba7f4baa0062fcc41ec75b460fd"
+			"sha256": "267b2e99ebdfd1550a213c9d9b2c2c688c13bc21851c97c12eb6ccf8a4e18504"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
