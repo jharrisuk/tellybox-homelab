@@ -20,7 +20,6 @@ jobs:
     timeout-minutes: 30
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
-      EXPORT_DIR: ${{ runner.temp }}/public-export
     steps:
       - uses: actions/checkout@v4
         with:
@@ -37,11 +36,6 @@ jobs:
       - name: Server tests
         working-directory: server
         run: npm ci && npm test
-      - name: Build the public export
-        if: ${{ hashFiles('packaging/export-public.mjs') != '' }}
-        run: |
-          set -euo pipefail
-          node packaging/export-public.mjs "$EXPORT_DIR"
       - name: Build source assets
         run: |
           set -euo pipefail
@@ -50,13 +44,7 @@ jobs:
             --prefix="tellybox-homelab-${RELEASE_TAG#v}/" \
             -o "dist/tellybox-homelab-${RELEASE_TAG#v}.tar.gz" \
             "$RELEASE_TAG"
-          # The export helper writes its manifest into the export tree. A tree that
-          # was itself produced by that helper ships the same manifest in-tree.
-          if [ -f "$EXPORT_DIR/packaging/public-manifest.json" ]; then
-            cp "$EXPORT_DIR/packaging/public-manifest.json" dist/public-manifest.json
-          else
-            cp packaging/public-manifest.json dist/public-manifest.json
-          fi
+          cp packaging/public-manifest.json dist/public-manifest.json
           (cd dist && sha256sum * > SHA256SUMS)
       - name: Publish the source release
         env:
