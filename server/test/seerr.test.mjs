@@ -150,7 +150,7 @@ test('discovery routes inherit remote login and reject cross-origin and originle
 	installSeerr(app, { configPath });
 	app.use((error, req, res, next) => res.status(error.status || 500).json({ error: error.message }));
 	const base = side => `http://127.0.0.1:${side.address().port}`;
-	for (const route of ['/api/discover', '/api/discover/requests', '/api/discover/movie/42', '/api/discover/options', '/api/discover/provider/8', '/api/search?q=Arrival']) assert.equal((await fetch(base(remote) + route)).status, 401);
+	for (const route of ['/api/discover', '/api/discover/requests', '/api/discover/movie/42', '/api/discover/options', '/api/discover/provider/8', '/api/discover/new-this-week', '/api/search?q=Arrival']) assert.equal((await fetch(base(remote) + route)).status, 401);
 	assert.equal((await fetch(base(remote) + '/discover', { redirect: 'manual' })).status, 302);
 	assert.equal((await fetch(base(remote) + '/search', { redirect: 'manual' })).status, 302);
 	for (const origin of ['', 'https://unrelated.test']) {

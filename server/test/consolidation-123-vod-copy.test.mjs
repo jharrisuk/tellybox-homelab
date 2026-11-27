@@ -383,7 +383,46 @@ test('absent, incompatible and compatibility-retry requests fail closed to trans
 	try{assert.equal(ceilingSession.method,'Transcode','a source above the requested ceiling must transcode');}finally{await ceilingSession.stop();}
 });
 
-test('copy session stop aborts the producer and expires reads',{skip:!ffmpeg,timeout:120000},async t=>{
+test('copyOnly uses the web-shaped h264 capability and releases a failed slot',{skip:!ffmpeg,timeout:120000},async()=>{
+	const webCapabilities={videoCodecs:['h264','hevc'],audioCodecs:['aac'],maxWidth:1920,maxHeight:1080,maxBitrate:20000000,maxFps:30,
+		hevcMaxWidth:1920,hevcMaxHeight:1080,hevcMaxBitrate:20000000,hevcMaxFps:30,hevcMain10:false,hls:true,mpegTs:true};
+	const {file}=await h264Aac({seconds:16});
+	const bytes=await readFile(file);
+	const absent=createVodPlayer({open:rangeOpener(bytes)});
+	assert.equal(await absent.start({type:'movie',uuid:'copy-only-absent'},{quality:20000000,copyOnly:true}),null);
+	// A failed copyOnly must release its admission slot and temp session.
+	const limited=createVodPlayer({open:rangeOpener(bytes),maxSessions:1});
+	assert.equal(await limited.start({type:'movie',uuid:'copy-only-slot-1'},{quality:20000000,copyOnly:true}),null);
+	assert.equal(await limited.start({type:'movie',uuid:'copy-only-slot-2'},{quality:20000000,copyOnly:true}),null);
+	const copy=createVodPlayer({open:rangeOpener(bytes)});
+	const session=await copy.start({type:'movie',uuid:'copy-only-ok'},{capabilities:webCapabilities,quality:20000000,copyOnly:true});
+	try{assert.ok(session);assert.notEqual(session.method,'Transcode');assert.equal(session.videoCodec,'h264');}finally{await session.stop();}
+});test('a transient provider HTTP failure is retried once at the same segment',{skip:!ffmpeg,timeout:120000},async()=>{
+	const {file}=await h264Aac({seconds:16});
+	const bytes=await readFile(file);
+	let fail=false;const opener=rangeOpener(bytes);
+	const player=createVodPlayer({open:async(source,options)=>{
+		if(fail){fail=false;return new Response(null,{status:502});}
+		return opener(source,options);
+	}});
+	const session=await player.start({type:'movie',uuid:'transient-retry'},{capabilities:capabilities(),quality:20000000});
+	try{
+		fail=true;
+		const segment=await session.read('segment000000000.ts');
+		assert.ok(segment.length>1000,'the retry must serve the requested segment');
+	}finally{await session.stop();}
+});test('a proven copy plan is reused instead of reopening the provider for every probe',{skip:!ffmpeg,timeout:120000},async()=>{
+	const {file}=await h264Aac({seconds:16});
+	const bytes=await readFile(file);
+	let opens=0;const opener=rangeOpener(bytes);
+	const player=createVodPlayer({open:(source,options)=>{opens++;return opener(source,options);}});
+	const first=await player.start({type:'movie',uuid:'copy-plan-cache'},{capabilities:capabilities(),quality:20000000});
+	try{await first.read('segment000000000.ts');}finally{await first.stop();}
+	const cold=opens;
+	const second=await player.start({type:'movie',uuid:'copy-plan-cache'},{capabilities:capabilities(),quality:20000000});
+	try{await second.read('segment000000000.ts');}finally{await second.stop();}
+	assert.ok(opens-cold < cold-2,'the warmed plan must skip the keyframe/tail probes: cold='+cold+' warm='+(opens-cold));
+});test('copy session stop aborts the producer and expires reads',{skip:!ffmpeg,timeout:120000},async t=>{
 	const {file}=await hevcSmall({seconds:24});
 	const bytes=await readFile(file);
 	const player=createVodPlayer({open:rangeOpener(bytes)});

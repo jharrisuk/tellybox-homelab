@@ -2408,6 +2408,47 @@ async function preparePlaybackContent(req, res, sessionId) {
 		await stop(session);
 		throw new Error('Jellyfin did not offer a browser-compatible stream. Check transcoding on the Jellyfin server.');
 	}
+	// Local MKV/AVI files are remuxed by Jellyfin with very large ffmpeg probe
+	// windows, which can add roughly twenty seconds before the first segment.
+	// When the browser advertises the source's decode capability, remux it in
+	// our own HLS player instead. It starts in about a second and falls back to
+	// Jellyfin's transcode whenever the copy cannot be proven.
+	if (kind === 'hls' && !session.live && localViewer && !nativeClient && !forceTranscode && !session.download && localCapabilities) {
+		const container = String(source.Container || 'mkv').split(',')[0].trim() || 'mkv';
+		const directQuery = new URLSearchParams({ Static:'true', MediaSourceId:source.Id, DeviceId:device, PlaySessionId:playback.PlaySessionId });
+		const directUrl = `/Videos/${id}/stream.${container}?${directQuery}`;
+		const keepSidecars = Boolean(sidecars && captionOptions);
+		const encoded = await vodPlayer.start({ type:'local', route:directUrl }, { quality, audioIndex:req.body.audioIndex,
+			capabilities:localCapabilities, compatibility:false,
+			textSubtitles:keepSidecars ? false : req.body.textSubtitles === true,
+			preferEnglishSubtitles:keepSidecars ? false : req.body.preferEnglishSubtitles === true,
+			subtitleIndex:keepSidecars ? -1 : req.body.subtitleIndex, copyOnly:true }).catch(error => {
+				if (error.status !== 503) console.error(JSON.stringify({ event:'vod_local_copy_fallback', code:error.code || '' }));
+				return null;
+			});
+		if (encoded) {
+			if (!auth.validOwner(session.owner) || res.destroyed) { await encoded.stop(); return res.sendStatus(req.jserverShare ? 410 : 401); }
+			const method = encoded.method || 'Copy';
+			session.direct = encoded;
+			session.kind = 'hls';
+			session.playMethod = method;
+			session.resource = Buffer.from('index.m3u8').toString('base64url');
+			if (!session.captionSources) session.captionSources = encoded.captionSources;
+			for (const track of encoded.subtitles) if (session.captionSources?.has(track.index)) track.url = directStreamLink(session, Buffer.from(`subtitle-${track.index}.vtt`).toString('base64url'));
+			session.viewer = req.jserverViewer;
+			sessions.set(session.id, session);
+			activity.begin(session.id, req.jserverViewer, item, { purpose:'watch' });
+			const reason = method === 'Copy' ? 'Local file copied directly'
+				: method === 'Remux' ? 'Local video copied; audio remuxed to AAC'
+					: 'Local transcode';
+			session.conversionReason = reason;
+			activity.update(session.id, { method, qualityMbps:quality/1e6, videoCodec:encoded.videoCodec || 'h264', audioCodec:encoded.audioCodec || 'aac', conversionReason:reason });
+			return res.json({ session:session.id, url:directStreamLink(session, session.resource), kind:'hls', live:false, quality,
+				duration:encoded.duration, subtitleIndex:keepSidecars ? subtitleIndex : encoded.subtitleIndex,
+				subtitles:keepSidecars ? captionOptions : encoded.subtitles, audio:encoded.audio,
+				method, videoCodec:encoded.videoCodec || '', audioCodec:encoded.audioCodec || 'aac', conversionReason:reason });
+		}
+	}
 	// Media3 cannot seek a Matroska file whose Cues are only named by a chained
 	// SeekHead. The app detects that unseekable DirectPlay timeline and asks for
 	// the same file through the ffmpeg HLS player, which can seek anywhere.
@@ -2450,7 +2491,7 @@ async function preparePlaybackContent(req, res, sessionId) {
 				: seekMethod === 'Remux' ? 'Original file has no usable seek index; audio remuxed to AAC'
 					: 'Original file has no usable seek index';
 			session.conversionReason = seekReason;
-			return res.json({ session: session.id, url: directStreamLink(session, session.resource), kind: 'hls', live: false,
+			return res.json({ session: session.id, url: directStreamLink(session, session.resource), kind: 'hls', live: false, quality,
 				duration: encoded.duration, subtitleIndex: keepSidecars ? subtitleIndex : encoded.subtitleIndex,
 				subtitles: keepSidecars ? captionOptions : encoded.subtitles, audio: encoded.audio,
 				method: seekMethod, videoCodec: encoded.videoCodec || '', audioCodec: encoded.audioCodec || 'aac', seekFallback: true,

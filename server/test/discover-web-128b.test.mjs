@@ -184,7 +184,14 @@ test('switching mode cancels shelf loading before the new view starts', () => {
 	assert.match(switchModeSource, /return loadTrending\(\)/);
 });
 
-test('for-you keeps its single personalised POST and renders sections in order', () => {
+test('services mode uses one cached new-release request with provider-rail fallback', () => {
+	assert.match(loadFeedsSource, /api\('\/api\/discover\/new-this-week',undefined,\{signal:shelfSignal\(\)\}\)/);
+	assert.match(loadFeedsSource, /for\(const section of data\.sections\|\|\[\]\)/);
+	assert.match(loadFeedsSource, /shelf\(section\.title,section\.items,holder,section\.provider/);
+	const primary = loadFeedsSource.indexOf("new-this-week");
+	const fallback = loadFeedsSource.indexOf("options.providers.map");
+	assert.ok(primary > 0 && fallback > primary, 'provider rails are only the fallback');
+});test('for-you keeps its single personalised POST and renders sections in order', () => {
 	assert.match(loadFeedsSource, /api\('\/api\/discover\/for-you',TellyboxTaste\.payload\(\),\{signal:shelfSignal\(\)\}\)/);
 	assert.match(loadFeedsSource, /for\(const section of data\.sections\) if\(section\.items\.length\) shelf\(section\.title,section\.items,parent\)/);
 	assert.doesNotMatch(loadFeedsSource, /data\.sections\.(?:sort|reverse)\(/);
@@ -214,4 +221,12 @@ test('handoff and detail behaviour is untouched', () => {
 	}
 	assert.match(discoverJs, /stream\.href='\/\?item='\+encodeURIComponent\(item\.vodId\)\+'&from=discover'/);
 	assert.match(discoverJs, /link\.href = '\/\?item=' \+ encodeURIComponent\(item\.watchId\) \+ '&from=discover'/);
+});
+test('the shared retry helper is top-level and available to failed loads', () => {
+	const source = section('const $ = selector', '// Shelves');
+	const nodeStart = source.indexOf('function node(');
+	const retryStart = source.indexOf('function retryable(');
+	const apiStart = source.indexOf('async function api(');
+	assert.ok(nodeStart >= 0 && retryStart > nodeStart && retryStart < apiStart);
+	assert.match(source.slice(nodeStart, retryStart), /\n\}\n$/, 'node closes before retryable is declared');
 });

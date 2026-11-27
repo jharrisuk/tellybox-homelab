@@ -1,3 +1,119 @@
+## Server 0.26.89 - 27 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Device pairing recovery
+
+- The account page now accepts the approval code shown by a pending phone or TV,
+  not only a separate link code. Entering the TV's code links and approves that
+  device directly.
+- An expired pending request no longer locks the same hardware out. "Connect
+  again" creates a fresh request; at home it is approved automatically, and a
+  revoked device still needs an administrator.
+- The account page now says the code comes from the device, and no longer
+  suggests the page generates one.
+## Android 0.26.56 - 25 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Faster TV home
+
+- The hero and main rails no longer wait for Continue watching or Next episodes.
+  The static rails load together and paint first; the personal shelves drop into
+  their usual place underneath as soon as they are ready.
+- Returning to Home reuses the same rails for five minutes and refreshes them in
+  the background, so it appears immediately instead of showing a spinner.
+
+## Android 0.26.55 - 25 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Search and navigation
+
+- TV Search opens on suggestions instead of the Android system keyboard: recent
+  searches, popular titles, and Films/Series/Live TV/Discover shortcuts.
+- TV typing uses a remote-friendly A-Z grid with Space, Delete, Clear and
+  Search. The Android system keyboard is never opened.
+- Voice search is offered when the device has a recogniser.
+- Results are grouped as Films, Series, Live TV and Not in your library yet,
+  with empty groups hidden and the first result focused.
+- Search is now the first item in the TV rail and a bottom-nav tab on phones.
+- Phone search shows recent and popular suggestions before typing, then the same
+  plain-language result groups.
+
+## Server 0.26.88 - 25 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Dispatcharr VOD startup and stalls
+
+- A proven copy/remux plan is cached per source and audio track, so a repeat
+  play, seek or replacement skips the keyframe and tail probes that opened the
+  provider several times before the first segment.
+- Cold copying samples the start, middle and tail in parallel with a bounded
+  provider timeout, instead of stacking four sequential opens. A slow provider
+  falls back to transcode within the budget.
+- A transient provider HTTP failure mid-playback now reopens the encoder once at
+  the same segment instead of failing the whole title with "Playback
+  interrupted". A persistent error still fails on the second attempt.
+
+## Server 0.26.87 - 25 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### VOD startup
+
+- Local films and episodes that the browser can decode are now remuxed by the
+  in-process HLS player instead of waiting for Jellyfin's large 200M/1G probe
+  HLS job. In testing the first segment arrived in under a second instead of
+  about twenty. The path only runs when copy/remux is proven and falls back to
+  Jellyfin's transcode otherwise.
+- The web buffering warning no longer counts initial preparation before the
+  first frame, so a slow start cannot show "Playback is struggling".
+
+## Android 0.26.54 - 25 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### VOD startup
+
+- Phone and TV wait for the first presented frame before the buffering warning
+  can count preparation time. A slow VOD start no longer looks like a stall.
+
+## Server 0.26.86 - 24 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Discover
+
+- Streaming services now opens with **New this week**, **Top rated this week**,
+  **New on Netflix**, **New UK titles**, **New on UK services**, and a
+  new-release shelf for Apple TV, Disney+, Prime Video and Paramount+.
+- Each shelf is cached separately on the server and preloaded by the daily
+  warmer, so the landing page is one request instead of one per service.
+- Shelves use UK release and premiere dates. They do not claim a title was added
+  to a streaming service this week when TMDB only knows its original release.
+
+## Android 0.26.53 - 24 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Discover
+
+- Streaming services shows the same new-release shelves as the web:
+  New this week, Top rated, Netflix, UK titles, UK services, and each other
+  service.
+- The shelves come from one cached server response. Older servers keep the
+  existing per-service rails as a fallback.
+
 ## Server 0.26.85 - 23 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

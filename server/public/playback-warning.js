@@ -98,6 +98,15 @@
 			this.shown = false;
 			return result(false, true, state.seeking ? 'seeking' : 'paused');
 		}
+		// Initial preparation is not a playback stall. Do not count buffering
+		// until the first frame has actually been decoded and presented.
+		if (state.started === false) {
+			this._closeSegment(previous);
+			this.continuousStart = null;
+			this.recoveredSince = null;
+			this.shown = false;
+			return result(false, true, 'starting');
+		}
 		if (now < this.graceUntil) return result(false, false, 'grace');
 		if (now < this.dismissedUntil) return result(false, false, 'dismissed');
 		if (state.buffering) {

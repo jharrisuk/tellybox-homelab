@@ -27,6 +27,9 @@ const fail = (message, status = 400) => Object.assign(Error(message), { status }
 // Unambiguous alphabet: no I, L, O, 0 or 1. 8 characters ~ 39.6 bits.
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const CODE_PATTERN = new RegExp('^[' + CODE_ALPHABET + ']{8}$');
+// Enrollment approval codes are 8 uppercase hex characters, so they may contain
+// 0 or 1 even though link codes deliberately exclude them.
+const APPROVAL_CODE = /^[A-F0-9]{8}$/;
 const DEVICE_ID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const TTL = 10 * 60000;
 
@@ -124,18 +127,35 @@ export function createDeviceLink(directory, { clock = Date.now, apps, people, ac
 		throttle('link-claim-ip:' + identity.ip, 10, 15 * 60000);
 		throttle('link-claim-all', 300, 15 * 60000);
 		const value = String(code || '').trim().toUpperCase();
-		if (!CODE_PATTERN.test(value)) throw fail('That code is not correct.', 401);
+		if (!CODE_PATTERN.test(value) && !APPROVAL_CODE.test(value)) throw fail('That code is not correct.', 401);
 		clean();
 		const state = store.get();
 		let request = null;
 		for (const entry of Object.values(state.requests)) {
 			if (timingSafeEqual(Buffer.from(entry.codeHash, 'hex'), Buffer.from(signature(entry.deviceKey, value), 'hex'))) { request = entry; break; }
 		}
-		if (!request) throw fail('That code is not correct.', 401);
-		if (request.expires <= clock()) throw fail('That code has expired. Request another.', 401);
-		if (request.claimedBy) throw fail('That code has already been used. Request another.', 401);
 		const person = people.list().people.find(p => p.id === personId);
 		if (!person || person.status !== 'approved') throw fail('This account needs the owner’s approval before linking devices.', 403);
+		if (!request) {
+			// The TV/phone apps show the enrollment approval code from
+			// /api/apps/enroll. Accept it here too, so the same code works from the
+			// account page without the device starting a separate link request.
+			const pending = apps.pendingByCode?.(value);
+			if (!pending) throw fail('That code is not correct.', 401);
+			if (pending.record.expires <= clock()) throw fail('That code has expired. Request another.', 401);
+			const currentOwner = people.device(pending.record.id).personId;
+			if (currentOwner && currentOwner !== personId) throw fail('This device is already linked to another account.', 409);
+			checkAllowance(personId, pending.record.platform, pending.record.id);
+			apps.approvePending(pending.key);
+			people.manage({ action: 'device', id: personId, deviceId: pending.record.id });
+			// Re-read so the response carries the fresh account link.
+			const linked = apps.deviceById(pending.record.id);
+			const device = linked ? linked.device : pending.device;
+			audit?.record('device_linked', identity, { personId, personName: person.name, deviceId: device.id, deviceName: device.name, platform: device.platform, method: 'approval-code' });
+			return { ok: true, device, allowances: allowances(personId) };
+		}
+		if (request.expires <= clock()) throw fail('That code has expired. Request another.', 401);
+		if (request.claimedBy) throw fail('That code has already been used. Request another.', 401);
 		const found = apps.byDeviceKey(request.deviceKey);
 		if (found && (found.record.status === 'revoked' || found.record.expires <= clock())) throw fail('This device access was revoked or expired. Ask an administrator to review it.', 403);
 		const currentOwner = found ? people.device(found.record.id).personId : undefined;

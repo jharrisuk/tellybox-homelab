@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import express from 'express';
@@ -256,6 +256,64 @@ test('a pending enrolment is approved by the claim, the old credential is rotate
 	const again = await f.json(await f.start(TV_ID, 'tv', 'Pending TV'));
 	assert.equal(again.status, 403);
 	assert.equal(again.body.error, 'This device access was revoked or expired. Ask an administrator to review it.');
+});
+
+test('the approval code shown by a pending app links from the account page and keeps its device token', async t => {
+	const f = await fixture(t);
+	await f.enableEmail();
+	const { person, cookie } = await f.signIn('viewer@example.test');
+	const enrolled = await f.json(await f.call('remote', '/api/apps/enroll', { name: 'Sitting room TV' }, undefined, { 'X-Tellybox-Device-Id': TV_ID, 'X-Tellybox-Client': 'android-tv' }));
+	assert.equal(enrolled.status, 201);
+	assert.equal(enrolled.body.status, 'pending');
+	// Approval codes are hex and may contain 0 or 1, unlike Q70 link codes.
+	const file = path.join(f.directory, 'apps.json');
+	const entries = JSON.parse(readFileSync(file, 'utf8'));
+	for (const record of Object.values(entries)) if (record.id === enrolled.body.id) record.code = 'A10B2C3D';
+	writeFileSync(file, JSON.stringify(entries));
+	const claimed = await f.json(await f.claim('A10B2C3D', cookie));
+	assert.equal(claimed.status, 200);
+	assert.equal(claimed.body.device.personId, person.id);
+	assert.equal(claimed.body.device.platform, 'tv');
+	assert.deepEqual(claimed.body.allowances.tv, { used: 1, limit: 1 });
+	const me = await f.json(await f.call('remote', '/api/apps/me', undefined, enrolled.body.token, { 'X-Tellybox-Device-Id': TV_ID }));
+	assert.equal(me.status, 200);
+	assert.equal(me.body.status, 'approved');
+	assert.equal(me.body.personId, person.id);
+	assert.equal((await f.call('remote', '/api/items', undefined, enrolled.body.token)).status, 200, 'the device keeps the token it was already polling with');
+	assert.equal((await f.json(await f.claim('A10B2C3D', cookie))).status, 401, 'the code is single use');
+	// The allowance is enforced before the second TV is approved.
+	const second = await f.json(await f.call('remote', '/api/apps/enroll', { name: 'Bedroom TV' }, undefined, { 'X-Tellybox-Device-Id': TV2_ID, 'X-Tellybox-Client': 'android-tv' }));
+	const secondEntries = JSON.parse(readFileSync(file, 'utf8'));
+	for (const record of Object.values(secondEntries)) if (record.id === second.body.id) record.code = 'B20C3D4E';
+	writeFileSync(file, JSON.stringify(secondEntries));
+	const blocked = await f.json(await f.claim('B20C3D4E', cookie));
+	assert.equal(blocked.status, 409);
+	assert.equal(blocked.body.error, OVER_TV);
+	assert.equal((await f.json(await f.call('remote', '/api/apps/me', undefined, second.body.token, { 'X-Tellybox-Device-Id': TV2_ID }))).body.status, 'pending');
+});
+
+test('expired access is unlinked before the same identity can request again', async t => {
+	const f = await fixture(t);
+	await f.enableEmail();
+	const { person, cookie } = await f.signIn('viewer@example.test');
+	const enrolled = await f.json(await f.call('local', '/api/apps/enroll', { name: 'Living room TV' }, undefined, { 'X-Tellybox-Device-Id': TV_ID, 'X-Tellybox-Client': 'android-tv' }));
+	assert.equal(enrolled.body.status, 'approved');
+	assert.equal((await f.call('local', '/api/people', { action: 'device', id: person.id, deviceId: enrolled.body.id })).status, 200);
+	const before = await f.json(await f.call('remote', '/api/people/me', undefined, undefined, { Cookie: cookie }));
+	assert.equal(before.body.devices.length, 1);
+	const file = path.join(f.directory, 'apps.json'), entries = JSON.parse(readFileSync(file, 'utf8'));
+	for (const record of Object.values(entries)) if (record.id === enrolled.body.id) record.expires = Date.now() - 1;
+	writeFileSync(file, JSON.stringify(entries));
+	const recovered = await f.json(await f.call('remote', '/api/apps/enroll', { name: 'Living room TV' }, undefined, { 'X-Tellybox-Device-Id': TV_ID, 'X-Tellybox-Client': 'android-tv' }));
+	assert.equal(recovered.status, 201);
+	assert.equal(recovered.body.status, 'pending');
+	assert.notEqual(recovered.body.token, enrolled.body.token);
+	const after = await f.json(await f.call('remote', '/api/people/me', undefined, undefined, { Cookie: cookie }));
+	assert.equal(after.body.devices.length, 0, 'an expired access loses its stale account binding');
+	// The original owner can still claim the fresh request and link it again.
+	const claimed = await f.json(await f.claim(recovered.body.code, cookie));
+	assert.equal(claimed.status, 200);
+	assert.equal(claimed.body.device.personId, person.id);
 });
 
 test('admin manual link stays the fallback, obeys the same allowance, and the allowance is configurable', async t => {

@@ -700,7 +700,12 @@ function segmentEndTimes(file) {
 export function createVodPlayer({open,close=async()=>{},maxSessions=3,cacheBytes=defaultCacheBytes,deps={}}) {
 	// Test seam: deterministic race tests inject controlled filesystem barriers.
 	const io={readdir,readFile,stat,rm,...deps};
-	const jobs=new Map();let serverPromise;
+	const jobs=new Map();
+	// The GOP/tail geometry of a completed VOD file is immutable. Re-probing it
+	// on every play/seek/replacement opens the provider several times on the
+	// critical path, so cache the proven plan per source and audio selection.
+	const copyPlans=new Map();
+	let serverPromise;
 	// Serialize whole prune passes and encoder transitions. A dispatched rm
 	// cannot be cancelled by a late generation check, so an encode must not
 	// start a new generation (or its ffmpeg) while any prune rm is in flight.
@@ -805,26 +810,32 @@ export function createVodPlayer({open,close=async()=>{},maxSessions=3,cacheBytes
 			const planProven=!explicitPlan||(options.copyPlan!==null&&Number(options.copyPlan?.segmentSeconds)>0);
 			const wantsCopy=options.compatibility!==true&&planProven&&subtitle===null&&vodCopyEnabled()&&
 				vodCopyEligible(video,info.format,{capabilities:options.capabilities,quality,audio:chosen,container});
-			let copyMode=false,segmentSeconds=4,copyStart=0;
+			let copyMode=false,segmentSeconds=4,copyStart=0,cachedTail=null,planKey='',firstKeyframeOffset=0;
 			if(wantsCopy) {
 				let plan=options.copyPlan,firstKeyframes=[];
-				if(explicitPlan){
+				planKey=(source.uuid?'uuid:'+source.uuid:'route:'+source.route)+'|'+container+'|'+(chosen?chosen.index+':'+chosen.codec_name+':'+chosen.channels:'none');
+				const cached=copyPlans.get(planKey);
+				if(cached&&Date.now()-cached.time<6*3600000&&cached.container===container&&Math.abs(cached.duration-duration)<=2){
+					copyMode=true;segmentSeconds=cached.segmentSeconds;copyStart=cached.copyStart;
+					firstKeyframes=[cached.firstKeyframe];cachedTail=cached.tailPlan;
+					if(process.env.VOD_DEBUG==='1')console.error(JSON.stringify({event:'vod_copy_plan_cached',segmentSeconds}));
+				}else if(explicitPlan){
 					// The worker probe already proved the whole-title step. Use the
 					// same plan; only the first keyframe offset is needed for seeks.
 					segmentSeconds=Number(plan.segmentSeconds);
 					if(plan.firstKeyframe!==undefined)firstKeyframes=[Number(plan.firstKeyframe)||0];
-					else firstKeyframes=await keyframeTimes(job.url,container,{start:0});
+					else firstKeyframes=await keyframeTimes(job.url,container,{start:0,timeout:source.type==='local'?20000:7000});
 					copyMode=true;
 				}else{
 					// Direct/main VOD has no worker plan. Sample the start, thirds and
-					// tail and require the same proven step at every point.
+					// tail in parallel and require the same proven step at every point.
+					// Provider probes get a shorter budget so a slow source falls back
+					// to transcode instead of stacking four cold opens.
 					const uniqueStarts=vodCopySampleStarts(duration);
-					const samples=[];
-					for(const start of uniqueStarts){
-						const times=await keyframeTimes(job.url,container,{start});
-						if(start===0)firstKeyframes=times;
-						samples.push(vodCopySegmentSeconds(times));
-					}
+					const sampleTimes=await Promise.all(uniqueStarts.map(start=>keyframeTimes(job.url,container,{start,timeout:source.type==='local'?20000:7000})));
+					const samples=sampleTimes.map(vodCopySegmentSeconds);
+					const firstStart=uniqueStarts.indexOf(0);
+					if(firstStart>=0)firstKeyframes=sampleTimes[firstStart];
 					plan=vodCopyPlan(samples);
 					if(plan){copyMode=true;segmentSeconds=plan.segmentSeconds;}
 					else if(process.env.VOD_DEBUG==='1')console.error(JSON.stringify({event:'vod_copy_ineligible',reason:'gop',starts:uniqueStarts,samples}));
@@ -833,7 +844,8 @@ export function createVodPlayer({open,close=async()=>{},maxSessions=3,cacheBytes
 					// Copy can only split on keyframes. The first keyframe time is
 					// the alignment base: seeking to n*step alone can land one GOP
 					// early when the source starts at a small positive timestamp.
-					copyStart=Math.max(0,Math.min(10,Number(firstKeyframes[0])||0));
+					firstKeyframeOffset=Number(firstKeyframes[0])||0;
+					copyStart=Math.max(0,Math.min(10,firstKeyframeOffset));
 					// A normal MPEG-TS mux start offset is ~1.4 s; anything much later
 					// means a delayed first decodable frame and copy would drop the
 					// opening timeline. Fail closed instead.
@@ -857,8 +869,15 @@ export function createVodPlayer({open,close=async()=>{},maxSessions=3,cacheBytes
 			let tailPlan=null;
 			if(copyMode){
 				const audioArgs=chosen?(job.copyAudio?['-c:a','copy']:['-c:a','aac','-ac','2','-b:a','160k']):[];
-				try{tailPlan=await copyTailPlan({step:segmentSeconds,copyStart,chosen,audioArgs,declaredDuration:duration});}
-				catch(error){if(error.status)throw error;tailPlan=null;}
+				if(cachedTail)tailPlan=cachedTail;
+				else {
+					try{tailPlan=await copyTailPlan({step:segmentSeconds,copyStart,chosen,audioArgs,declaredDuration:duration,probeTimeout:source.type==='local'?120000:15000});}
+					catch(error){if(error.status)throw error;tailPlan=null;}
+					if(tailPlan&&planKey){
+						copyPlans.set(planKey,{time:Date.now(),segmentSeconds,copyStart,firstKeyframe:firstKeyframeOffset,tailPlan,container,duration});
+						if(copyPlans.size>100)copyPlans.delete(copyPlans.keys().next().value);
+					}
+				}
 				if(tailPlan){playEnd=tailPlan.end;}
 				else {
 					// A pre-playback compatibility decision: no 409/502 is needed
@@ -868,6 +887,10 @@ export function createVodPlayer({open,close=async()=>{},maxSessions=3,cacheBytes
 				}
 			}
 			job.copyMode=copyMode;job.segmentSeconds=segmentSeconds;job.copyStart=copyStart;
+			// The local fast path only wants a proven copy/remux. If the source
+			// cannot be copied, release the slot and let the caller use Jellyfin's
+			// own transcode instead of paying for a second full encode.
+			if (options.copyOnly && !copyMode) { await stop(); return null; }
 			job.windowSegments=Math.max(1,Math.ceil(encodeWindowSeconds/segmentSeconds));
 			if(copyMode){
 				job.total=tailPlan.total;
@@ -1044,7 +1067,7 @@ export function createVodPlayer({open,close=async()=>{},maxSessions=3,cacheBytes
 			// authoritative total/tail. A short genuine tail is preserved; a tail
 			// that cannot be proven rejects the copy plan (null), and a provably
 			// truncated source fails closed instead of finishing early as success.
-			async function copyTailPlan({step,copyStart,chosen,audioArgs,declaredDuration}) {
+			async function copyTailPlan({step,copyStart,chosen,audioArgs,declaredDuration,probeTimeout=120000}) {
 				if(!(Number(declaredDuration)>0)||Number(declaredDuration)>86400)return null;
 				const requested=Math.max(0,Math.round((Math.max(0,Number(declaredDuration)-step*2)-copyStart)/step));
 				const scanStart=Math.max(0,requested*step+copyStart);
@@ -1076,7 +1099,7 @@ export function createVodPlayer({open,close=async()=>{},maxSessions=3,cacheBytes
 						'-max_muxing_queue_size','2048','-f','hls','-hls_time',String(step),'-hls_list_size','0',
 						'-start_number',String(requested),'-hls_flags','temp_file',
 						'-hls_segment_filename',path.join(job.directory,`${prefix}%09d.ts`),playlist];
-					const code=await runCopyProbe(args,120000);
+					const code=await runCopyProbe(args,probeTimeout);
 					if(code!==0)return null;
 					const files=(await io.readdir(job.directory))
 						.map(name=>({name,index:Number(pattern.exec(name)?.[1])}))
@@ -1311,7 +1334,8 @@ export function createVodPlayer({open,close=async()=>{},maxSessions=3,cacheBytes
 					if(job.startingWindow===n)job.startingWindow=null;
 				}
 			}
-			async function chunk(n) {
+			async function chunk(n,retried=false,startedAt=0) {
+				const requestStart=startedAt||Date.now();
 				if(n<0||n>=job.total)throw Object.assign(Error('Invalid segment.'),{status:404});
 				if(job.copyFailure)throw compatibilityRequired();
 				job.requested=n;
@@ -1361,7 +1385,10 @@ export function createVodPlayer({open,close=async()=>{},maxSessions=3,cacheBytes
 				// watchdog. Stalls only when 45 s pass with no completed segment,
 				// capped in total so a near-dead producer cannot hold the read.
 				const hardDeadline=Date.now()+240000;
-				let deadline=Date.now()+45000,ticks=0;
+				// A retry shares the original read's budget so a second provider
+				// failure cannot hold the client past its media timeout.
+				const waitBudget=retried?Math.min(45000,Math.max(10000,60000-(Date.now()-requestStart))):45000;
+				let deadline=Date.now()+waitBudget,ticks=0;
 				// Current-generation terminal state only. A close callback from an
 				// older child returns early, and a new spawn resets these fields, so
 				// an old error can never fail a newer window.
@@ -1403,6 +1430,15 @@ export function createVodPlayer({open,close=async()=>{},maxSessions=3,cacheBytes
 					const failure=recorded||{...encoderFailureFrom(job.stderr,exited.code??undefined,exited.signal||undefined),
 						generation:job.generation,produced:job.produced,requested:job.requested,windowStart:job.windowStart,windowEnd:job.windowEnd,at:Date.now()};
 					job.lastFailure=failure;
+					// A transient provider/proxy failure is worth one fresh open at
+					// the same segment. The internal proxy opens a new upstream for
+					// each request, so a bounded re-encode is the safe retry; a
+					// persistent 4xx still fails on the second attempt.
+					if(!retried&&!job.stopped&&Date.now()-requestStart<30000&&['http_status','input_open','timeout'].includes(failure.category)){
+						console.error(JSON.stringify({event:'vod_producer_retry',segment:n,generation:job.generation,failureCategory:failure.category,failureCode:failure.code}));
+						await new Promise(r=>setTimeout(r,250));
+						if(!job.stopped)return chunk(n,true,requestStart);
+					}
 					console.error(JSON.stringify({event:'vod_producer_stall',segment:n,produced:job.produced,windowStart:job.windowStart,windowEnd:job.windowEnd,speed:job.speed,
 						childExit:exited.code??null,childSignal:exited.signal||null,encoding:Boolean(job.encoding),
 						failureCategory:failure.category,failureCode:failure.code}));

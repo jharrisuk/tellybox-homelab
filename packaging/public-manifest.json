@@ -1,6 +1,6 @@
 {
 	"format": 1,
-	"serverVersion": "0.26.85",
+	"serverVersion": "0.26.89",
 	"files": [
 		{
 			"path": ".env.example",
@@ -54,13 +54,13 @@
 		},
 		{
 			"path": "docs/build-guide.mjs",
-			"bytes": 33175,
-			"sha256": "7dc9c2cf030983c3ba608f3feef6beb785b3159fe2072cc8971ff07f36bab505"
+			"bytes": 33382,
+			"sha256": "ed3e67dc56e7167d5a8390b5bb23697e459159f028351f34b45ffffd72daf993"
 		},
 		{
 			"path": "docs/CHANGELOG.md",
-			"bytes": 73065,
-			"sha256": "c8b767a553a3c19ec912c738dbb9fc3a894ff4234fc7669411a8c0e21663ba70"
+			"bytes": 77929,
+			"sha256": "9b98a5fd23c4755b67aa3671357fa85f1de9ec6c7c25d6539a08365f0a4dae8c"
 		},
 		{
 			"path": "docs/guide-extra.css",
@@ -114,8 +114,8 @@
 		},
 		{
 			"path": "docs/site/index.html",
-			"bytes": 56475,
-			"sha256": "28c1170713e825f4d2ff420c87024e57bea2ac6b95605f891d9c9f125524ae4f"
+			"bytes": 56682,
+			"sha256": "d28eb5a139a63c61c5328b26ccdb2308d987cb5f68650b2640cf4c71d97e7c37"
 		},
 		{
 			"path": "docs/story.html",
@@ -304,8 +304,8 @@
 		},
 		{
 			"path": "server/app-access.mjs",
-			"bytes": 14581,
-			"sha256": "0bf7fbb79afe6d227872976843b77515143b901c87b6f77a485243a57caff9ed"
+			"bytes": 17936,
+			"sha256": "bb3463517f5cfabef92c249049bb2b199a33e6a22f54ad69ea82756710adff9d"
 		},
 		{
 			"path": "server/app-updates.mjs",
@@ -379,8 +379,8 @@
 		},
 		{
 			"path": "server/device-link.mjs",
-			"bytes": 10490,
-			"sha256": "9bc2ad20a70d5fd2e499435793b70487c38863e99f64f8954f694cea33e94b24"
+			"bytes": 11887,
+			"sha256": "aa7df9d2a2cf39ba2ea17862a59bf61dcbbff2b2bc16bd8342a9d9439c8060c4"
 		},
 		{
 			"path": "server/direct-session.mjs",
@@ -394,8 +394,8 @@
 		},
 		{
 			"path": "server/discovery-feeds.mjs",
-			"bytes": 11434,
-			"sha256": "6f9cf693f7911e523ab82df7b608860ec2f5829eb448c4560c28ec23f2d793a4"
+			"bytes": 19825,
+			"sha256": "89a4348452341f9c6d534ffb8d1e152c54e606d29bdcce9dcdbe4750d3694a08"
 		},
 		{
 			"path": "server/dispatcharr-guide.mjs",
@@ -685,12 +685,12 @@
 		{
 			"path": "server/package-lock.json",
 			"bytes": 31625,
-			"sha256": "d26943c08bad4a8c359048afc3d0eaf7f3862d29257abbaa5fe0ff416042cc02"
+			"sha256": "694937ee98fdc9d1febfacf7c4553699c27261d731b578e14510ab6a58bbe227"
 		},
 		{
 			"path": "server/package.json",
 			"bytes": 354,
-			"sha256": "c84e6016eed6d44f7c292078a377260a6c18f2a393284dc05a49f2afd419e9fa"
+			"sha256": "a5afe5f81f1255a67fff1191dad27519054d441858b7433ad9f6f3d4e6c7b17e"
 		},
 		{
 			"path": "server/paused-enforcer.mjs",
@@ -739,8 +739,8 @@
 		},
 		{
 			"path": "server/public/account-devices.js",
-			"bytes": 4905,
-			"sha256": "62900befd69540f90a3ec4ac1b04a6f38240af4d4d58e087a439016b992a4f8f"
+			"bytes": 4939,
+			"sha256": "b804c61fa94113aab810375fdae8f40336cee1343a6090b637fe950cdf8dad3a"
 		},
 		{
 			"path": "server/public/activity-summary.js",
@@ -769,8 +769,8 @@
 		},
 		{
 			"path": "server/public/app.js",
-			"bytes": 254250,
-			"sha256": "3983e375715cdd45e557b33255370a55a86c573cb4d0d6702ebbc61877e23751"
+			"bytes": 254309,
+			"sha256": "05faed4bbbcdde4d70bb4403fd2ad5ab301a7bd83f63cfcb70b85e468b49afaa"
 		},
 		{
 			"path": "server/public/apps.html",
@@ -849,8 +849,8 @@
 		},
 		{
 			"path": "server/public/discover.js",
-			"bytes": 34444,
-			"sha256": "6ceb555345058b1b70ee6573c56634d5402af5760684f92faa534a4e8ddcae32"
+			"bytes": 35619,
+			"sha256": "dbb8ae5a688bb4f5be5fd4b30d76758375fbcc8f7abf4c9c6315b7b7c19b76ea"
 		},
 		{
 			"path": "server/public/dispatcharr-settings.js",
@@ -919,8 +919,8 @@
 		},
 		{
 			"path": "server/public/people-directory.js",
-			"bytes": 20872,
-			"sha256": "0e77064ca7dc5a3ecc84d5ffbc6c1b732c23a7092c028e4bd5e3c0727b5d6c52"
+			"bytes": 20871,
+			"sha256": "f85444e2f7f5b803a98fcfd343017090cd6c2cc7e3240fd6a3793afd6afb9b5c"
 		},
 		{
 			"path": "server/public/people.js",
@@ -939,13 +939,13 @@
 		},
 		{
 			"path": "server/public/playback-warning.js",
-			"bytes": 5333,
-			"sha256": "3a63a1af7cd9e0b55997062f651943b0b733b1670b1ad847d654948e4d2421cc"
+			"bytes": 5673,
+			"sha256": "372f2cb038546a4be87c3e902942642a10f376471dfc793191ec9a35b4edc4ff"
 		},
 		{
 			"path": "server/public/preferences.html",
-			"bytes": 4932,
-			"sha256": "f4e25bf110f383ad1bcc873aef138cf111b9acbc2b470275af12fc4674bd168a"
+			"bytes": 5038,
+			"sha256": "7bc747506b34b154c09b516cf48cc7979cc71e476d458e1b22b905221ecaff83"
 		},
 		{
 			"path": "server/public/purge.html",
@@ -1189,8 +1189,8 @@
 		},
 		{
 			"path": "server/seerr.mjs",
-			"bytes": 16625,
-			"sha256": "6a91fcd7c3060ac24af25bce619ab4770fe421ec03497f2994a387c3c283de82"
+			"bytes": 17630,
+			"sha256": "044fda399ee82ac2d3edf37b20e654e0ae589bcb348a8c524921d1e5aded6299"
 		},
 		{
 			"path": "server/server-health.mjs",
@@ -1199,8 +1199,8 @@
 		},
 		{
 			"path": "server/server.mjs",
-			"bytes": 199283,
-			"sha256": "9bc1467901ee1cb2c38e8198d9db843d27eb266bc634db37f96478f2bd2bf8c8"
+			"bytes": 202320,
+			"sha256": "9358367115076e928fb19862258d90941206b48550b310733ce70b08371be076"
 		},
 		{
 			"path": "server/session-limits.mjs",
@@ -1289,8 +1289,8 @@
 		},
 		{
 			"path": "server/test/app-access.test.mjs",
-			"bytes": 14393,
-			"sha256": "ee94cf5c62db09f79658d3142b62f3c020a1df5e07b540259e79e958b41443b2"
+			"bytes": 15953,
+			"sha256": "86d240dea412dd5c06e2babe5f832a2a4778b125e31c73beb1ebfd169ea04b74"
 		},
 		{
 			"path": "server/test/app-updates-batch-2026-11-20.test.mjs",
@@ -1594,8 +1594,8 @@
 		},
 		{
 			"path": "server/test/consolidation-123-vod-copy.test.mjs",
-			"bytes": 34735,
-			"sha256": "eb0101a1888fe8951b6fbd15c3e6487b8cd733fc80c8f9d713cdf341cab97db8"
+			"bytes": 37660,
+			"sha256": "71f32668cd4cf15b3c1b5d540f42ad9d42e4c419cc135db2b8002ef342064a2b"
 		},
 		{
 			"path": "server/test/consolidation-123-vod-fixture.mjs",
@@ -1619,8 +1619,8 @@
 		},
 		{
 			"path": "server/test/device-link-q70.test.mjs",
-			"bytes": 38284,
-			"sha256": "3a8d0c6e1b29d30260218e45c8bf61344b124ddb8c5ea2ccc4c691e81b6af358"
+			"bytes": 42510,
+			"sha256": "2c56a68e468eeebdcfb9178986b5ab25be835f8a32cfd5a7b19bf1c9893b3c20"
 		},
 		{
 			"path": "server/test/direct-seek.test.mjs",
@@ -1649,8 +1649,8 @@
 		},
 		{
 			"path": "server/test/discover-cache-128b.test.mjs",
-			"bytes": 23781,
-			"sha256": "79b57aa9854ad5e22f4eb40446649e560d38a4bff824b699b9c32587bd1187b8"
+			"bytes": 23841,
+			"sha256": "baf520ce815c6ff3afe5bd480f42db3319a9bdd47e36a0d081effe66515a749f"
 		},
 		{
 			"path": "server/test/discover-season-link-077.test.mjs",
@@ -1659,13 +1659,13 @@
 		},
 		{
 			"path": "server/test/discover-web-128b.test.mjs",
-			"bytes": 11341,
-			"sha256": "b19d8f6e2edae0a9ecd80672c6d7c3677f228356ecd5b28840d645208ea1df84"
+			"bytes": 12445,
+			"sha256": "438b9adef755ef96d255c32daf59ee3f9693bf88db288b8a9044fd9431fe1ffe"
 		},
 		{
 			"path": "server/test/discovery-feeds.test.mjs",
-			"bytes": 8692,
-			"sha256": "a3e58c2c058b3d3750360364091c7bba262149f5b4c69eb7cbf1286d69b66934"
+			"bytes": 12871,
+			"sha256": "538d216331a0c7f4f1f6670fa02ae6d4ac7bf4bba150a21e3e6c34a94c1b3d1c"
 		},
 		{
 			"path": "server/test/dispatcharr-access.test.mjs",
@@ -2299,8 +2299,8 @@
 		},
 		{
 			"path": "server/test/playback-warning-099.test.mjs",
-			"bytes": 6544,
-			"sha256": "6a1e9edddf08abbd1f7dea95179e579facdba2f2a3ed17c0097b609c8f9b47c7"
+			"bytes": 7300,
+			"sha256": "87a1119413cfbd73b30a02759a3ef8ed45dd39455c7bf4cc4039a89aba9a9c7e"
 		},
 		{
 			"path": "server/test/player-loading.test.mjs",
@@ -2609,8 +2609,8 @@
 		},
 		{
 			"path": "server/test/seerr.test.mjs",
-			"bytes": 11833,
-			"sha256": "ee944c79858b0c836b36f3296f6a63aa4ae5e469b8659b471ef17ab2d11a95ee"
+			"bytes": 11864,
+			"sha256": "527a89398372e3eecad8a83e03373ad11243f8fcaa6a8f27e27b96b0f9064f51"
 		},
 		{
 			"path": "server/test/series-index.test.mjs",
@@ -3029,8 +3029,8 @@
 		},
 		{
 			"path": "server/vod-player.mjs",
-			"bytes": 89615,
-			"sha256": "6df4d582975e5b1767630aaf5c7f42af65f260043b9d457b3b092780f5d96ab2"
+			"bytes": 92473,
+			"sha256": "66ce31f1f7e7fc0a41f8912a9f297552c7eed80d86e9105ca3a8fcc7f718eb57"
 		},
 		{
 			"path": "server/warmup.mjs",

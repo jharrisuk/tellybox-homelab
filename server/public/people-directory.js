@@ -111,7 +111,7 @@ function platformCounts(person) {
 function addLinkCodeControl(parent, person, onLinked) {
 	const section = peopleElement('section', null, 'account-link');
 	section.append(peopleElement('h3', 'Link device'));
-	section.append(peopleElement('p', 'On the phone or TV, open Tellybox and choose to link it to an account. Enter the code it shows here. Codes expire after 10 minutes and work once.', 'auth-note'));
+	section.append(peopleElement('p', 'Open Tellybox on the phone or TV and enter the 8-character code it shows here. A pending TV approval code works too. Codes work once and expire.', 'auth-note'));
 	const form = peopleElement('form');
 	const label = peopleElement('label', 'Device code', 'auth-field');
 	const input = document.createElement('input');

@@ -71,6 +71,22 @@ export function createSeerr({ config, fetcher = fetch, audit = () => {}, enrich 
 		}
 		return (await enrich([item]))[0];
 	}
+	// Production/origin countries are public catalogue metadata, cached briefly
+	// so the "New UK titles" shelf does not refetch details on every visit.
+	const originCache = new Map();
+	async function originCountries(type, id) {
+		const key = identify(type, id);
+		const saved = originCache.get(key);
+		if (saved && Date.now() - saved.time < 86400000) return saved.value;
+		const data = await call('/' + key);
+		const value = [...new Set([
+			...(data?.productionCountries || []),
+			...(data?.originCountry || [])
+		].map(country => typeof country === 'string' ? country : country?.iso_3166_1).filter(code => /^[A-Z]{2}$/.test(code || '')))];
+		originCache.set(key, { value, time:Date.now() });
+		if (originCache.size > 300) originCache.delete(originCache.keys().next().value);
+		return value;
+	}
 	// Raw upstream catalogue read. Cacheable only when it contains no search
 	// relevance, viewer identity or workflow state.
 	async function browseRaw(query, page, type, sort, excludeDocumentaries) {
@@ -163,10 +179,10 @@ export function createSeerr({ config, fetcher = fetch, audit = () => {}, enrich 
 		locks.set(key, pending);
 		try { return await pending; } finally { if (locks.get(key) === pending) locks.delete(key); }
 	}
-	const feeds = createDiscoveryFeeds({ call, view:mediaView, enrich, library, publicCache: discoverCache ? { read: publicRead, generation: () => discoverCache.generation() } : null });
+	const feeds = createDiscoveryFeeds({ call, view:mediaView, enrich, library, origins:originCountries, publicCache: discoverCache ? { read: publicRead, generation: () => discoverCache.generation() } : null });
 	// Finite, real Discover-landing warm set: default mixed browse, films and
-	// series popular, plus the five provider rails. Never a Cartesian product of
-	// provider x type x genre x sort x page.
+	// series popular, the five provider rails and the fixed new-release shelves.
+	// Never a Cartesian product of provider x type x genre x sort x page.
 	function discoverWarmers() {
 		if (!discoverCache) return [];
 		const rows = [['all', 'popular'], ['movie', 'popular'], ['tv', 'popular']].map(([type, sort]) => ({
@@ -208,6 +224,7 @@ export function installSeerr(app, { configPath, audit, enrich, library, discover
 	app.get('/api/discover/trending', (req,res)=>res.json({groups:trendingGroups,note:trendingNote}));
 	app.get('/api/discover/trending/:key', async(req,res)=>res.json(await service.trending(req.params.key)));
 	app.get('/api/discover/options', (req, res) => res.json({ providers, interests, region:'GB', note:providerNote }));
+	app.get('/api/discover/new-this-week', async (req, res) => res.json(await service.newThisWeek(req.query.provider ? Number(req.query.provider) : null)));
 	app.get('/api/discover/provider/:id', async (req, res) => res.json(await service.provider(req.params.id, req.query.type || 'all', Number(req.query.page || 1), {genre:req.query.genre||'',sort:req.query.sort||'release'})));
 	app.post('/api/discover/for-you', async (req, res) => {
 		if (!req.is('application/json') || !req.get('origin') || ![req.jserverOrigin, process.env.PUBLIC_ORIGIN].includes(req.get('origin'))) return res.sendStatus(403);

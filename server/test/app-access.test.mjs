@@ -70,6 +70,30 @@ test('revoked and expired identities fail closed even after reinstall and remain
 	assert.equal(Object.values(JSON.parse(readFileSync(file, 'utf8'))).filter(record => record.id === first.id).length, 1);
 });
 
+test('an expired request can be made again with the same device identity, without weakening revocation', async t => {
+	const { call, directory } = await fixture(t);
+	const first = await (await call('remote', '/api/apps/enroll', { name: 'TV' }, undefined, stableHeader)).json();
+	assert.equal(first.status, 'pending');
+	const file = path.join(directory, 'apps.json'), entries = JSON.parse(readFileSync(file, 'utf8'));
+	for (const record of Object.values(entries)) record.expires = Date.now() - 1;
+	writeFileSync(file, JSON.stringify(entries));
+	const again = await (await call('remote', '/api/apps/enroll', { name: 'TV' }, undefined, stableHeader)).json();
+	assert.equal(again.status, 'pending');
+	assert.equal(again.id, first.id);
+	assert.notEqual(again.token, first.token);
+	assert.match(again.code, /^[A-F0-9]{8}$/);
+	assert.equal((await call('remote', '/api/apps/me', undefined, first.token, stableHeader)).status, 401);
+	const me = await (await call('remote', '/api/apps/me', undefined, again.token, stableHeader)).json();
+	assert.equal(me.status, 'pending');
+	// Home still auto-approves the recovered request.
+	const home = await (await call('local', '/api/apps/enroll', { name: 'TV' }, undefined, stableHeader)).json();
+	assert.equal(home.status, 'approved');
+	assert.equal(home.id, first.id);
+	// Revocation remains a hard stop even when the record has also expired.
+	await call('local', '/api/apps/' + first.id, { action: 'revoke' });
+	assert.equal((await call('local', '/api/apps/enroll', { name: 'TV' }, undefined, stableHeader)).status, 403);
+});
+
 test('invalid identifiers rejected and known UUID alone never authorises remote access', async t => {
 	const { call } = await fixture(t);
 	assert.equal((await call('local', '/api/apps/enroll', { name: 'TV' }, undefined, { 'X-Tellybox-Device-Id': 'bad' })).status, 400);

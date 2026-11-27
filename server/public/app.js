@@ -65,7 +65,8 @@ function updatePlaybackTrouble() {
 		buffering: !pip && !video.paused && !video.seeking && !video.ended && video.readyState < 3,
 		paused: video.paused || pip,
 		seeking: video.seeking,
-		ended: video.ended
+		ended: video.ended,
+		started: video.readyState >= 2 || video.currentTime > 0
 	});
 	if (status.show) showPlaybackTrouble();
 	else if (status.hide) hidePlaybackTrouble();

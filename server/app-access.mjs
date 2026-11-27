@@ -1,6 +1,6 @@
 import { installAdminPush, notification, notificationTypes } from './admin-push.mjs';
 import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
-import { randomBytes, createHash } from 'node:crypto';
+import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
 import { installFavourites } from './favourites.mjs';
 import { platformOf } from './client-identity.mjs';
@@ -42,6 +42,14 @@ export function installAppAccess(app, { directory, local, home = () => false, id
 		record.status = 'approved'; record.role = 'viewer'; record.approved = Date.now(); record.expires = Date.now() + 365 * day;
 		audit?.record('app_auto_approved', identity(req), { deviceId: record.id, deviceName: record.name, role: 'viewer' });
 		return true;
+	}
+	function enrollmentCode(entries) {
+		const used = new Set(Object.values(entries).filter(record => record.status === 'pending' && record.expires > Date.now()).map(record => record.code));
+		for (let attempt = 0; attempt < 8; attempt++) {
+			const code = randomBytes(4).toString('hex').toUpperCase();
+			if (!used.has(code)) return code;
+		}
+		return randomBytes(4).toString('hex').toUpperCase();
 	}
 	function view(record) {
 		const { id, name, code, status, role, created, expires, approved, ip, lastSeen } = record;
@@ -86,8 +94,10 @@ export function installAppAccess(app, { directory, local, home = () => false, id
 			approveAtHome(current, req); touch(current, req); save(entries);
 			return res.json({ token: req.get('authorization').slice(7), ...view(current) });
 		}
-		// A failed credential must not become a new automatically approved installation.
-		if (current) return res.status(403).json({ error: 'This device access was revoked or expired. Ask an administrator to review it.' });
+		// A revoked credential must never recover itself. An expired token is not a
+		// revocation: let the same installation fall through and request again, so a
+		// timed-out pending request cannot lock the device out forever.
+		if (current && current.status === 'revoked') return res.status(403).json({ error: 'This device access was revoked. Ask an administrator to review it.' });
 		for (const [address, attempt] of attempts) if (attempt.until <= now) attempts.delete(address);
 		const attempt = attempts.get(viewer.ip) || { count: 0, until: now + 3600000 };
 		if (attempt.count >= 5 || attempts.size >= 1000) return res.status(429).json({ error: 'Too many approval requests. Try again in an hour.' });
@@ -95,7 +105,26 @@ export function installAppAccess(app, { directory, local, home = () => false, id
 		const match = stableKey && Object.entries(entries).find(([, record]) => record.deviceKey === stableKey);
 		if (match) {
 			const [oldKey, record] = match;
-			if (record.status === 'revoked' || record.expires <= now) return res.status(403).json({ error: 'This device access was revoked or expired. Ask an administrator to review it.' });
+			if (record.status === 'revoked') return res.status(403).json({ error: 'This device access was revoked. Ask an administrator to review it.' });
+			// An expired request or access is recoverable. The installation keeps its
+			// identity, but must ask again; only home/local is auto-approved. This is
+			// what stops a 24-hour pending timeout from needing a factory reset.
+			if (record.expires <= now) {
+				const token = randomBytes(32).toString('hex');
+				record.status = 'pending'; record.role = 'viewer'; record.code = enrollmentCode(entries);
+				record.created = now; delete record.approved; record.expires = now + day;
+				if (platform) record.platform = platform;
+				// The old access has lapsed. Drop the stale account binding so a UUID
+				// (an identifier, not a secret) cannot re-enrol and hand the device to
+				// a different account. The owner can link it again.
+				people?.manage?.({ action: 'unlink', deviceId: record.id });
+				touch(record, req);
+				approveAtHome(record, req);
+				delete entries[oldKey]; entries[hash(token)] = record; save(entries);
+				disconnect(`app:${oldKey}`);
+				audit?.record(record.status === 'approved' ? 'app_reconnected' : 'app_requested', viewer, { deviceId: record.id, deviceName: record.name, role: 'viewer' });
+				return res.status(201).json({ token, ...view(record) });
+			}
 			if (!(local(req) || home(req))) return res.status(409).json({ error: 'This device is already registered. Reconnect on your home network to restore it without creating a duplicate.' });
 			// An identifier is not authentication: home recovery always becomes a viewer.
 			const token = randomBytes(32).toString('hex');
@@ -110,7 +139,7 @@ export function installAppAccess(app, { directory, local, home = () => false, id
 		for (const [entryKey, record] of Object.entries(entries)) if (!record.deviceKey && record.expires <= now) delete entries[entryKey];
 		if (Object.keys(entries).length >= 256) return res.status(429).json({ error: 'The app list is full. Ask an admin to remove old devices.' });
 		const token = randomBytes(32).toString('hex');
-		const record = { id: randomBytes(16).toString('hex'), name: name.trim(), code: randomBytes(4).toString('hex').toUpperCase(), status: 'pending', role: 'viewer', created: now, expires: now + day, ip: viewer.ip };
+		const record = { id: randomBytes(16).toString('hex'), name: name.trim(), code: enrollmentCode(entries), status: 'pending', role: 'viewer', created: now, expires: now + day, ip: viewer.ip };
 		if (stableKey) record.deviceKey = stableKey;
 		if (platform) record.platform = platform;
 		touch(record, req);
@@ -154,7 +183,7 @@ export function installAppAccess(app, { directory, local, home = () => false, id
 		if (action === 'revoke') { record.status = 'revoked'; record.expires = Date.now() + 30 * day; }
 		else if (action === 'rename') record.name = name.trim();
 		else if (action === 'platform') record.platform = platform;
-		else { record.role = role; if (action === 'approve') { record.status = 'approved'; record.approved = Date.now(); record.expires = Date.now() + 365 * day; } }
+		else { record.role = role; if (action === 'approve') { record.status = 'approved'; record.approved = Date.now(); record.expires = Date.now() + 365 * day; record.code = ''; } }
 		save(entries);
 		if (action === 'revoke') disconnect(`app:${tokenKey}`);
 		audit?.record(`app_${action}`, identity(req), { deviceId: record.id, deviceName: record.name, role: record.role, ...(action === 'platform' ? { platform } : {}) });
@@ -175,6 +204,36 @@ export function installAppAccess(app, { directory, local, home = () => false, id
 		if (!/^[a-f0-9]{32}$/.test(personId || '')) return [];
 		const now = Date.now();
 		return Object.values(read()).filter(record => ['approved', 'pending'].includes(record.status) && record.expires > now && people?.device(record.id).personId === personId).map(view);
+	}
+	// The code shown by /api/apps/enroll is an approval reference, not a Q70 link
+	// code. Let the signed-in account holder claim it from the account page so the
+	// code on the TV works in both approval paths. Approval is in place: the device
+	// keeps the token it already holds and its next /api/apps/me sees approved.
+	function pendingByCode(code) {
+		const value = String(code || '').trim().toUpperCase();
+		if (!/^[A-F0-9]{8}$/.test(value)) return null;
+		const entries = read(), wanted = Buffer.from(value);
+		for (const tokenKey of Object.keys(entries)) {
+			const record = entries[tokenKey];
+			if (record.status !== 'pending' || typeof record.code !== 'string' || record.code.length !== value.length) continue;
+			if (timingSafeEqual(Buffer.from(record.code), wanted)) return { key: tokenKey, record, device: view(record) };
+		}
+		return null;
+	}
+	function deviceById(id) {
+		const entries = read();
+		const tokenKey = Object.keys(entries).find(value => entries[value].id === id);
+		return tokenKey ? { key: tokenKey, record: entries[tokenKey], device: view(entries[tokenKey]) } : null;
+	}
+	function approvePending(tokenKey) {
+		const entries = read(), record = entries[tokenKey];
+		if (!record || record.status !== 'pending' || record.expires <= Date.now()) {
+			throw Object.assign(Error('This approval request has expired. Ask the device for a new code.'), { status: 409 });
+		}
+		record.status = 'approved'; record.role = 'viewer'; record.approved = Date.now(); record.expires = Date.now() + 365 * day;
+		record.code = '';
+		save(entries);
+		return view(record);
 	}
 	function linkApprove({ deviceKey, name, platform, ip }) {
 		const now = Date.now();
@@ -199,6 +258,6 @@ export function installAppAccess(app, { directory, local, home = () => false, id
 		present: req => Boolean(req.get('authorization') || req.get('x-jserver-app')),
 		resolve(req) { const record = entry(req); return valid(record) ? { ...view(record), owner: `app:${key(req)}` } : null; },
 		validOwner: owner => owner.startsWith('app:') && valid(read()[owner.slice(4)]),
-		byDeviceKey, forPerson, linkApprove
+		byDeviceKey, deviceById, forPerson, linkApprove, pendingByCode, approvePending
 	};
 }

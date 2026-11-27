@@ -7,6 +7,11 @@ state.documentaryType = initial.get('format') === 'tv' ? 'tv' : 'movie';
 if (initial.get('type') === 'documentaries') state.mode = 'documentaries';
 if (state.genre === 'Documentary') { state.documentaryType = state.mode === 'tv' ? 'tv' : 'movie'; state.mode = 'documentaries'; state.genre = ''; }
 function node(tag, text, className) {
+	const el = document.createElement(tag);
+	if (text !== undefined) el.textContent = text;
+	if (className) el.className = className;
+	return el;
+}
 function retryable(message, retry) {
 	const status = $('#discoverStatus');
 	status.textContent = message;
@@ -19,11 +24,6 @@ function retryable(message, retry) {
 	}
 	button.hidden = false;
 	button.onclick = () => { button.hidden = true; retry(); };
-}
-	const el = document.createElement(tag);
-	if (text !== undefined) el.textContent = text;
-	if (className) el.className = className;
-	return el;
 }
 async function api(route, body, options = {}) {
 	const init = body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {};
@@ -380,10 +380,11 @@ window.addEventListener('pagehide', saveHandoffState);
 // one-shot marker/state so a later visit does not restore stale state.
 window.addEventListener('pageshow', event => { if (event && event.persisted) { try { const raw = sessionStorage.getItem(handoffMarkerKey); if (raw) { let marker = null; try { marker = JSON.parse(raw); } catch { marker = null; } if (marker && marker.path === location.pathname) sessionStorage.removeItem(handoffMarkerKey); } sessionStorage.removeItem(handoffStateKey); } catch {} } });
 
-function shelf(title, items, parent, action) {
+function shelf(title, items, parent, action, note) {
 	const section=node('section',undefined,'discovery-shelf'), heading=node('div',undefined,'shelf-heading'); heading.append(node('h2',title));
 	if(action) { const button=node('button','See all','button quiet'); button.onclick=action; heading.append(button); }
-	const row=node('div',undefined,'discovery-row'); row.append(...items.map(card)); section.append(heading,row); parent.append(section);
+	const row=node('div',undefined,'discovery-row'); row.append(...items.map(card));
+	section.append(heading); if(note) section.append(node('p',note,'discover-meta')); section.append(row); parent.append(section);
 	if(!items.length) row.append(node('p','Nothing to show here just now.','discover-meta'));
 }
 async function loadFeeds() {
@@ -404,15 +405,34 @@ async function loadFeeds() {
 			if(data.personalized&&!data.sections.some(s=>s.items.length)) $('#discoverStatus').textContent='No fresh matches yet. Try another interest or like a few more titles.';
 		} else {
 			parent.append(node('p',options.note,'discover-note')); $('#discoverStatus').textContent='';
-			// Create every service holder up front, in the intended order, then
-			// let the pool fetch at most three at a time. A slow provider
-			// therefore cannot hold back the providers below it.
-			const jobs=options.providers.map(provider=>{
-				const holder=node('div'); parent.append(holder);
-				holder.append(node('p','Finding recent '+provider.name+' releases…','discover-meta'));
-				return()=>loadProviderShelf(provider,holder,generation,options.note);
-			});
-			await shelfPool(generation,jobs);
+			// One cached request returns every new-release shelf in display
+			// order, so the whole landing page is one round trip. If an older
+			// server does not expose it, fall back to the provider rails.
+			const freshHolder=node('div'); parent.append(freshHolder);
+			freshHolder.append(node('p','Finding new releases this week…','discover-meta'));
+			try {
+				const data=await api('/api/discover/new-this-week',undefined,{signal:shelfSignal()}); if(generation!==state.generation)return;
+				freshHolder.remove();
+				let shown=0;
+				for(const section of data.sections||[]) {
+					if(!section.items||!section.items.length)continue;
+					shown++;
+					const holder=node('div'); parent.append(holder);
+					shelf(section.title,section.items,holder,section.provider?()=>openProvider(section.provider,options.note):undefined,section.note);
+				}
+				if(!shown)parent.append(node('p','No new releases found this week.','discover-meta'));
+				if(data.partial)$('#discoverStatus').textContent='Some new-release shelves are unavailable just now.';
+			} catch(error) {
+				if(generation!==state.generation||error.name==='AbortError')return;
+				freshHolder.remove();
+				const jobs=options.providers.map(provider=>{
+					const holder=node('div'); parent.append(holder);
+					holder.append(node('p','Finding recent '+provider.name+' releases…','discover-meta'));
+					return()=>loadProviderShelf(provider,holder,generation,options.note);
+				});
+				$('#discoverStatus').textContent='New releases are temporarily unavailable; showing recent service releases.';
+				await shelfPool(generation,jobs);
+			}
 		}
 	} catch(error) { if(generation===state.generation&&error.name!=='AbortError') { $('#discoverStatus').textContent=error.message; const retry=node('button','Try again','button secondary'); retry.onclick=()=>switchMode(mode); parent.append(retry); } }
 }

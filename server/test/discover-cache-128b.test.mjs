@@ -456,16 +456,16 @@ test('documentary category browsing shares the same sanitized public cache', asy
 	assert.doesNotMatch(readFileSync(path.join(directory, 'snapshot.json'), 'utf8'), /mediaInfo|jellyfinMediaId|requestedBy/);
 });
 
-test('the landing warm set is finite: three browse pages and five provider rails only', async t => {
+test('the landing warm set is finite: browse, provider and new-release shelves only', async t => {
 	const directory = workspace(t);
 	const clock = fakeClock();
 	const cache = createDiscoverCache({ file: path.join(directory, 'snapshot.json'), now: clock.now, staleMs: 60000, maxStaleMs: 100000, schema: 's', sourceKey: 'A' });
 	const { service, paths } = seerrFixture(cache);
 	service.startDiscoverCache();
 	await cache.whenIdle();
-	assert.equal(paths.length, 13);
+	assert.equal(paths.length, 29);
 	const providerIds = new Set(paths.filter(route => route.includes('watchProviders=')).map(route => new URL('http://x' + route).searchParams.get('watchProviders')));
-	assert.deepEqual([...providerIds].sort(), ['337', '350', '531', '8', '9']);
+	for (const id of ['8', '9', '337', '350', '531', '38|41|103|333|39']) assert.ok(providerIds.has(id), 'warm set includes provider ' + id);
 	assert.ok(paths.every(route => !route.includes('genre=')));
 	for (const route of paths.filter(value => value.startsWith('/discover/'))) {
 		assert.equal(new URL('http://x' + route).searchParams.get('page'), '1');

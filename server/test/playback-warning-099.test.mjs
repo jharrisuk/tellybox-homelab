@@ -86,7 +86,20 @@ test('dismiss suppresses repeats and recovery clears the warning state', () => {
 	assert.equal(update(recovery, 148 * 1000, true).show, true, 'a later run can warn again');
 });
 
-test('healthy playback never opens the warning after short buffering', () => {
+test('initial loading is not buffering until the first frame is presented', () => {
+	const monitor = new Monitor({ continuousMs: 60000, cumulativeMs: 25000 });
+	monitor.reset(0, 'stream-a');
+	for (let second = 1; second <= 80; second++) {
+		assert.equal(update(monitor, second * 1000, true, { started: false }).show, false, 'startup at ' + second + 's');
+	}
+	// The first frame arrives. Only time after that point may accumulate.
+	for (let second = 81; second < 106; second++) {
+		assert.equal(update(monitor, second * 1000, true, { started: true }).show, false, 'first 25s after start at ' + second + 's');
+	}
+	const show = update(monitor, 106 * 1000, true, { started: true });
+	assert.equal(show.show, true);
+	assert.equal(show.reason, 'cumulative');
+});test('healthy playback never opens the warning after short buffering', () => {
 	const monitor = new Monitor({ continuousMs: 999999, cumulativeMs: 25000 });
 	monitor.reset(0, 'stream-a');
 	bufferingFor(monitor, 16, 10);

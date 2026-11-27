@@ -85,3 +85,73 @@ test('category browsing validates genre and uses the correct film and television
 	await service.category('Action','movie',2); assert.match(routes[2], /genre=28/);
 	await assert.rejects(service.category('invalid','tv',1)); await assert.rejects(service.category('Drama','all',1)); await assert.rejects(service.category('Drama','tv',21));
 });
+
+const day=n=>new Date(Date.now()-n*86400000).toISOString().slice(0,10);
+const freshRow=(id,type='movie',date=day(1))=>({id,title:'New '+id,mediaType:type,genreIds:[18],...(type==='movie'?{releaseDate:date}:{firstAirDate:date})});
+
+test('new-release shelves cover the window, providers and top-rated ordering',async()=>{
+	const routes=[];
+	const service=feeds(async route=>{const url=new URL(route,'https://test');routes.push(url);return{page:1,totalPages:1,results:[freshRow(1,'movie'),freshRow(2,'tv')]};});
+	const result=await service.newThisWeek();
+	assert.equal(result.region,'GB');
+	assert.deepEqual(result.sections.map(section=>section.id),['all','top','netflix','uk-titles','uk-services','service-350','service-337','service-9','service-531']);
+	assert.equal(result.sections.find(section=>section.id==='netflix').provider.name,'Netflix');
+	assert.equal(routes.filter(url=>url.searchParams.get('watchProviders')==='8').length,2);
+	assert.ok(routes.some(url=>url.searchParams.get('watchProviders')==='38|41|103|333|39'));
+	assert.ok(routes.every(url=>url.searchParams.get('primaryReleaseDateGte')||url.searchParams.get('firstAirDateGte')));
+	assert.ok(routes.some(url=>url.searchParams.get('sortBy')==='vote_average.desc'&&url.searchParams.get('voteCountGte')==='10'));
+	const netflix=await service.newThisWeek(8);assert.equal(netflix.provider.id,8);assert.equal(netflix.items.length,4);
+	const bbc=await service.newThisWeek(38);assert.equal(bbc.provider.name,'BBC iPlayer');assert.equal(bbc.items.length,4);
+	await assert.rejects(service.newThisWeek(999));
+});
+
+test('new UK titles keep only titles whose production or origin country is GB',async()=>{
+	const service=createDiscoveryFeeds({
+		call:async route=>({page:1,totalPages:1,results:(new URL(route,'https://test').pathname.endsWith('/movies')?[freshRow(1),freshRow(2)]:[freshRow(3,'tv'),freshRow(4,'tv')])}),
+		view:mediaView,enrich:async items=>items,
+		origins:async (type,id)=>id===1||id===4?['GB','US']:['US']
+	});
+	const result=await service.newThisWeek();
+	const uk=result.sections.find(section=>section.id==='uk-titles');
+	assert.deepEqual(uk.items.map(item=>item.id),[1,4]);
+});
+
+test('new-release shelves are reused from the public cache instead of refetching',async()=>{
+	let calls=0;const saved=new Map();
+	const service=createDiscoveryFeeds({
+		call:async()=>{calls++;return{page:1,totalPages:1,results:[freshRow(1),freshRow(2,'tv')]};},
+		view:mediaView,enrich:async items=>items,origins:async()=>['GB'],
+		publicCache:{read:async(key,loader)=>{if(!saved.has(key))saved.set(key,await loader());return saved.get(key);},generation:()=>'fixture'}
+	});
+	await service.newThisWeek();const cold=calls;assert.ok(cold>0);
+	await service.newThisWeek();assert.equal(calls,cold);
+	assert.equal(service.newWeekWarmers().length,9);
+	assert.equal(new Set(service.newWeekWarmers().map(warmer=>warmer.key)).size,9);
+});
+test('top-rated shelf re-sorts the merged film and TV rows by rating',async()=>{
+	const service=createDiscoveryFeeds({
+		call:async route=>{
+			const tv=new URL(route,'https://test').pathname.endsWith('/tv');
+			return{page:1,totalPages:1,results:tv?[
+				{id:1,title:'TV one',firstAirDate:day(1),voteAverage:8,voteCount:50},
+				{id:2,title:'TV two',firstAirDate:day(1),voteAverage:9.5,voteCount:30}
+			]:[
+				{id:3,title:'Film one',releaseDate:day(1),voteAverage:9,voteCount:20},
+				{id:4,title:'Film two',releaseDate:day(1),voteAverage:7,voteCount:100}
+			]};
+		},
+		view:mediaView,enrich:async items=>items
+	});
+	const result=await service.newThisWeek();
+	const top=result.sections.find(section=>section.id==='top');
+	assert.deepEqual(top.items.map(item=>item.id),[2,3,1,4]);
+});test('a failed shelf marks the aggregate partial but keeps the other shelves',async()=>{
+	const service=feeds(async route=>{
+		if(route.includes('watchProviders=8'))throw Error('Netflix unavailable');
+		return{page:1,totalPages:1,results:[freshRow(1),freshRow(2,'tv')]};
+	});
+	const result=await service.newThisWeek();
+	assert.equal(result.partial,true);
+	assert.ok(result.sections.some(section=>section.id==='all'&&section.items.length>0));
+	assert.ok(!result.sections.some(section=>section.id==='netflix'));
+});

@@ -48,7 +48,7 @@
 		usageLine.textContent = bits.join(' · ');
 		list.replaceChildren();
 		if (!data.devices.length) {
-			const empty = document.createElement('p'); empty.className = 'auth-note'; empty.textContent = 'No phones or TVs linked yet. Use the code below to add one.'; list.append(empty);
+			const empty = document.createElement('p'); empty.className = 'auth-note'; empty.textContent = 'No phones or TVs linked yet. Enter the 8-character code shown on the device you want to link.'; list.append(empty);
 		}
 		for (const device of data.devices) {
 			const row = document.createElement('article'); row.className = 'access-row';
