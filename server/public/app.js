@@ -3881,10 +3881,19 @@ function hlsJsSupported() {
 		&& MediaSource.isTypeSupported('video/mp4; codecs="avc1.42E01E"')
 		&& (MediaSource.isTypeSupported('audio/mp4; codecs="mp4a.40.2"') || MediaSource.isTypeSupported('audio/aac'));
 }
+// Safari has a native HLS pipeline and is more reliable with it than with
+// hls.js/MSE, especially for MPEG-TS, HEVC and live edge timing. Prefer native
+// HLS on Apple WebKit; other browsers keep hls.js.
+function nativeHlsPreferred() {
+	const media = document.createElement('video');
+	return media.canPlayType('application/vnd.apple.mpegurl') !== ''
+		&& navigator.vendor === 'Apple Computer, Inc.';
+}
 function playbackCapabilities() {
 	const media = document.createElement('video');
 	const mse = typeof MediaSource !== 'undefined' && typeof MediaSource.isTypeSupported === 'function';
-	const hlsJs = hlsJsSupported();
+	const nativePreferred = nativeHlsPreferred();
+	const hlsJs = !nativePreferred && hlsJsSupported();
 	const nativeHls = media.canPlayType('application/vnd.apple.mpegurl') !== '';
 	if (!hlsJs && !nativeHls) return null;
 	// Probe the pipeline the player will actually choose, not both.
@@ -3921,7 +3930,7 @@ async function startPlayback(item, position = 0, keepSettings = false, options =
 	// Start the player bundle in parallel with session teardown. It is awaited
 	// only before capability probing, so direct playback still proceeds if the
 	// script is unavailable.
-	const hlsReady = loadHlsScript().catch(() => false);
+	const hlsReady = nativeHlsPreferred() ? Promise.resolve(false) : loadHlsScript().catch(() => false);
 	const relayReplacement = keepSettings && state.relayMedia === true && Boolean(state.session) && state.playing?.Id === item.Id;
 	resetViewingState();
 	saveProgress();
@@ -4066,7 +4075,7 @@ async function startPlayback(item, position = 0, keepSettings = false, options =
 			if (generation !== playGeneration || !player.open) return;
 		}
 		for(const track of playback.subtitles.filter(track=>track.url)){const node=document.createElement('track');node.kind='subtitles';node.label=track.label;node.dataset.index=String(track.index);node.src=new URL(track.url,sessionBase||location.origin).href;node.default=String(track.index)===subtitleValue;video.append(node);node.track.mode=node.default?'showing':'disabled';node.addEventListener('load',()=>{if(node.track.mode==='showing'&&!node.track.cues?.length)$('#playerStatus').textContent='No matching captions available. Video can keep playing.';});}
-		if (playback.kind === 'hls' && typeof Hls !== 'undefined' && typeof Hls.isSupported === 'function' && Hls.isSupported()) {
+		if (playback.kind === 'hls' && !nativeHlsPreferred() && typeof Hls !== 'undefined' && typeof Hls.isSupported === 'function' && Hls.isSupported()) {
 			const hls = new Hls({ maxBufferLength:30,backBufferLength:30,startPosition:state.live?-1:position, liveSyncDuration:4, liveMaxLatencyDuration:12, maxLiveSyncPlaybackRate:1.5 });
 			state.hls = hls;
 			hls.on(Hls.Events.ERROR, (_, data) => {

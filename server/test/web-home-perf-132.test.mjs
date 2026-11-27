@@ -84,7 +84,7 @@ test('hls.js is not part of the Home page and is loaded once on first play', () 
 	assert.doesNotMatch(indexHtml, /vendor\/hls\.min\.js/, 'Home no longer preloads the 529 KB player bundle');
 	assert.match(hlsSource, /script\.src = '\/vendor\/hls\.min\.js';/);
 	assert.match(hlsSource, /if \(hlsScriptPromise\) return hlsScriptPromise;/);
-	assert.match(startPlaybackSource, /const hlsReady = loadHlsScript\(\)\.catch\(\(\) => false\);/);
+	assert.match(startPlaybackSource, /const hlsReady = nativeHlsPreferred\(\) \? Promise\.resolve\(false\) : loadHlsScript\(\)\.catch\(\(\) => false\);/);
 	assert.match(startPlaybackSource, /await hlsReady;/);
 	// The loader itself has the only script element for this bundle.
 	assert.equal((appJs.match(/vendor\/hls\.min\.js/g) || []).length, 1);

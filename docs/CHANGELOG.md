@@ -1,3 +1,30 @@
+## Android 0.26.57 - 27 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Continue watching after a timeout
+
+- A pause or viewing timeout now returns to a freshly rebuilt Home instead of the
+  stale page left behind when playback started. Continue watching therefore shows
+  the episode that was just being watched, not the previous one.
+- The latest unfinished episode of a show remains the single Continue card; the
+  normal stop and still-watching paths keep the same behaviour.
+
+## Server 0.26.90 - 27 November 2026
+
+**Not a public source release.** This entry documents the reviewed private home
+installation.
+
+### Safari playback
+
+- Safari on macOS now uses its native HLS pipeline instead of hls.js/MSE. This
+  avoids the MSE buffering stalls, the automatic 1.5x live catch-up rate, and the
+  TS/HEVC failures that made Safari speed up or refuse to play.
+- Safari's capability probe now follows the native pipeline it actually uses, so
+  the server chooses a compatible H.264/AAC stream rather than an MSE-only one.
+- Chrome, Edge, Firefox, Android and the apps keep their existing hls.js or
+  native playback paths.
 ## Server 0.26.89 - 27 November 2026
 
 **Not a public source release.** This entry documents the reviewed private home

@@ -25,9 +25,15 @@ let compatibility = false;
 let compatibilityRetried = false;
 let pendingCompatibilityRetry = null;
 let playAttempt = 0;
+// Safari's native HLS pipeline is more reliable than hls.js/MSE for MPEG-TS,
+// HEVC and live timing. Keep hls.js for other browsers.
+function nativeHlsPreferred() {
+	return video.canPlayType('application/vnd.apple.mpegurl') !== '' && navigator.vendor === 'Apple Computer, Inc.';
+}
 function playbackCapabilities() {
 	const mse = typeof MediaSource !== 'undefined' && typeof MediaSource.isTypeSupported === 'function';
-	const hlsJs = typeof Hls !== 'undefined' && typeof Hls.isSupported === 'function' && Hls.isSupported();
+	const nativePreferred = nativeHlsPreferred();
+	const hlsJs = !nativePreferred && typeof Hls !== 'undefined' && typeof Hls.isSupported === 'function' && Hls.isSupported();
 	const nativeHls = video.canPlayType('application/vnd.apple.mpegurl') !== '';
 	if (!hlsJs && !nativeHls) return null;
 	const supported = type => hlsJs ? (mse && MediaSource.isTypeSupported(type)) : (video.canPlayType(type) !== '');
@@ -176,7 +182,7 @@ async function play(restart = false, resumePosition = null) {
 			updateLiveControls();
 		};
 		const mediaUrl = new URL(data.url, location.origin).href;
-		if (data.kind === 'hls' && typeof Hls !== 'undefined' && typeof Hls.isSupported === 'function' && Hls.isSupported()) {
+		if (data.kind === 'hls' && !nativeHlsPreferred() && typeof Hls !== 'undefined' && typeof Hls.isSupported === 'function' && Hls.isSupported()) {
 			hls = new Hls();
 			const playerHls = hls;
 			playerHls.on(Hls.Events.ERROR, (event, error) => {
